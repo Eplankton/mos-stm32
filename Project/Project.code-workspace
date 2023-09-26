@@ -1,0 +1,72 @@
+{
+    "folders": [
+        {
+            "name": "Project",
+            "path": "."
+        },
+        {
+            "name": "Root",
+            "path": ".."
+        }
+    ],
+    "settings": {
+        "files.autoGuessEncoding": true,
+        "C_Cpp.default.configurationProvider": "cl.eide",
+        "C_Cpp.errorSquiggles": "disabled",
+        "files.associations": {
+            "gdb-macros": "masm",
+            "*.s": "arm",
+            ".eideignore": "ignore",
+            "*.a51": "a51",
+            "*.h": "c",
+            "*.c": "c",
+            "*.hxx": "cpp",
+            "*.hpp": "cpp",
+            "*.c++": "cpp",
+            "*.cpp": "cpp",
+            "*.cxx": "cpp",
+            "*.cc": "cpp",
+            "array": "cpp",
+            "deque": "cpp",
+            "vector": "cpp",
+            "string_view": "cpp"
+        },
+        "[yaml]": {
+            "editor.insertSpaces": true,
+            "editor.tabSize": 4,
+            "editor.autoIndent": "advanced"
+        },
+        "EIDE.ARM.Option.AxfToElf": true,
+        "C_Cpp.autocomplete": "disabled",
+        "C_Cpp.intelliSenseEngine": "disabled",
+        "cortex-debug.variableUseNaturalFormat": true,
+        "C_Cpp.default.cStandard": "c11",
+        "C_Cpp.default.cppStandard": "c++20",
+        "C_Cpp.default.intelliSenseMode": "",
+        "clangd.checkUpdates": false,
+        "clangd.arguments": [
+            "--header-insertion=never"
+        ],
+        "clangd.path": "c:\\Users\\Wike Chao\\AppData\\Roaming\\Code\\User\\globalStorage\\llvm-vs-code-extensions.vscode-clangd\\install\\16.0.2\\clangd_16.0.2\\bin\\clangd.exe",
+        "editor.inlayHints.enabled": "offUnlessPressed",
+        "editor.inlayHints.padding": true,
+        "EIDE.ARM.GCC.InstallDirectory": "C:\\Program Files (x86)\\Arm-GNU-Toolchain\\12.2",
+        "C_Cpp.hover": "disabled",
+        "C_Cpp.intelliSenseEngineFallback": "disabled"
+    },
+    "extensions": {
+        "recommendations": [
+            "cl.eide",
+            "keroc.hex-fmt",
+            "xiaoyongdong.srecord",
+            "hars.cppsnippets",
+            "zixuanwang.linkerscript",
+            "redhat.vscode-yaml",
+            "IBM.output-colorizer",
+            "cschlosser.doxdocgen",
+            "ms-vscode.vscode-serial-monitor",
+            "dan-c-underwood.arm",
+            "marus25.cortex-debug"
+        ]
+    }
+}

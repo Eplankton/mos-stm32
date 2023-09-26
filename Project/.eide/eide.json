@@ -1,0 +1,561 @@
+{
+  "name": "led",
+  "type": "ARM",
+  "dependenceList": [],
+  "srcDirs": [
+    ".eide/deps"
+  ],
+  "virtualFolder": {
+    "name": "<virtual_root>",
+    "files": [],
+    "folders": [
+      {
+        "name": "CMSIS",
+        "files": [
+          {
+            "path": "../CMSIS/Include/arm_common_tables.h"
+          },
+          {
+            "path": "../CMSIS/Include/arm_const_structs.h"
+          },
+          {
+            "path": "../CMSIS/Include/arm_math.h"
+          },
+          {
+            "path": "../CMSIS/Include/cmsis_armcc.h"
+          },
+          {
+            "path": "../CMSIS/Include/cmsis_armclang.h"
+          },
+          {
+            "path": "../CMSIS/Include/cmsis_compiler.h"
+          },
+          {
+            "path": "../CMSIS/Include/cmsis_version.h"
+          },
+          {
+            "path": "../CMSIS/Include/core_cm0.h"
+          },
+          {
+            "path": "../CMSIS/Include/core_cm0plus.h"
+          },
+          {
+            "path": "../CMSIS/Include/core_cm3.h"
+          },
+          {
+            "path": "../CMSIS/Include/core_cm4.h"
+          },
+          {
+            "path": "../CMSIS/Include/core_cm7.h"
+          },
+          {
+            "path": "../CMSIS/Include/core_cmFunc.h"
+          },
+          {
+            "path": "../CMSIS/Include/core_cmInstr.h"
+          },
+          {
+            "path": "../CMSIS/Include/core_cmSimd.h"
+          },
+          {
+            "path": "../CMSIS/Include/core_sc000.h"
+          },
+          {
+            "path": "../CMSIS/Include/core_sc300.h"
+          }
+        ],
+        "folders": []
+      },
+      {
+        "name": "CORE",
+        "files": [
+          {
+            "path": "../CORE/system_stm32f4xx.c"
+          }
+        ],
+        "folders": []
+      },
+      {
+        "name": "Driver",
+        "files": [
+          {
+            "path": "../Driver/src/misc.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_adc.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_can.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_cec.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_crc.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_cryp_aes.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_cryp_des.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_cryp_tdes.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_cryp.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_dac.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_dbgmcu.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_dcmi.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_dfsdm.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_dma.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_dma2d.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_dsi.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_exti.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_flash_ramfunc.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_flash.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_fmc.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_fmpi2c.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_gpio.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_hash_md5.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_hash_sha1.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_hash.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_i2c.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_iwdg.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_lptim.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_ltdc.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_pwr.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_qspi.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_rcc.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_rng.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_rtc.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_sai.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_sdio.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_spdifrx.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_spi.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_syscfg.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_tim.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_usart.c"
+          },
+          {
+            "path": "../Driver/src/stm32f4xx_wwdg.c"
+          }
+        ],
+        "folders": []
+      },
+      {
+        "name": "INIT",
+        "files": [
+          {
+            "path": "../INIT/startup_stm32f429_439xx.s"
+          }
+        ],
+        "folders": []
+      },
+      {
+        "name": "USR",
+        "files": [],
+        "folders": [
+          {
+            "name": "nuts",
+            "files": [
+              {
+                "path": "../USR/nuts/concepts.hpp"
+              },
+              {
+                "path": "../USR/nuts/delay.hpp"
+              },
+              {
+                "path": "../USR/nuts/dma.hpp"
+              },
+              {
+                "path": "../USR/nuts/exti.hpp"
+              },
+              {
+                "path": "../USR/nuts/gpio.hpp"
+              },
+              {
+                "path": "../USR/nuts/i2c.hpp"
+              },
+              {
+                "path": "../USR/nuts/io.hpp"
+              },
+              {
+                "path": "../USR/nuts/key.hpp"
+              },
+              {
+                "path": "../USR/nuts/led.hpp"
+              },
+              {
+                "path": "../USR/nuts/mod.hpp"
+              },
+              {
+                "path": "../USR/nuts/nvic.hpp"
+              },
+              {
+                "path": "../USR/nuts/pipe.hpp"
+              },
+              {
+                "path": "../USR/nuts/rcc.hpp"
+              },
+              {
+                "path": "../USR/nuts/syscfg.hpp"
+              },
+              {
+                "path": "../USR/nuts/systick.hpp"
+              },
+              {
+                "path": "../USR/nuts/task.hpp"
+              },
+              {
+                "path": "../USR/nuts/type.hpp"
+              },
+              {
+                "path": "../USR/nuts/usart.hpp"
+              }
+            ],
+            "folders": []
+          },
+          {
+            "name": "src",
+            "files": [
+              {
+                "path": "../USR/src/main.cpp"
+              },
+              {
+                "path": "../USR/src/stm32f4xx_it.cpp"
+              }
+            ],
+            "folders": []
+          }
+        ]
+      }
+    ]
+  },
+  "outDir": "build",
+  "deviceName": null,
+  "packDir": null,
+  "miscInfo": {
+    "uid": "f48caa33aa00c72c61b99e03659c2dc4"
+  },
+  "targets": {
+    "Release": {
+      "excludeList": [
+        "<virtual_root>/USR/mod.cpp",
+        "<virtual_root>/USR/led.cpp",
+        "<virtual_root>/USR/printf.c",
+        "<virtual_root>/USR/nuts/io.c",
+        "<virtual_root>/USR/nuts/io.cpp"
+      ],
+      "toolchain": "AC6",
+      "compileConfig": {
+        "cpuType": "Cortex-M4",
+        "floatingPointHardware": "single",
+        "useCustomScatterFile": false,
+        "scatterFilePath": "<YOUR_SCATTER_FILE>.sct",
+        "storageLayout": {
+          "RAM": [
+            {
+              "tag": "IRAM",
+              "id": 1,
+              "mem": {
+                "startAddr": "0x20000000",
+                "size": "0x40000"
+              },
+              "isChecked": true,
+              "noInit": false
+            },
+            {
+              "tag": "IRAM",
+              "id": 2,
+              "mem": {
+                "startAddr": "0x10000000",
+                "size": "0x10000"
+              },
+              "isChecked": false,
+              "noInit": false
+            }
+          ],
+          "ROM": [
+            {
+              "tag": "IROM",
+              "id": 1,
+              "mem": {
+                "startAddr": "0x8000000",
+                "size": "0x100000"
+              },
+              "isChecked": true,
+              "isStartup": true
+            }
+          ]
+        },
+        "options": "null"
+      },
+      "uploader": "OpenOCD",
+      "uploadConfig": {
+        "bin": "",
+        "target": "stm32f4x",
+        "interface": "stlink-v2-1",
+        "baseAddr": "0x08000000"
+      },
+      "uploadConfigMap": {
+        "JLink": {
+          "bin": "",
+          "baseAddr": "",
+          "cpuInfo": {
+            "vendor": "null",
+            "cpuName": "null"
+          },
+          "proType": 1,
+          "speed": 8000,
+          "otherCmds": ""
+        }
+      },
+      "custom_dep": {
+        "name": "default",
+        "incList": [
+          "c:/Keil_v5/ARM/ARMCLANG/include",
+          ".cmsis/include",
+          ".eide/deps",
+          "../Driver/inc",
+          "../CMSIS/Include",
+          "../CORE",
+          "../USR"
+        ],
+        "libList": [],
+        "sourceDirList": [],
+        "defineList": [
+          "USE_STDPERIPH_DRIVER",
+          "STM32F429_439xx"
+        ]
+      }
+    },
+    "Debug": {
+      "excludeList": [
+        "<virtual_root>/USR/etl",
+        "<virtual_root>/USR/nuts/io.cpp",
+        "<virtual_root>/USR/main.cpp",
+        "<virtual_root>/USR/io.cpp",
+        "<virtual_root>/USR/stm32f4xx_it.cpp"
+      ],
+      "toolchain": "AC6",
+      "compileConfig": {
+        "cpuType": "Cortex-M4",
+        "floatingPointHardware": "single",
+        "scatterFilePath": "",
+        "useCustomScatterFile": false,
+        "storageLayout": {
+          "RAM": [
+            {
+              "tag": "RAM",
+              "id": 1,
+              "mem": {
+                "startAddr": "0x0",
+                "size": "0x0"
+              },
+              "isChecked": false,
+              "noInit": false
+            },
+            {
+              "tag": "RAM",
+              "id": 2,
+              "mem": {
+                "startAddr": "0x0",
+                "size": "0x0"
+              },
+              "isChecked": false,
+              "noInit": false
+            },
+            {
+              "tag": "RAM",
+              "id": 3,
+              "mem": {
+                "startAddr": "0x0",
+                "size": "0x0"
+              },
+              "isChecked": false,
+              "noInit": false
+            },
+            {
+              "tag": "IRAM",
+              "id": 1,
+              "mem": {
+                "startAddr": "0x20000000",
+                "size": "0x40000"
+              },
+              "isChecked": true,
+              "noInit": false
+            },
+            {
+              "tag": "IRAM",
+              "id": 2,
+              "mem": {
+                "startAddr": "0x10000000",
+                "size": "0x10000"
+              },
+              "isChecked": false,
+              "noInit": false
+            }
+          ],
+          "ROM": [
+            {
+              "tag": "ROM",
+              "id": 1,
+              "mem": {
+                "startAddr": "0x0",
+                "size": "0x0"
+              },
+              "isChecked": false,
+              "isStartup": false
+            },
+            {
+              "tag": "ROM",
+              "id": 2,
+              "mem": {
+                "startAddr": "0x0",
+                "size": "0x0"
+              },
+              "isChecked": false,
+              "isStartup": false
+            },
+            {
+              "tag": "ROM",
+              "id": 3,
+              "mem": {
+                "startAddr": "0x0",
+                "size": "0x0"
+              },
+              "isChecked": false,
+              "isStartup": false
+            },
+            {
+              "tag": "IROM",
+              "id": 1,
+              "mem": {
+                "startAddr": "0x8000000",
+                "size": "0x200000"
+              },
+              "isChecked": true,
+              "isStartup": true
+            },
+            {
+              "tag": "IROM",
+              "id": 2,
+              "mem": {
+                "startAddr": "0x0",
+                "size": "0x0"
+              },
+              "isChecked": false,
+              "isStartup": false
+            }
+          ]
+        },
+        "options": "null"
+      },
+      "uploader": "OpenOCD",
+      "uploadConfig": {
+        "bin": "",
+        "target": "stm32f4x",
+        "interface": "stlink",
+        "baseAddr": "0x08000000"
+      },
+      "uploadConfigMap": {
+        "JLink": {
+          "bin": "",
+          "baseAddr": "",
+          "cpuInfo": {
+            "vendor": "null",
+            "cpuName": "null"
+          },
+          "proType": 1,
+          "speed": 8000,
+          "otherCmds": ""
+        }
+      },
+      "custom_dep": {
+        "name": "default",
+        "incList": [
+          "../Driver/inc",
+          "../CMSIS/Include",
+          "../CORE",
+          "../USR",
+          ".cmsis/include",
+          "RTE/_Target",
+          ".eide/deps",
+          "c:/Keil_v5/ARM/ARMCLANG/include"
+        ],
+        "libList": [],
+        "sourceDirList": [],
+        "defineList": [
+          "USE_STDPERIPH_DRIVER",
+          "STM32F429_439xx"
+        ]
+      }
+    }
+  },
+  "version": "3.3"
+}
