@@ -138,7 +138,8 @@ void PendSV_Handler(void)
 extern "C" {
 #endif
 
-__attribute__((naked)) void SysTick_Handler(void)
+__attribute__((naked, used)) void
+ContextSwitch(void)// For Context Switch
 {
 	// STEP 1 - SAVE THE CURRENT TASK CONTEXT
 
@@ -146,7 +147,7 @@ __attribute__((naked)) void SysTick_Handler(void)
 	// onto the stack. We need to push the rest(i.e R4, R5, R6, R7, R8, R9, R10, R11) to save the context of the current task.
 
 	// Disable interrupts
-	asm("CPSID   I");
+	DISABLE_IRQ();
 
 	// Push registers R4 to R7
 	asm("PUSH    {R4-R7}");
@@ -172,9 +173,12 @@ __attribute__((naked)) void SysTick_Handler(void)
 	asm("STR     R4, [R1,#8]");// TCB.sp offest = 8
 
 	// STEP 2: LOAD THE NEW TASK CONTEXT FROM ITS STACK TO THE CPU REGISTERS, UPDATE pCurntTcb.
-
 	// Load the address of the next task TCB onto the R1.
-	asm("LDR     R1, [R1,#4]");// TCB.next offest = 4
+
+	asm("PUSH    {R0,LR}");// 保存上下文 R0，LR 的值
+	asm("BL      nextTCB");// 自定义调度函数，返回下一个 TCB* 到 R0
+	asm("MOV     R1, R0"); // R1 = R0
+	asm("POP     {R0,LR}");// 恢复 R0，LR 的值
 
 	// Load the contents of the next tasks stack pointer to pCurntTcb, equivalent to pointing pCurntTcb to
 	// the newer tasks TCB. Remember R1 contains the address of pCurntTcb.
@@ -194,8 +198,13 @@ __attribute__((naked)) void SysTick_Handler(void)
 	// Pop registers R4-R7
 	asm("POP     {R4-R7}");
 
-	asm("CPSIE   I ");
+	ENABLE_IRQ();
 	asm("BX      LR");
+}
+
+__attribute__((naked)) void SysTick_Handler(void)
+{
+	asm("B   ContextSwitch");
 }
 
 #ifdef __cplusplus

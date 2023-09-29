@@ -167,13 +167,12 @@ namespace nuts
 				;
 		}
 
-		inline constexpr void
-		send_string(const char* str)
+		inline constexpr void send_string(const char* str)
 		{
 			uint32_t k = 0;
-			do {
+			while (*(str + k) != '\0') {
 				send_byte(*(str + k++));
-			} while (*(str + k) != '\0');
+			}
 
 			while (get_flag_status(USART_FLAG_TC) == RESET)
 				;

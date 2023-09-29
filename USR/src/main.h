@@ -36,7 +36,9 @@
 
 // Module selection begin
 
-#define IMPORT(MOD) using nuts::MOD;
+#define IMPORT(MOD)   using nuts::MOD;
+#define DISABLE_IRQ() asm("CPSID I")
+#define ENABLE_IRQ()  asm("CPSIE I")
 
 IMPORT(convert)
 IMPORT(delay)
