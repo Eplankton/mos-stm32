@@ -138,11 +138,9 @@ void PendSV_Handler(void)
 extern "C" {
 #endif
 
-__attribute__((naked, used)) void
-ContextSwitch(void)// For Context Switch
+__attribute__((naked, used)) void ContextSwitch(void)
 {
 	// STEP 1 - SAVE THE CURRENT TASK CONTEXT
-
 	// At this point the processor has already pushed PSR, PC, LR, R12, R3, R2, R1 and R0
 	// onto the stack. We need to push the rest(i.e R4, R5, R6, R7, R8, R9, R10, R11) to save the context of the current task.
 
@@ -204,7 +202,7 @@ ContextSwitch(void)// For Context Switch
 
 __attribute__((naked)) void SysTick_Handler(void)
 {
-	asm("B   ContextSwitch");
+	asm("B     ContextSwitch");
 }
 
 #ifdef __cplusplus

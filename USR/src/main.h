@@ -34,26 +34,28 @@
 #include "etl_profile.h"
 #include "../nuts/mod.hpp"
 
-// Module selection begin
-
-#define IMPORT(MOD)   using nuts::MOD;
 #define DISABLE_IRQ() asm("CPSID I")
 #define ENABLE_IRQ()  asm("CPSIE I")
 
-IMPORT(convert)
-IMPORT(delay)
-IMPORT(GPIO_t)
-IMPORT(RCC_t)
-IMPORT(NVIC_t)
-IMPORT(EXTI_t)
-IMPORT(SYSCFG_t)
-IMPORT(SysTick_t)
-IMPORT(USART_t)
-IMPORT(LED_t)
-IMPORT(KEY_t)
-IMPORT(DMA_Stream_t)
-IMPORT(I2C_t)
-IMPORT(TIM_t)
+// Modules begin
+
+#define MODULE(MOD) using nuts::MOD;
+MODULE(convert)
+MODULE(delay)
+MODULE(GPIO_t)
+MODULE(RCC_t)
+MODULE(NVIC_t)
+MODULE(EXTI_t)
+MODULE(SYSCFG_t)
+MODULE(SysTick_t)
+MODULE(USART_t)
+MODULE(LED_t)
+MODULE(KEY_t)
+MODULE(DMA_Stream_t)
+MODULE(I2C_t)
+MODULE(TIM_t)
+
+// Modules end
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

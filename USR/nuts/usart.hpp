@@ -178,6 +178,12 @@ namespace nuts
 				;
 		}
 
+		inline constexpr void println(const char* str)
+		{
+			send_string(str);
+			send_byte('\n');
+		}
+
 		inline constexpr Data_t
 		receive_data() const
 		{

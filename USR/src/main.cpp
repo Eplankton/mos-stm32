@@ -1,6 +1,35 @@
 #include "main.h"
 #include "mos.hpp"
 
+// Put all global resource here
+namespace MOS::GlobalRes
+{
+	// Serial input && output
+	auto& uart = convert(USART3);
+
+	// LED red, green, blue
+	LED_t leds[] = {
+	        {GPIOB, GPIO_Pin_14},
+	        {GPIOB,  GPIO_Pin_0},
+	        {GPIOB,  GPIO_Pin_7},
+	};
+}
+
+namespace MOS::Task
+{
+	inline void print_name()
+	{
+		DISABLE_IRQ();
+		uart.println(curTCB->name);
+		ENABLE_IRQ();
+	}
+
+	inline void delay(const uint32_t n)
+	{
+		nuts::delay(n);
+	}
+}
+
 static void NVIC_Config()
 {
 	NVIC_t::group_config(NVIC_PriorityGroup_2);
@@ -43,44 +72,63 @@ static void Resource_Config()
 	Welcome();
 }
 
-void Task0(void* argv)
+void idle(void* argv = nullptr)
 {
-	using namespace MOS::GlobalRes;
 	while (true) {
-		delay(500);
-		leds[0].toggle();
-		uart.send_string("[MOS]: Task0\n");
+		// Idle does nothing but loop...
+		MOS::Task::delay(1000);
+		MOS::Task::print_name();
 	}
 }
 
-void Task1(void* argv)
+void Task0(void* argv = nullptr)
 {
-	using namespace MOS::GlobalRes;
-	while (true) {
-		delay(750);
-		leds[1].toggle();
-		uart.send_string("[MOS]: Task1\n");
+	for (uint8_t i = 0; i < 10; i++) {
+		MOS::Task::delay(500);
+		MOS::GlobalRes::leds[0].toggle();
+		MOS::Task::print_name();
 	}
+	MOS::Task::terminate();
 }
 
-void Task2(void* argv)
+void Task1(void* argv = nullptr)
 {
-	using namespace MOS::GlobalRes;
-	while (true) {
-		delay(1000);
-		leds[2].toggle();
-		uart.send_string("[MOS]: Task2\n");
+	for (uint8_t i = 0; i < 10; i++) {
+		MOS::Task::delay(750);
+		MOS::GlobalRes::leds[1].toggle();
+		MOS::Task::print_name();
 	}
+	MOS::Task::terminate();
 }
 
-void Task3(void* argv)
+void Task2(void* argv = nullptr)
 {
-	using namespace MOS::GlobalRes;
-	for (uint8_t i = 0; i < 5; i++) {
-		delay(2000);
-		uart.send_string("[MOS]: Task3\n");
+	for (uint8_t i = 0; i < 10; i++) {
+		MOS::Task::delay(1000);
+		MOS::GlobalRes::leds[2].toggle();
+		MOS::Task::print_name();
 	}
+	MOS::Task::terminate();
+}
 
+void Task3(void* argv = nullptr)
+{
+	for (uint8_t i = 0; i < 10; i++) {
+		MOS::Task::delay(1500);
+		MOS::Task::print_name();
+	}
+	MOS::Task::terminate();
+}
+
+void Task4(void* argv = nullptr)
+{
+	// Create a sub task
+	MOS::Task::create(Task3, nullptr, 4, "S1");
+
+	for (uint8_t i = 0; i < 10; i++) {
+		MOS::Task::delay(2000);
+		MOS::Task::print_name();
+	}
 	MOS::Task::terminate();
 }
 
@@ -90,10 +138,15 @@ int main(void)
 
 	Resource_Config();
 
-	Task::create(Task0, nullptr, 0);
-	Task::create(Task1, nullptr, 1);
-	Task::create(Task2, nullptr, 2);
-	// Task::create(Task3, nullptr, 3);
+	// Create idle task
+	Task::create(idle, nullptr, 15, "IDIE");
+
+	// Create user tasks
+	Task::create(Task0, nullptr, 0, "T0");
+	Task::create(Task1, nullptr, 1, "T1");
+	Task::create(Task2, nullptr, 2, "T2");
+	Task::create(Task3, nullptr, 3, "T3");
+	Task::create(Task4, nullptr, 4, "T4");
 
 	Scheduler::launch();
 
