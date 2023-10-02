@@ -20,13 +20,13 @@ namespace MOS::Task
 	inline void print_name()
 	{
 		DISABLE_IRQ();
-		uart.println(curTCB->name);
+		GlobalRes::uart.println(curTCB->name);
 		ENABLE_IRQ();
 	}
 
-	inline void delay(const uint32_t n)
+	inline void delay(const uint32_t n, const uint32_t unit = 1000)
 	{
-		nuts::delay(n);
+		nuts::delay(n, unit);
 	}
 }
 
@@ -40,6 +40,7 @@ static void LED_Config()
 	using MOS::GlobalRes::leds;
 
 	RCC_t::AHB1::clock_cmd(RCC_AHB1Periph_GPIOB, ENABLE);
+
 	for (auto& led: leds) {
 		led.init();
 	}
@@ -47,12 +48,12 @@ static void LED_Config()
 
 static void USART_Config()
 {
-	using MOS::GlobalRes::uart;
+	using namespace MOS;
 
 	RCC_t::AHB1::clock_cmd(RCC_AHB1Periph_GPIOD, ENABLE);
 	RCC_t::APB1::clock_cmd(RCC_APB1Periph_USART3, ENABLE);
 
-	uart.init(9600, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
+	GlobalRes::uart.init(9600, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
 	        .rx_config(GPIOD, GPIO_t::get_pin_src(9), GPIO_AF_USART3)
 	        .tx_config(GPIOD, GPIO_t::get_pin_src(8), GPIO_AF_USART3)
 	        .enable();
@@ -60,8 +61,8 @@ static void USART_Config()
 
 static void Welcome()
 {
-	using MOS::GlobalRes::uart;
-	uart.send_string("[MOS]: Hello :)\n");
+	using namespace MOS;
+	GlobalRes::uart.println("[MOS]: Hello :)");
 }
 
 static void Resource_Config()
@@ -74,62 +75,84 @@ static void Resource_Config()
 
 void idle(void* argv = nullptr)
 {
+	using namespace MOS;
+
 	while (true) {
 		// Idle does nothing but loop...
-		MOS::Task::delay(1000);
-		MOS::Task::print_name();
+		Task::delay(5000);
+		Task::print_name();
 	}
 }
 
 void Task0(void* argv = nullptr)
 {
-	for (uint8_t i = 0; i < 10; i++) {
-		MOS::Task::delay(500);
-		MOS::GlobalRes::leds[0].toggle();
-		MOS::Task::print_name();
+	using namespace MOS;
+
+	for (uint8_t i = 0; i < 20; i++) {
+		if (i % 2 == 0) {
+			Task::delay(500);
+			GlobalRes::leds[0].toggle();
+			Task::print_name();
+		}
+		else {
+			Task::yield();
+		}
 	}
+
 	MOS::Task::terminate();
 }
 
 void Task1(void* argv = nullptr)
 {
+	using namespace MOS;
+
 	for (uint8_t i = 0; i < 10; i++) {
-		MOS::Task::delay(750);
-		MOS::GlobalRes::leds[1].toggle();
-		MOS::Task::print_name();
+		Task::delay(750);
+		GlobalRes::leds[1].toggle();
+		Task::print_name();
 	}
-	MOS::Task::terminate();
+
+	Task::terminate();
 }
 
 void Task2(void* argv = nullptr)
 {
+	using namespace MOS;
+
 	for (uint8_t i = 0; i < 10; i++) {
-		MOS::Task::delay(1000);
-		MOS::GlobalRes::leds[2].toggle();
-		MOS::Task::print_name();
+		Task::delay(1000);
+		GlobalRes::leds[2].toggle();
+		Task::print_name();
 	}
-	MOS::Task::terminate();
+
+	Task::terminate();
 }
 
 void Task3(void* argv = nullptr)
 {
+	using namespace MOS;
+
 	for (uint8_t i = 0; i < 10; i++) {
-		MOS::Task::delay(1500);
-		MOS::Task::print_name();
+		Task::delay(1500);
+		Task::print_name();
 	}
-	MOS::Task::terminate();
+
+	Task::terminate();
 }
 
 void Task4(void* argv = nullptr)
 {
+	using namespace MOS;
+
 	// Create a sub task
-	MOS::Task::create(Task3, nullptr, 4, "S1");
+	Task::create(Task3, nullptr, 4, "S1");
 
 	for (uint8_t i = 0; i < 10; i++) {
-		MOS::Task::delay(2000);
-		MOS::Task::print_name();
+		Task::delay(2000);
+		Task::print_name();
 	}
-	MOS::Task::terminate();
+
+	Task::terminate();
 }
 
 int main(void)

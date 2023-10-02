@@ -18,7 +18,7 @@ namespace nuts
 	}
 
 	inline void
-	delay(const uint32_t n, const uint32_t unit = 2000)
+	delay(const uint32_t n, const uint32_t unit = 1000)
 	{
 		portable_delay(n * unit);
 	}

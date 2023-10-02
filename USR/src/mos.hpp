@@ -85,7 +85,7 @@ namespace MOS
 			using Prior_t       = uint8_t;// 0~15
 			using Name_t        = const char*;
 
-			using State_t = enum {
+			using Status_t = enum {
 				READY,
 				RUNNING,
 				TERMINATED,
@@ -102,7 +102,7 @@ namespace MOS
 			Argv_t argv      = nullptr;
 			Prior_t priority = 15;
 			PagePtr_t page   = nullptr;
-			State_t state    = TERMINATED;
+			Status_t status  = TERMINATED;
 			Name_t name      = "";
 
 			SelfPtr_t parent = nullptr;
@@ -114,14 +114,46 @@ namespace MOS
 			      const char* name = ""): func(fn), argv(argv),
 			                              priority(pr), name(name) {}
 
-			inline void set_state(State_t new_state) volatile
+			inline void set_state(Status_t new_state) volatile
 			{
-				state = new_state;
+				status = new_state;
+			}
+
+			inline void set_SP(StackPtr_t sp_val) volatile
+			{
+				sp = sp_val;
+			}
+
+			inline void set_xPSR(uint32_t xpsr_val) volatile
+			{
+				page->raw[Macro::PAGE_SIZE - 1] = xpsr_val;
+			}
+
+			inline void set_PC(uint32_t pc_val) volatile
+			{
+				page->raw[Macro::PAGE_SIZE - 2] = pc_val;
+			}
+
+			inline void attach_page(PagePtr_t page_ptr) volatile
+			{
+				page          = page_ptr;
+				page->is_used = true;
+			}
+
+			inline void release_page() volatile
+			{
+				page          = nullptr;
+				page->is_used = false;
 			}
 
 			inline bool empty() volatile const
 			{
 				return func == nullptr;
+			}
+
+			inline StackPtr_t stack_top() volatile const
+			{
+				return &page->raw[Macro::PAGE_SIZE - 16];
 			}
 		};
 	}
@@ -147,8 +179,10 @@ namespace MOS
 		using namespace DataType;
 		using namespace GlobalRes;
 
-		inline TCB_t* create(TCB_t::Fn_t&& fn, TCB_t::Argv_t argv = nullptr,
-		                     TCB_t::Prior_t pr = 15, TCB_t::Name_t name = "")
+		inline TCB_t* create(TCB_t::Fn_t&& fn   = nullptr,
+		                     TCB_t::Argv_t argv = nullptr,
+		                     TCB_t::Prior_t pr  = 15,
+		                     TCB_t::Name_t name = "")
 		{
 			// Disable interrupt to enter critical section
 			DISABLE_IRQ();
@@ -156,11 +190,10 @@ namespace MOS
 			TCB_t::PagePtr_t p = nullptr;
 
 			if (TCBs.size() >= MAX_TASK_NUM) {
-				// Failed
+				// Failed, no enough page
 				return nullptr;
 			}
 
-			// Until find an unused page
 			for (auto& page: PAGES) {
 				if (!page.is_used) {
 					p = &page;
@@ -169,23 +202,24 @@ namespace MOS
 			}
 
 			// Construct a TCB inside the page
-			TCB_t& tcb = *new (p->raw) TCB_t {fn, argv, pr, name};
-			tcb.page   = p;
-			p->is_used = true;
+			auto& tcb = *new (p->raw) TCB_t {fn, argv, pr, name};
+
+			// Set task page
+			tcb.attach_page(p);
 
 			// Setup the stack to hold task context.
 			// Remember it is a descending stack and a context consists of 16 registers.
-			tcb.sp = &p->raw[PAGE_SIZE - 16];
+			tcb.set_SP(tcb.stack_top());
 
 			// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the thumb state.
-			// V6-m and V7-m cores can only support thumb state hence this should be always set to '1'.
-			tcb.page->raw[PAGE_SIZE - 1] = 0x01000000;
+			// V6-m and V7-m cores can only support thumb state hence it should always be set to '1'.
+			tcb.set_xPSR((uint32_t) 0x01000000);
 
 			// Set the stacked PC to point to the task
-			tcb.page->raw[PAGE_SIZE - 2] = (uint32_t) tcb.func;
+			tcb.set_PC((uint32_t) tcb.func);
 
 			// Set TCB to running
-			tcb.set_state(TCB_t::RUNNING);
+			tcb.set_state(TCB_t::Status_t::RUNNING);
 
 			// Add to TCBs
 			TCBs.add(tcb.node);
@@ -199,10 +233,11 @@ namespace MOS
 			return &tcb;
 		}
 
-		// __attribute__((naked, used)) inline void yield()
-		// {
-		// 	asm("B     ContextSwitch");
-		// }
+		inline void yield()
+		{
+			// Trigger SysTick Interrupt -> SysTick_Handler
+			SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+		}
 
 		inline void terminate()
 		{
@@ -214,11 +249,11 @@ namespace MOS
 			// Remove the task from the task list and kids list
 			TCBs.remove(cur_tcb.node);
 
-			// Mark the page as not used
-			cur_tcb.page->is_used = false;
-
 			// Clear the task's page
-			///
+			// todo!()
+
+			// Mark the page as unused
+			cur_tcb.release_page();
 
 			// Reset the TCB to default
 			new (&cur_tcb) TCB_t {};
@@ -282,6 +317,7 @@ namespace MOS
 
 			// Enable interrupts
 			ENABLE_IRQ();
+
 			asm("BX      LR");
 		}
 
@@ -309,7 +345,7 @@ namespace MOS
 				}
 				else {
 					// The next task is the head, return the first task in the list
-					return reinterpret_cast<TCB_t*>(TCBs.head.next);
+					return reinterpret_cast<TCB_t*>(TCBs.begin());
 				}
 			}
 

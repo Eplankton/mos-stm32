@@ -40,6 +40,7 @@
 // Modules begin
 
 #define MODULE(MOD) using nuts::MOD;
+
 MODULE(convert)
 MODULE(delay)
 MODULE(GPIO_t)

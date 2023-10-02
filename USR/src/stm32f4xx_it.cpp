@@ -140,67 +140,67 @@ extern "C" {
 
 __attribute__((naked, used)) void ContextSwitch(void)
 {
-	// STEP 1 - SAVE THE CURRENT TASK CONTEXT
-	// At this point the processor has already pushed PSR, PC, LR, R12, R3, R2, R1 and R0
-	// onto the stack. We need to push the rest(i.e R4, R5, R6, R7, R8, R9, R10, R11) to save the context of the current task.
+	// 步骤1 - 保存当前任务的上下文
+	// 处理器已经将 xPSR、PC、LR、R12、R3、R2、R1 和 R0 压入堆栈。
+	// 需要压入剩下的寄存器 {R4-R11} 以保存当前任务的上下文。
 
-	// Disable interrupts
+	// 禁用中断
 	DISABLE_IRQ();
 
-	// Push registers R4 to R7
+	// 压入寄存器R4到R7
 	asm("PUSH    {R4-R7}");
 
-	// Push registers R8-R11
+	// 压入寄存器R8-R11
 	asm("MOV     R4, R8");
 	asm("MOV     R5, R9");
 	asm("MOV     R6, R10");
 	asm("MOV     R7, R11");
 	asm("PUSH    {R4-R7}");
 
-	// Load R0 with the address of pCurntTcb
+	// R0 = &curTCB
 	asm("LDR     R0, =curTCB");
 
-	// Load R1 with the content of pCurntTcb(i.e post this, R1 will contain the address of current TCB).
+	// R1 = *R0 = curTCB
 	asm("LDR     R1, [R0]");
 
-	// Move the SP value to R4
+	// R4 = SP
 	asm("MOV     R4, SP");
 
-	// Store the value of the stack pointer(copied in R4) to the current tasks "stackPt" element in its TCB.
-	// This marks an end to saving the context of the current task.
-	asm("STR     R4, [R1,#8]");// TCB.sp offest = 8
+	// 将堆栈指针的值（复制到R4）存储到 curTCB.sp
+	// 保存当前任务上下文的流程结束
+	asm("STR     R4, [R1,#8]");// TCB.sp偏移量 = 8
 
-	// STEP 2: LOAD THE NEW TASK CONTEXT FROM ITS STACK TO THE CPU REGISTERS, UPDATE pCurntTcb.
-	// Load the address of the next task TCB onto the R1.
-
-	asm("PUSH    {R0,LR}");// 保存上下文 R0，LR 的值
-	asm("BL      nextTCB");// 自定义调度函数，返回下一个 TCB* 到 R0
+	// 步骤2：从其堆栈加载新任务的上下文到CPU寄存器，更新curTCB
+	asm("PUSH    {R0,LR}");// 保存上下文R0，LR的值
+	asm("BL      nextTCB");// 自定义调度函数，将下一个TCB*返回到R0
 	asm("MOV     R1, R0"); // R1 = R0
-	asm("POP     {R0,LR}");// 恢复 R0，LR 的值
+	asm("POP     {R0,LR}");// 恢复R0，LR的值
 
-	// Load the contents of the next tasks stack pointer to pCurntTcb, equivalent to pointing pCurntTcb to
-	// the newer tasks TCB. Remember R1 contains the address of pCurntTcb.
+	// curTCB = curTCB.next
 	asm("STR     R1, [R0]");
 
-	// Load the newer tasks TCB to the SP using R4.
-	asm("LDR     R4, [R1,#8]");// TCB.sp offest = 8
+	// 将下一个任务的堆栈指针的内容加载到 curTCB，相当于将 curTCB 指向新任务的 TCB
+	// 使用 R4 将新任务的 sp 加载到 SP。
+	asm("LDR     R4, [R1,#8]");// TCB.sp偏移量 = 8
 	asm("MOV     SP, R4");
 
-	// Pop registers R8-R11
+	// 弹出寄存器 R8-R11
 	asm("POP     {R4-R7}");
 	asm("MOV     R8, R4");
 	asm("MOV     R9, R5");
 	asm("MOV     R10, R6");
 	asm("MOV     R11, R7");
 
-	// Pop registers R4-R7
+	// 弹出寄存器 R4-R7
 	asm("POP     {R4-R7}");
 
+	// 使能中断
 	ENABLE_IRQ();
+
 	asm("BX      LR");
 }
 
-__attribute__((naked)) void SysTick_Handler(void)
+__attribute__((naked, used)) void SysTick_Handler(void)
 {
 	asm("B     ContextSwitch");
 }
