@@ -15,19 +15,12 @@ namespace MOS::GlobalRes
 	};
 }
 
-namespace MOS::Task
+void _putchar(char ch)
 {
-	inline void print_name()
-	{
-		DISABLE_IRQ();
-		GlobalRes::uart.println(curTCB->name);
-		ENABLE_IRQ();
-	}
-
-	inline void delay(const uint32_t n, const uint32_t unit = 1000)
-	{
-		nuts::delay(n, unit);
-	}
+	using MOS::GlobalRes::uart;
+	uart.send_data(ch);                                   /* 发送一个字节数据到串口 */
+	while (uart.get_flag_status(USART_FLAG_TXE) == RESET) /* 等待发送完毕 */
+		;
 }
 
 static void NVIC_Config()
@@ -38,9 +31,7 @@ static void NVIC_Config()
 static void LED_Config()
 {
 	using MOS::GlobalRes::leds;
-
 	RCC_t::AHB1::clock_cmd(RCC_AHB1Periph_GPIOB, ENABLE);
-
 	for (auto& led: leds) {
 		led.init();
 	}
@@ -48,12 +39,12 @@ static void LED_Config()
 
 static void USART_Config()
 {
-	using namespace MOS;
+	using MOS::GlobalRes::uart;
 
 	RCC_t::AHB1::clock_cmd(RCC_AHB1Periph_GPIOD, ENABLE);
 	RCC_t::APB1::clock_cmd(RCC_APB1Periph_USART3, ENABLE);
 
-	GlobalRes::uart.init(9600, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
+	uart.init(9600, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
 	        .rx_config(GPIOD, GPIO_t::get_pin_src(9), GPIO_AF_USART3)
 	        .tx_config(GPIOD, GPIO_t::get_pin_src(8), GPIO_AF_USART3)
 	        .enable();
@@ -61,8 +52,8 @@ static void USART_Config()
 
 static void Welcome()
 {
-	using namespace MOS;
-	GlobalRes::uart.println("[MOS]: Hello :)");
+	using MOS::GlobalRes::uart;
+	printf("[MOS]: Hello :)\n");
 }
 
 static void Resource_Config()
@@ -76,10 +67,9 @@ static void Resource_Config()
 void idle(void* argv = nullptr)
 {
 	using namespace MOS;
-
 	while (true) {
 		// Idle does nothing but loop...
-		Task::delay(5000);
+		Task::delay_ms(5000);
 		Task::print_name();
 	}
 }
@@ -87,10 +77,9 @@ void idle(void* argv = nullptr)
 void Task0(void* argv = nullptr)
 {
 	using namespace MOS;
-
 	for (uint8_t i = 0; i < 20; i++) {
 		if (i % 2 == 0) {
-			Task::delay(500);
+			Task::delay_ms(500);
 			GlobalRes::leds[0].toggle();
 			Task::print_name();
 		}
@@ -98,60 +87,49 @@ void Task0(void* argv = nullptr)
 			Task::yield();
 		}
 	}
-
-	MOS::Task::terminate();
+	Task::terminate();
 }
 
 void Task1(void* argv = nullptr)
 {
 	using namespace MOS;
-
 	for (uint8_t i = 0; i < 10; i++) {
-		Task::delay(750);
+		Task::delay_ms(750);
 		GlobalRes::leds[1].toggle();
 		Task::print_name();
 	}
-
 	Task::terminate();
 }
 
 void Task2(void* argv = nullptr)
 {
 	using namespace MOS;
-
 	for (uint8_t i = 0; i < 10; i++) {
-		Task::delay(1000);
+		Task::delay_ms(1000);
 		GlobalRes::leds[2].toggle();
 		Task::print_name();
 	}
-
 	Task::terminate();
 }
 
 void Task3(void* argv = nullptr)
 {
 	using namespace MOS;
-
 	for (uint8_t i = 0; i < 10; i++) {
-		Task::delay(1500);
+		Task::delay_ms(1500);
 		Task::print_name();
 	}
-
 	Task::terminate();
 }
 
 void Task4(void* argv = nullptr)
 {
 	using namespace MOS;
-
-	// Create a sub task
-	Task::create(Task3, nullptr, 4, "S1");
-
+	Task::create(Task3, nullptr, 5, "S1");
 	for (uint8_t i = 0; i < 10; i++) {
-		Task::delay(2000);
+		Task::delay_ms(2000);
 		Task::print_name();
 	}
-
 	Task::terminate();
 }
 
@@ -162,7 +140,7 @@ int main(void)
 	Resource_Config();
 
 	// Create idle task
-	Task::create(idle, nullptr, 15, "IDIE");
+	Task::create(idle, nullptr, 15, "idle");
 
 	// Create user tasks
 	Task::create(Task0, nullptr, 0, "T0");
@@ -170,6 +148,9 @@ int main(void)
 	Task::create(Task2, nullptr, 2, "T2");
 	Task::create(Task3, nullptr, 3, "T3");
 	Task::create(Task4, nullptr, 4, "T4");
+
+	// Print tasks
+	Task::print_tasks(GlobalRes::ready_list);
 
 	Scheduler::launch();
 

@@ -141,7 +141,7 @@ extern "C" {
 __attribute__((naked, used)) void ContextSwitch(void)
 {
 	// 步骤1 - 保存当前任务的上下文
-	// 处理器已经将 xPSR、PC、LR、R12、R3、R2、R1 和 R0 压入堆栈。
+	// 处理器已经将 xPSR, PC, LR, R12, R3, R2, R1 和 R0 压入处理器堆栈。
 	// 需要压入剩下的寄存器 {R4-R11} 以保存当前任务的上下文。
 
 	// 禁用中断
@@ -167,21 +167,23 @@ __attribute__((naked, used)) void ContextSwitch(void)
 	asm("MOV     R4, SP");
 
 	// 将堆栈指针的值（复制到R4）存储到 curTCB.sp
-	// 保存当前任务上下文的流程结束
 	asm("STR     R4, [R1,#8]");// TCB.sp偏移量 = 8
 
-	// 步骤2：从其堆栈加载新任务的上下文到CPU寄存器，更新curTCB
-	asm("PUSH    {R0,LR}");// 保存上下文R0，LR的值
-	asm("BL      nextTCB");// 自定义调度函数，将下一个TCB*返回到R0
+	// 保存旧任务上下文的流程到此结束
+
+	// 步骤2：更新 curTCB，从其堆栈加载新任务上下文到 CPU 寄存器
+
+	asm("PUSH    {R0,LR}");// 保存上下文 R0，LR 的值
+	asm("BL      nextTCB");// 自定义调度函数，将下一个 TCB* 返回到R0
 	asm("MOV     R1, R0"); // R1 = R0
-	asm("POP     {R0,LR}");// 恢复R0，LR的值
+	asm("POP     {R0,LR}");// 恢复 R0，LR 的值
 
 	// curTCB = curTCB.next
 	asm("STR     R1, [R0]");
 
 	// 将下一个任务的堆栈指针的内容加载到 curTCB，相当于将 curTCB 指向新任务的 TCB
-	// 使用 R4 将新任务的 sp 加载到 SP。
-	asm("LDR     R4, [R1,#8]");// TCB.sp偏移量 = 8
+	// 使用 R4 将新任务的 sp 加载到 SP
+	asm("LDR     R4, [R1,#8]");// TCB.sp offset = 8
 	asm("MOV     SP, R4");
 
 	// 弹出寄存器 R8-R11
@@ -197,6 +199,7 @@ __attribute__((naked, used)) void ContextSwitch(void)
 	// 使能中断
 	ENABLE_IRQ();
 
+	// BX 指令在这里只用于从中断返回，不关心 LR(R14) 储存了什么值
 	asm("BX      LR");
 }
 

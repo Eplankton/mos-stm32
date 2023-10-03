@@ -1,4 +1,7 @@
 # MOS-STM32
 
 #### 介绍
-stm32f4上的极简RTOS实现，Mini RTOS => MOS
+
+STM32F429上的简单RTOS实现，Mini-RTOS <=> MOS
+
+MCU: STM32F429ZIT6 (256KB SRAM, 2MB ROM)

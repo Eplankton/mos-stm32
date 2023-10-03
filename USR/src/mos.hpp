@@ -1,20 +1,25 @@
 #ifndef _MOS_
 #define _MOS_
 
+#include <string.h>
 #include "main.h"
+
+#ifdef _MOS_DEBUG_INFO_
+#define debug_info(format, ...) printf(format, ##__VA_ARGS__)
+#else
+#define debug_info(format, ...) ((void) 0)
+#endif
 
 // placement new
 inline void*
 operator new(size_t, void* addr) noexcept { return addr; }
-
-extern "C" __attribute__((naked, used)) void ContextSwitch(void);
 
 namespace MOS
 {
 	namespace Macro
 	{
 		constexpr uint32_t MAX_TASK_NUM = 16;
-		constexpr uint32_t PAGE_SIZE    = 64;// 64x4 = 256 bytes
+		constexpr uint32_t PAGE_SIZE    = 256;
 	}
 
 	namespace DataType
@@ -36,6 +41,7 @@ namespace MOS
 			inline uint32_t size() const { return len; }
 			inline bool empty() const { return size() == 0; }
 			inline Node_t* begin() const { return head.next; }
+			inline Node_t* end() const { return (Node_t*) &head; }
 
 			void add(Node_t& node)
 			{
@@ -75,6 +81,7 @@ namespace MOS
 		{
 			using Self_t        = TCB_t;
 			using SelfPtr_t     = TCB_t*;
+			using ParentPtr_t   = TCB_t*;
 			using StackPtr_t    = uint32_t*;// 32-bit address
 			using Node_t        = list_node_t;
 			using PagePtr_t     = Page_t*;
@@ -88,6 +95,7 @@ namespace MOS
 			using Status_t = enum {
 				READY,
 				RUNNING,
+				BLOCKED,
 				TERMINATED,
 			};
 
@@ -105,7 +113,7 @@ namespace MOS
 			Status_t status  = TERMINATED;
 			Name_t name      = "";
 
-			SelfPtr_t parent = nullptr;
+			ParentPtr_t parent = nullptr;
 
 			TCB_t() = default;
 			TCB_t(Fn_t fn,
@@ -114,7 +122,22 @@ namespace MOS
 			      const char* name = ""): func(fn), argv(argv),
 			                              priority(pr), name(name) {}
 
-			inline void set_state(Status_t new_state) volatile
+			inline SelfPtr_t next() volatile const
+			{
+				return (SelfPtr_t) node.next;
+			}
+
+			inline void deinit() volatile
+			{
+				new ((void*) this) TCB_t {};
+			}
+
+			inline void set_parent(ParentPtr_t parent_ptr) volatile
+			{
+				parent = parent_ptr;
+			}
+
+			inline void set_status(Status_t new_state) volatile
 			{
 				status = new_state;
 			}
@@ -164,10 +187,11 @@ namespace MOS
 		using namespace Macro;
 
 		Page_t PAGES[MAX_TASK_NUM];
-		list_t TCBs;
+		list_t ready_list;
+		list_t block_list;
 
 		extern "C" {
-		// Put it in extern "C" because the name is referred in asm("") for name demangling.
+		// Put it in extern "C" because the name is referred in asm("") and don't change it.
 		// Anytime when a task is running, the curTCB points to its function.
 		__attribute__((used)) volatile TCB_t* curTCB = nullptr;
 		}
@@ -189,7 +213,7 @@ namespace MOS
 
 			TCB_t::PagePtr_t p = nullptr;
 
-			if (TCBs.size() >= MAX_TASK_NUM) {
+			if (ready_list.size() >= MAX_TASK_NUM) {
 				// Failed, no enough page
 				return nullptr;
 			}
@@ -219,13 +243,13 @@ namespace MOS
 			tcb.set_PC((uint32_t) tcb.func);
 
 			// Set TCB to running
-			tcb.set_state(TCB_t::Status_t::RUNNING);
+			tcb.set_status(TCB_t::Status_t::READY);
 
-			// Add to TCBs
-			TCBs.add(tcb.node);
+			// Add parent
+			tcb.set_parent((TCB_t*) curTCB);
 
-			// Add to sub-task list
-			tcb.parent = (TCB_t*) curTCB;
+			// Add to TCBs list
+			ready_list.add(tcb.node);
 
 			// Enable interrupt, leave critical section
 			ENABLE_IRQ();
@@ -239,6 +263,27 @@ namespace MOS
 			SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 		}
 
+		inline void block()
+		{
+			// // Disable interrupt to enter critical section
+			// DISABLE_IRQ();
+
+			// auto& cur_tcb = (TCB_t&) *curTCB;
+
+			// // Remove the task from the task list and kids list
+			// ready_list.remove(cur_tcb.node);
+			// block_list.add(cur_tcb.node);
+
+			// GOTO READY_LIST
+
+			// // Enable interrupt, leave critical section
+			// ENABLE_IRQ();
+
+			// while (true) {
+			// 	// never
+			// }
+		}
+
 		inline void terminate()
 		{
 			// Disable interrupt to enter critical section
@@ -247,7 +292,7 @@ namespace MOS
 			auto& cur_tcb = (TCB_t&) *curTCB;
 
 			// Remove the task from the task list and kids list
-			TCBs.remove(cur_tcb.node);
+			ready_list.remove(cur_tcb.node);
 
 			// Clear the task's page
 			// todo!()
@@ -256,14 +301,54 @@ namespace MOS
 			cur_tcb.release_page();
 
 			// Reset the TCB to default
-			new (&cur_tcb) TCB_t {};
+			cur_tcb.deinit();
 
 			// Enable interrupt, leave critical section
 			ENABLE_IRQ();
 
 			while (true) {
-				// Never
+				// never
 			}
+		}
+
+		inline void print_name()
+		{
+			DISABLE_IRQ();
+			printf("%s\n", curTCB->name);
+			ENABLE_IRQ();
+		}
+
+		inline void print_tasks(const list_t& task_list)
+		{
+			// Status to String
+			auto stos = [](const TCB_t::Status_t s) constexpr {
+				switch (s) {
+					case TCB_t::READY:
+						return "READY";
+					case TCB_t::RUNNING:
+						return "RUNNING";
+					case TCB_t::BLOCKED:
+						return "BLOCKED";
+					case TCB_t::TERMINATED:
+						return "TERMINATED";
+				}
+			};
+
+			DISABLE_IRQ();
+			printf("\n================================================\n");
+			for (auto tcb = (TCB_t*) task_list.begin();
+			     tcb != (TCB_t*) task_list.end();
+			     tcb = tcb->next()) {
+				printf(" Name: %s\t Priority: %d\t Status: %s\n",
+				       tcb->name, (int8_t) tcb->priority, stos(tcb->status));
+			}
+			printf("================================================\n\n");
+			ENABLE_IRQ();
+		}
+
+		inline void delay_ms(const uint32_t n, const uint32_t unit = 1000)
+		{
+			nuts::delay(n, unit);
 		}
 	}
 
@@ -324,38 +409,47 @@ namespace MOS
 		inline void launch()
 		{
 			// Make curTCB points to task0
-			curTCB = reinterpret_cast<TCB_t*>(TCBs.begin());
+			curTCB = reinterpret_cast<TCB_t*>(ready_list.begin());
 			SysTick_t::config(1000);
 			init();
 		}
 
-		// Custom Scheduler Policy, return TCB*
+		// Custom Scheduler Policy, return TCB* as the next task to run
 		template <Policy policy = RoundRobin>
-		inline TCB_t* next()
+		inline TCB_t* next_tcb()
 		{
+			curTCB->set_status(TCB_t::READY);
+			TCB_t* tmp = nullptr;
+
+			auto cxt = [tmp](void* x) mutable {
+				tmp         = reinterpret_cast<TCB_t*>(x);
+				tmp->status = TCB_t::RUNNING;
+				return tmp;
+			};
+
 			if constexpr (policy == Policy::RoundRobin) {
 				if (curTCB->empty()) {
-					return reinterpret_cast<TCB_t*>(TCBs.begin());
+					return cxt(ready_list.begin());
 				}
 
 				// Return the next task of curTCB
-				if (curTCB->node.next != &TCBs.head) {
+				if (curTCB->next() != (TCB_t*) ready_list.end()) {
 					// The next task is not the head, return it
-					return reinterpret_cast<TCB_t*>(curTCB->node.next);
+					return cxt(curTCB->next());
 				}
 				else {
 					// The next task is the head, return the first task in the list
-					return reinterpret_cast<TCB_t*>(TCBs.begin());
+					return cxt(ready_list.begin());
 				}
 			}
 
 			if constexpr (policy == Policy::PreemptivePriority) {
 				// Find the task with the highest priority
-				TCB_t* tmp = reinterpret_cast<TCB_t*>(TCBs.begin());
+				auto tmp = reinterpret_cast<TCB_t*>(ready_list.begin());
 
-				for (auto st = (TCB_t*) tmp->node.next;
-				     st != (TCB_t*) &TCBs.head;
-				     st = (TCB_t*) st->node.next) {
+				for (auto st = tmp->next();
+				     st != (TCB_t*) ready_list.end();
+				     st = st->next()) {
 					if (st->priority < tmp->priority) {
 						tmp = st;
 					}
@@ -368,7 +462,7 @@ namespace MOS
 		__attribute__((used)) extern "C" inline TCB_t*
 		nextTCB()// Don't change this name which used in asm
 		{
-			return next<Policy::RoundRobin>();
+			return next_tcb<Policy::RoundRobin>();
 		}
 	}
 }

@@ -287,6 +287,9 @@
                 "path": "../USR/src/main.cpp"
               },
               {
+                "path": "../USR/src/printf.c"
+              },
+              {
                 "path": "../USR/src/stm32f4xx_it.cpp"
               }
             ],
@@ -346,7 +349,7 @@
               "id": 1,
               "mem": {
                 "startAddr": "0x8000000",
-                "size": "0x100000"
+                "size": "0x200000"
               },
               "isChecked": true,
               "isStartup": true
