@@ -258,11 +258,12 @@ namespace MOS
 
 	namespace GlobalRes
 	{
-		using namespace Macro;
-		using namespace DataType;
+		using DataType::TCB_t;
+		using DataType::Page_t;
+		using DataType::list_t;
 
-		Page_t pages[MAX_TASK_NUM];
-		list_t ready_list, blocked_list;
+		DataType::Page_t pages[Macro::MAX_TASK_NUM];
+		DataType::list_t ready_list, blocked_list;
 		TCB_t::Tid_t tids = 0;
 
 		// Put it in extern "C" because the name is referred in asm("") and don't change it.
@@ -272,7 +273,13 @@ namespace MOS
 
 	namespace Task
 	{
-		using namespace GlobalRes;
+		using Macro::MAX_TASK_NUM;
+		using DataType::TCB_t;
+		using GlobalRes::ready_list;
+		using GlobalRes::blocked_list;
+		using GlobalRes::curTCB;
+		using GlobalRes::pages;
+		using GlobalRes::tids;
 
 		__attribute__((always_inline)) inline uint32_t
 		num() { return ready_list.size() + blocked_list.size(); }
@@ -440,7 +447,7 @@ namespace MOS
 		print_name()
 		{
 			DISABLE_IRQ();
-			debug_info("%s\n", curTCB->name);
+			debug_info("%s\n", curTCB->get_name());
 			ENABLE_IRQ();
 		}
 
@@ -485,10 +492,54 @@ namespace MOS
 		}
 	}
 
+	namespace Sync
+	{
+		using namespace Task;
+		using DataType::list_t;
+
+		struct Semaphore
+		{
+			volatile int32_t cnt = 0;
+			list_t waiting_list;
+
+			Semaphore(int32_t cnt): cnt(cnt) {}
+
+			inline void acquire()
+			{
+				while (cnt <= 0) {
+					// wait...
+					// 将当前任务添加到waiting_list中
+
+					auto& cur_tcb = (TCB_t&) *curTCB;
+					cur_tcb.set_status(TCB_t::BLOCKED);
+					waiting_list.add(cur_tcb.node);
+					yield();// 切换到其他任务
+				}
+				cnt--;
+			}
+
+			inline void release()
+			{
+				cnt++;
+				// 从waiting_list中选择一个任务唤醒
+				if (!waiting_list.empty()) {
+					auto& tcb = (TCB_t&) *waiting_list.begin();
+					waiting_list.remove(tcb.node);
+					tcb.set_status(TCB_t::READY);
+					ready_list.add(tcb.node);
+				}
+			}
+		};
+
+		struct Mutex : public Semaphore
+		{
+			Mutex(): Semaphore(1) {}
+		};
+	}
+
 	namespace Scheduler
 	{
-		using namespace DataType;
-		using namespace GlobalRes;
+		using namespace Task;
 
 		enum Policy
 		{

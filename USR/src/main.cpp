@@ -13,6 +13,8 @@ namespace MOS::GlobalRes
 	        {GPIOB,  GPIO_Pin_0},
 	        {GPIOB,  GPIO_Pin_7},
 	};
+
+	Sync::Mutex m;
 }
 
 // For printf_
