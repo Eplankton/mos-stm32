@@ -15,6 +15,7 @@ namespace MOS::GlobalRes
 	};
 }
 
+// For printf_
 void _putchar(char ch)
 {
 	using MOS::GlobalRes::uart;
@@ -64,16 +65,6 @@ static void Resource_Config()
 	Welcome();
 }
 
-void idle(void* argv = nullptr)
-{
-	using namespace MOS;
-	while (true) {
-		// Idle does nothing but loop...
-		Task::delay_ms(5000);
-		Task::print_name();
-	}
-}
-
 void Task0(void* argv = nullptr)
 {
 	using namespace MOS;
@@ -115,7 +106,15 @@ void Task2(void* argv = nullptr)
 void Task3(void* argv = nullptr)
 {
 	using namespace MOS;
+	using namespace MOS::GlobalRes;
+	using DataType::TCB_t;
+
 	for (uint8_t i = 0; i < 10; i++) {
+		auto tp = curTCB->get_parent();
+		if (tp != nullptr &&
+		    tp->is_status(TCB_t::BLOCKED)) {
+			Task::resume(tp);
+		}
 		Task::delay_ms(1500);
 		Task::print_name();
 	}
@@ -129,8 +128,33 @@ void Task4(void* argv = nullptr)
 	for (uint8_t i = 0; i < 10; i++) {
 		Task::delay_ms(2000);
 		Task::print_name();
+		if (i == 3) {
+			Task::block();
+		}
 	}
 	Task::terminate();
+}
+
+void idle(void* argv = nullptr)
+{
+	using namespace MOS;
+
+	// Create user tasks
+	Task::create(Task0, nullptr, 0, "T0");
+	Task::create(Task1, nullptr, 1, "T1");
+	Task::create(Task2, nullptr, 2, "T2");
+	Task::create(Task3, nullptr, 3, "T3");
+	Task::create(Task4, nullptr, 4, "T4");
+
+	// Print tasks
+	Task::print_all_tasks();
+
+	while (true) {
+		// Idle does nothing but loop...
+		Task::delay_ms(1000);
+		Task::print_name();
+		Task::print_all_tasks();
+	}
 }
 
 int main(void)
@@ -142,16 +166,7 @@ int main(void)
 	// Create idle task
 	Task::create(idle, nullptr, 15, "idle");
 
-	// Create user tasks
-	Task::create(Task0, nullptr, 0, "T0");
-	Task::create(Task1, nullptr, 1, "T1");
-	Task::create(Task2, nullptr, 2, "T2");
-	Task::create(Task3, nullptr, 3, "T3");
-	Task::create(Task4, nullptr, 4, "T4");
-
-	// Print tasks
-	Task::print_tasks(GlobalRes::ready_list);
-
+	// Start Scheduling
 	Scheduler::launch();
 
 	while (true) {

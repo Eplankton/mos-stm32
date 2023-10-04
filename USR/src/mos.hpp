@@ -1,7 +1,6 @@
 #ifndef _MOS_
 #define _MOS_
 
-#include <string.h>
 #include "main.h"
 
 #ifdef _MOS_DEBUG_INFO_
@@ -38,10 +37,10 @@ namespace MOS
 			Node_t head;
 			uint32_t len = 0;
 
-			inline uint32_t size() const { return len; }
-			inline bool empty() const { return size() == 0; }
-			inline Node_t* begin() const { return head.next; }
-			inline Node_t* end() const { return (Node_t*) &head; }
+			__attribute__((always_inline)) inline uint32_t size() const { return len; }
+			__attribute__((always_inline)) inline bool empty() const { return size() == 0; }
+			__attribute__((always_inline)) inline Node_t* begin() const { return head.next; }
+			__attribute__((always_inline)) inline const Node_t* end() const { return &head; }
 
 			void add(Node_t& node)
 			{
@@ -69,6 +68,14 @@ namespace MOS
 
 				len--;
 			}
+
+			__attribute__((always_inline)) inline void
+			iter(auto&& fn) const
+			{
+				for (auto it = begin(); it != end(); it = it->next) {
+					fn(*it);
+				}
+			}
 		};
 
 		struct Page_t
@@ -82,14 +89,14 @@ namespace MOS
 			using Self_t        = TCB_t;
 			using SelfPtr_t     = TCB_t*;
 			using ParentPtr_t   = TCB_t*;
-			using StackPtr_t    = uint32_t*;// 32-bit address
+			using StackPtr_t    = uint32_t*;
 			using Node_t        = list_node_t;
 			using PagePtr_t     = Page_t*;
 			using SubTaskList_t = list_t;
 			using Ret_t         = void;
 			using Argv_t        = void*;
 			using Fn_t          = Ret_t (*)(Argv_t);
-			using Prior_t       = uint8_t;// 0~15
+			using Prior_t       = uint8_t;// L:15 ~ HIGH:0
 			using Name_t        = const char*;
 
 			using Status_t = enum {
@@ -122,59 +129,106 @@ namespace MOS
 			      const char* name = ""): func(fn), argv(argv),
 			                              priority(pr), name(name) {}
 
-			inline SelfPtr_t next() volatile const
+			__attribute__((always_inline)) inline SelfPtr_t
+			next() volatile const
 			{
 				return (SelfPtr_t) node.next;
 			}
 
-			inline void deinit() volatile
+			__attribute__((always_inline)) inline void
+			deinit() volatile
 			{
 				new ((void*) this) TCB_t {};
 			}
 
-			inline void set_parent(ParentPtr_t parent_ptr) volatile
+			__attribute__((always_inline)) inline void
+			set_parent(ParentPtr_t parent_ptr) volatile
 			{
 				parent = parent_ptr;
 			}
 
-			inline void set_status(Status_t new_state) volatile
+			__attribute__((always_inline)) inline ParentPtr_t
+			get_parent() volatile const
 			{
-				status = new_state;
+				return parent;
 			}
 
-			inline void set_SP(StackPtr_t sp_val) volatile
+			__attribute__((always_inline)) inline void
+			set_status(Status_t new_status) volatile
+			{
+				status = new_status;
+			}
+
+			__attribute__((always_inline)) inline Status_t
+			get_status() volatile const
+			{
+				return status;
+			}
+
+			__attribute__((always_inline)) inline bool
+			is_status(Status_t expected) volatile const
+			{
+				return get_status() == expected;
+			}
+
+			__attribute__((always_inline)) inline Name_t
+			get_name() volatile const
+			{
+				return name;
+			}
+
+			__attribute__((always_inline)) inline void
+			set_priority(Prior_t pr) volatile
+			{
+				priority = pr;
+			}
+
+			__attribute__((always_inline)) inline Prior_t
+			get_priority() volatile const
+			{
+				return priority;
+			}
+
+			__attribute__((always_inline)) inline void
+			set_SP(StackPtr_t sp_val) volatile
 			{
 				sp = sp_val;
 			}
 
-			inline void set_xPSR(uint32_t xpsr_val) volatile
+			__attribute__((always_inline)) inline void
+			set_xPSR(uint32_t xpsr_val) volatile
 			{
 				page->raw[Macro::PAGE_SIZE - 1] = xpsr_val;
 			}
 
-			inline void set_PC(uint32_t pc_val) volatile
+			__attribute__((always_inline)) inline void
+			set_PC(uint32_t pc_val) volatile
 			{
 				page->raw[Macro::PAGE_SIZE - 2] = pc_val;
 			}
 
-			inline void attach_page(PagePtr_t page_ptr) volatile
+			__attribute__((always_inline)) inline void
+			attach_page(PagePtr_t page_ptr) volatile
 			{
 				page          = page_ptr;
 				page->is_used = true;
 			}
 
-			inline void release_page() volatile
+			__attribute__((always_inline)) inline void
+			release_page() volatile
 			{
 				page          = nullptr;
 				page->is_used = false;
 			}
 
-			inline bool empty() volatile const
+			__attribute__((always_inline)) inline bool
+			empty() volatile const
 			{
 				return func == nullptr;
 			}
 
-			inline StackPtr_t stack_top() volatile const
+			__attribute__((always_inline)) inline StackPtr_t
+			stack_top() volatile const
 			{
 				return &page->raw[Macro::PAGE_SIZE - 16];
 			}
@@ -183,12 +237,11 @@ namespace MOS
 
 	namespace GlobalRes
 	{
-		using namespace DataType;
 		using namespace Macro;
+		using namespace DataType;
 
 		Page_t PAGES[MAX_TASK_NUM];
-		list_t ready_list;
-		list_t block_list;
+		list_t ready_list, blocked_list;
 
 		extern "C" {
 		// Put it in extern "C" because the name is referred in asm("") and don't change it.
@@ -199,8 +252,6 @@ namespace MOS
 
 	namespace Task
 	{
-		using namespace Macro;
-		using namespace DataType;
 		using namespace GlobalRes;
 
 		inline TCB_t* create(TCB_t::Fn_t&& fn   = nullptr,
@@ -243,7 +294,7 @@ namespace MOS
 			tcb.set_PC((uint32_t) tcb.func);
 
 			// Set TCB to running
-			tcb.set_status(TCB_t::Status_t::READY);
+			tcb.set_status(TCB_t::READY);
 
 			// Add parent
 			tcb.set_parent((TCB_t*) curTCB);
@@ -257,7 +308,7 @@ namespace MOS
 			return &tcb;
 		}
 
-		inline void yield()
+		__attribute__((always_inline)) inline void yield()
 		{
 			// Trigger SysTick Interrupt -> SysTick_Handler
 			SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
@@ -265,23 +316,31 @@ namespace MOS
 
 		inline void block()
 		{
-			// // Disable interrupt to enter critical section
-			// DISABLE_IRQ();
+			// Disable interrupt to enter critical section
+			DISABLE_IRQ();
 
-			// auto& cur_tcb = (TCB_t&) *curTCB;
+			auto& cur_tcb = (TCB_t&) *curTCB;
 
-			// // Remove the task from the task list and kids list
-			// ready_list.remove(cur_tcb.node);
-			// block_list.add(cur_tcb.node);
+			// Remove the task from the task list and kids list
+			cur_tcb.set_status(TCB_t::BLOCKED);
+			ready_list.remove(cur_tcb.node);
+			blocked_list.add(cur_tcb.node);
 
-			// GOTO READY_LIST
+			// Enable interrupt, leave critical section
+			ENABLE_IRQ();
 
-			// // Enable interrupt, leave critical section
-			// ENABLE_IRQ();
+			yield();
+		}
 
-			// while (true) {
-			// 	// never
-			// }
+		inline void resume(TCB_t* blocked_tcb)
+		{
+			DISABLE_IRQ();
+			if (!blocked_tcb->is_status(TCB_t::BLOCKED))
+				return;
+			blocked_list.remove(blocked_tcb->node);
+			ready_list.add(blocked_tcb->node);
+			blocked_tcb->set_status(TCB_t::READY);
+			ENABLE_IRQ();
 		}
 
 		inline void terminate()
@@ -307,21 +366,22 @@ namespace MOS
 			ENABLE_IRQ();
 
 			while (true) {
-				// never
+				// Never goes to scheduling again...
 			}
 		}
 
-		inline void print_name()
+		__attribute__((always_inline)) inline void
+		print_name()
 		{
 			DISABLE_IRQ();
 			printf("%s\n", curTCB->name);
 			ENABLE_IRQ();
 		}
 
-		inline void print_tasks(const list_t& task_list)
+		inline void print_all_tasks()
 		{
 			// Status to String
-			auto stos = [](const TCB_t::Status_t s) constexpr {
+			static auto stos = [](const TCB_t::Status_t s) constexpr {
 				switch (s) {
 					case TCB_t::READY:
 						return "READY";
@@ -334,19 +394,24 @@ namespace MOS
 				}
 			};
 
+			static auto prts = [](TCB_t::Node_t& node) {
+				auto& tcb = (TCB_t&) node;
+				printf(" %s\t P: %d\t S: %s\n",
+				       tcb.get_name(),
+				       (int8_t) tcb.get_priority(),
+				       stos(tcb.get_status()));
+			};
+
 			DISABLE_IRQ();
-			printf("\n================================================\n");
-			for (auto tcb = (TCB_t*) task_list.begin();
-			     tcb != (TCB_t*) task_list.end();
-			     tcb = tcb->next()) {
-				printf(" Name: %s\t Priority: %d\t Status: %s\n",
-				       tcb->name, (int8_t) tcb->priority, stos(tcb->status));
-			}
-			printf("================================================\n\n");
+			printf("===================================\n");
+			ready_list.iter(prts);
+			blocked_list.iter(prts);
+			printf("===================================\n");
 			ENABLE_IRQ();
 		}
 
-		inline void delay_ms(const uint32_t n, const uint32_t unit = 1000)
+		__attribute__((always_inline)) inline void
+		delay_ms(const uint32_t n, const uint32_t unit = 1000)
 		{
 			nuts::delay(n, unit);
 		}
@@ -366,6 +431,7 @@ namespace MOS
 		inline __attribute__((naked)) void init()
 		{
 			DISABLE_IRQ();
+
 			// R0 contains the address of currentPt
 			asm("LDR     R0, =curTCB");
 
@@ -408,8 +474,8 @@ namespace MOS
 
 		inline void launch()
 		{
-			// Make curTCB points to task0
 			curTCB = reinterpret_cast<TCB_t*>(ready_list.begin());
+			curTCB->set_status(TCB_t::RUNNING);
 			SysTick_t::config(1000);
 			init();
 		}
@@ -418,48 +484,48 @@ namespace MOS
 		template <Policy policy = RoundRobin>
 		inline TCB_t* next_tcb()
 		{
-			curTCB->set_status(TCB_t::READY);
-			TCB_t* tmp = nullptr;
-
-			auto cxt = [tmp](void* x) mutable {
-				tmp         = reinterpret_cast<TCB_t*>(x);
-				tmp->status = TCB_t::RUNNING;
+			static auto switch_to_next = [](void* x) {
+				auto tmp = reinterpret_cast<TCB_t*>(x);
+				tmp->set_status(TCB_t::RUNNING);
 				return tmp;
 			};
 
-			if constexpr (policy == Policy::RoundRobin) {
-				if (curTCB->empty()) {
-					return cxt(ready_list.begin());
-				}
-
-				// Return the next task of curTCB
-				if (curTCB->next() != (TCB_t*) ready_list.end()) {
-					// The next task is not the head, return it
-					return cxt(curTCB->next());
+			if constexpr (policy == RoundRobin) {
+				if (curTCB->is_status(TCB_t::BLOCKED) || curTCB->empty()) {
+					return switch_to_next(ready_list.begin());
 				}
 				else {
-					// The next task is the head, return the first task in the list
-					return cxt(ready_list.begin());
+					// curTCB -> READY
+					curTCB->set_status(TCB_t::READY);
+
+					// Return the next task of curTCB
+					if (curTCB->next() != (TCB_t*) ready_list.end()) {
+						// The next task is not the head, return it
+						return switch_to_next(curTCB->next());
+					}
+					else {
+						// The next task is the head, return the first task in the list
+						return switch_to_next(ready_list.begin());
+					}
 				}
 			}
 
-			if constexpr (policy == Policy::PreemptivePriority) {
+			if constexpr (policy == PreemptivePriority) {
 				// Find the task with the highest priority
-				auto tmp = reinterpret_cast<TCB_t*>(ready_list.begin());
+				auto res = reinterpret_cast<TCB_t*>(ready_list.begin());
 
-				for (auto st = tmp->next();
-				     st != (TCB_t*) ready_list.end();
-				     st = st->next()) {
-					if (st->priority < tmp->priority) {
-						tmp = st;
+				ready_list.iter([&](TCB_t::Node_t& node) {
+					auto& tmp = (TCB_t&) (node);
+					if (tmp.get_priority() < res->get_priority()) {
+						res = &tmp;
 					}
-				}
+				});
 
-				return tmp;
+				return switch_to_next(res);
 			}
 		}
 
-		__attribute__((used)) extern "C" inline TCB_t*
+		__attribute__((used, always_inline)) extern "C" inline TCB_t*
 		nextTCB()// Don't change this name which used in asm
 		{
 			return next_tcb<Policy::RoundRobin>();
