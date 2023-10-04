@@ -68,70 +68,76 @@ static void Resource_Config()
 void Task0(void* argv = nullptr)
 {
 	using namespace MOS;
+
+	while (true) {
+		Task::delay_ms(500);
+		GlobalRes::leds[0].toggle();
+		Task::print_name();
+	}
+}
+
+void Task1(void* argv = nullptr)
+{
+	using namespace MOS;
+
 	for (uint8_t i = 0; i < 20; i++) {
 		if (i % 2 == 0) {
-			Task::delay_ms(500);
-			GlobalRes::leds[0].toggle();
+			Task::delay_ms(750);
+			GlobalRes::leds[1].toggle();
 			Task::print_name();
 		}
 		else {
 			Task::yield();
 		}
 	}
-	Task::terminate();
-}
 
-void Task1(void* argv = nullptr)
-{
-	using namespace MOS;
-	for (uint8_t i = 0; i < 10; i++) {
-		Task::delay_ms(750);
-		GlobalRes::leds[1].toggle();
-		Task::print_name();
-	}
 	Task::terminate();
 }
 
 void Task2(void* argv = nullptr)
 {
 	using namespace MOS;
+
 	for (uint8_t i = 0; i < 10; i++) {
 		Task::delay_ms(1000);
 		GlobalRes::leds[2].toggle();
 		Task::print_name();
+		if (i == 5) {
+			Task::create(Task2, nullptr, 6, "T2x");
+		}
 	}
+
 	Task::terminate();
 }
 
 void Task3(void* argv = nullptr)
 {
 	using namespace MOS;
-	using namespace MOS::GlobalRes;
-	using DataType::TCB_t;
 
 	for (uint8_t i = 0; i < 10; i++) {
-		auto tp = curTCB->get_parent();
-		if (tp != nullptr &&
-		    tp->is_status(TCB_t::BLOCKED)) {
-			Task::resume(tp);
-		}
 		Task::delay_ms(1500);
 		Task::print_name();
 	}
+
 	Task::terminate();
 }
 
 void Task4(void* argv = nullptr)
 {
 	using namespace MOS;
-	Task::create(Task3, nullptr, 5, "S1");
+
+	Task::create(Task3, nullptr, 6, "S0");
+	Task::create(Task0, nullptr, 0, "S1");
+	Task::create(Task1, nullptr, 1, "S2");
+
 	for (uint8_t i = 0; i < 10; i++) {
 		Task::delay_ms(2000);
 		Task::print_name();
-		if (i == 3) {
+		if (i == 2) {
 			Task::block();
 		}
 	}
+
 	Task::terminate();
 }
 
@@ -153,7 +159,10 @@ void idle(void* argv = nullptr)
 		// Idle does nothing but loop...
 		Task::delay_ms(1000);
 		Task::print_name();
-		Task::print_all_tasks();
+		if (Task::num() > 1) {
+			Task::print_all_tasks();
+		}
+		Task::resume(Task::find_by_name("T4"));
 	}
 }
 
@@ -161,6 +170,7 @@ int main(void)
 {
 	using namespace MOS;
 
+	// Init resource
 	Resource_Config();
 
 	// Create idle task

@@ -197,7 +197,7 @@ __attribute__((naked, used)) void ContextSwitch(void)
 	// 使能中断
 	ENABLE_IRQ();
 
-	// BX 指令在这里只用于从中断返回，不关心 LR(R14) 储存了什么值
+	// 从中断返回
 	asm("BX      LR");
 }
 
