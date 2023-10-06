@@ -239,12 +239,6 @@ namespace MOS
 				return fn == nullptr;
 			}
 
-			__attribute__((always_inline)) inline StackPtr_t
-			stack_top() volatile const
-			{
-				return &page->raw[Macro::PAGE_SIZE - 16];
-			}
-
 			__attribute__((always_inline)) inline uint32_t
 			page_usage() volatile const
 			{
@@ -285,7 +279,7 @@ namespace MOS
 
 			TCB_t::PagePtr_t p = nullptr;
 
-			if (num() >= MAX_TASK_NUM) {
+			if (fn == nullptr || num() >= MAX_TASK_NUM) {
 				// Failed, no enough page
 				return nullptr;
 			}
@@ -308,7 +302,7 @@ namespace MOS
 
 			// Setup the stack to hold task context.
 			// Remember it is a descending stack and a context consists of 16 registers.
-			tcb.set_SP(tcb.stack_top());
+			tcb.set_SP(&p->raw[Macro::PAGE_SIZE - 16]);
 
 			// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the thumb state.
 			// V6-m and V7-m cores can only support thumb state hence it should always be set to '1'.
