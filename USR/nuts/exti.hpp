@@ -53,7 +53,7 @@ namespace nuts
 			EXTI_GenerateSWInterrupt(line);
 		}
 
-		static inline bool
+		__attribute__((always_inline)) static inline bool
 		handle_line(Line_t line, auto&& fn)
 		{
 			if (get_status(line)) {

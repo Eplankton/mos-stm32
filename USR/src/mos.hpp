@@ -3,14 +3,14 @@
 
 #include "main.h"
 
-#ifdef _MOS_CONF_DEBUG_INFO_
+#ifdef MOS_CONF_DEBUG_INFO
 #define debug_info(format, ...) printf(format, ##__VA_ARGS__)
 #else
 #define debug_info(format, ...) ((void) 0)
 #endif
 
 // placement new
-inline void*
+__attribute__((always_inline)) inline void*
 operator new(size_t, void* addr) noexcept { return addr; }
 
 namespace MOS
@@ -37,21 +37,25 @@ namespace MOS
 			Node_t head;
 			uint32_t len = 0;
 
-			__attribute__((always_inline)) inline uint32_t size() const { return len; }
-			__attribute__((always_inline)) inline bool empty() const { return size() == 0; }
-			__attribute__((always_inline)) inline const Node_t* end() const { return &head; }
-			__attribute__((always_inline)) inline Node_t* begin() const { return head.next; }
+			__attribute__((always_inline)) inline uint32_t
+			size() const { return len; }
+
+			__attribute__((always_inline)) inline bool
+			empty() const { return size() == 0; }
+
+			__attribute__((always_inline)) inline const Node_t*
+			end() const { return &head; }
+
+			__attribute__((always_inline)) inline Node_t*
+			begin() const { return head.next; }
 
 			void add(Node_t& node)
 			{
 				Node_t* last = head.prev;
-
-				node.next = &head;
-				node.prev = last;
-
-				head.prev  = &node;
-				last->next = &node;
-
+				node.next    = &head;
+				node.prev    = last;
+				head.prev    = &node;
+				last->next   = &node;
 				len++;
 			}
 
@@ -59,13 +63,10 @@ namespace MOS
 			{
 				Node_t* prevNode = node.prev;
 				Node_t* nextNode = node.next;
-
-				prevNode->next = nextNode;
-				nextNode->prev = prevNode;
-
-				node.next = &node;
-				node.prev = &node;
-
+				prevNode->next   = nextNode;
+				nextNode->prev   = prevNode;
+				node.next        = &node;
+				node.prev        = &node;
 				len--;
 			}
 
@@ -86,19 +87,18 @@ namespace MOS
 
 		struct __attribute__((packed)) TCB_t
 		{
-			using Tid_t         = int16_t;
-			using Self_t        = TCB_t;
-			using SelfPtr_t     = TCB_t*;
-			using ParentPtr_t   = TCB_t*;
-			using StackPtr_t    = uint32_t*;
-			using Node_t        = list_node_t;
-			using PagePtr_t     = Page_t*;
-			using SubTaskList_t = list_t;
-			using Ret_t         = void;
-			using Argv_t        = void*;
-			using Fn_t          = Ret_t (*)(Argv_t);
-			using Prior_t       = uint8_t;
-			using Name_t        = const char*;
+			using Tid_t       = int16_t;
+			using Self_t      = TCB_t;
+			using SelfPtr_t   = TCB_t*;
+			using ParentPtr_t = TCB_t*;
+			using StackPtr_t  = uint32_t*;
+			using Node_t      = list_node_t;
+			using PagePtr_t   = Page_t*;
+			using Ret_t       = void;
+			using Argv_t      = void*;
+			using Fn_t        = Ret_t (*)(Argv_t);
+			using Prior_t     = int8_t;
+			using Name_t      = const char*;
 
 			using Status_t = enum {
 				READY,
@@ -107,10 +107,8 @@ namespace MOS
 				TERMINATED,
 			};
 
-			// For TCBList
+			// Don't change the offset of node and sp, it's important for context switch routine
 			Node_t node;
-
-			// Don't change the sp offset, it's important
 			StackPtr_t sp = nullptr;
 
 			// Add more members here
@@ -318,7 +316,7 @@ namespace MOS
 			// Set the stacked PC to point to the task
 			tcb.set_PC((uint32_t) tcb.fn);
 
-			// Set TCB to running
+			// Set TCB to ready
 			tcb.set_status(TCB_t::READY);
 
 			// Add parent
@@ -354,19 +352,20 @@ namespace MOS
 			// Enable interrupt, leave critical section
 			MOS_ENABLE_IRQ();
 
+			// Give out the CPU
 			yield();
 		}
 
-		inline void resume(TCB_t* blocked_task)
+		inline void resume(TCB_t* blocked)
 		{
-			if (blocked_task == nullptr ||
-			    !blocked_task->is_status(TCB_t::BLOCKED))
+			if (blocked == nullptr || !blocked->is_status(TCB_t::BLOCKED))
 				return;
 			MOS_DISABLE_IRQ();
-			blocked_list.remove(blocked_task->node);
-			ready_list.add(blocked_task->node);
-			blocked_task->set_status(TCB_t::READY);
+			blocked_list.remove(blocked->node);
+			ready_list.add(blocked->node);
+			blocked->set_status(TCB_t::READY);
 			MOS_ENABLE_IRQ();
+			yield();
 		}
 
 		inline void terminate()

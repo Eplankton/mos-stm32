@@ -168,7 +168,6 @@ void idle(void* argv = nullptr)
 		// Idle does nothing but loop...
 		Task::delay_ms(1000);
 		Task::print_name();
-		// Task::print_all_tasks();
 	}
 }
 
@@ -184,6 +183,7 @@ extern "C" void EXTI15_10_IRQHandler()
 
 static inline void Welcome()
 {
+	using namespace MOS;
 	printf("[MOS]: Hello :)   Date: %s\n", __DATE__);
 }
 
