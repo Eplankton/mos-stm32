@@ -19,6 +19,7 @@ namespace MOS
 	{
 		constexpr uint32_t MAX_TASK_NUM = MOS_CONF_MAX_TASK_NUM;
 		constexpr uint32_t PAGE_SIZE    = MOS_CONF_PAGE_SIZE / 4;
+		constexpr uint32_t SYSCLK       = MOS_CONF_SYSCLK;
 	}
 
 	namespace DataType
@@ -594,7 +595,7 @@ namespace MOS
 		{
 			curTCB = reinterpret_cast<TCB_t*>(ready_list.begin());
 			curTCB->set_status(TCB_t::RUNNING);
-			SysTick_t::config(1000);
+			SysTick_t::config(Macro::SYSCLK);
 			init();
 		}
 

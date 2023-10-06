@@ -143,13 +143,14 @@ __attribute__((naked, used)) void ContextSwitch(void)
 	// 步骤1 - 保存当前任务的上下文
 	// 处理器已经将 xPSR, PC, LR, R12, R3, R2, R1 和 R0 压入处理器堆栈。
 	// 需要压入剩下的寄存器 {R4-R11} 以保存当前任务的上下文。
+
 	// 禁用中断
 	MOS_DISABLE_IRQ();
 
-	// 压入寄存器R4到R7
+	// 压入寄存器 R4-R7
 	asm("PUSH    {R4-R7}");
 
-	// 压入寄存器R8-R11
+	// 压入寄存器 R8-R11
 	asm("MOV     R4, R8");
 	asm("MOV     R5, R9");
 	asm("MOV     R6, R10");
@@ -168,7 +169,7 @@ __attribute__((naked, used)) void ContextSwitch(void)
 	// 将堆栈指针的值（复制到R4）存储到 curTCB.sp
 	asm("STR     R4, [R1,#8]");// TCB.sp偏移量 = 8
 
-	// 保存旧任务上下文的流程到此结束
+	// 保存当前任务上下文的流程到此结束
 
 	// 步骤2：更新 curTCB，从其堆栈加载新任务上下文到 CPU 寄存器
 	asm("PUSH    {R0,LR}");// 保存上下文 R0，LR 的值
