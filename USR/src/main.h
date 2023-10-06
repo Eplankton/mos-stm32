@@ -32,12 +32,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"
 #include "etl_profile.h"
-#include "../nuts/mod.hpp"
+#include "nuts/mod.hpp"
 #include "printf.h"
-
-#define DISABLE_IRQ()    asm("CPSID I")
-#define ENABLE_IRQ()     asm("CPSIE I")
-#define _MOS_DEBUG_INFO_ true
+#include "mos_config.h"
 
 // Modules begin
 

@@ -144,7 +144,7 @@ __attribute__((naked, used)) void ContextSwitch(void)
 	// 处理器已经将 xPSR, PC, LR, R12, R3, R2, R1 和 R0 压入处理器堆栈。
 	// 需要压入剩下的寄存器 {R4-R11} 以保存当前任务的上下文。
 	// 禁用中断
-	DISABLE_IRQ();
+	MOS_DISABLE_IRQ();
 
 	// 压入寄存器R4到R7
 	asm("PUSH    {R4-R7}");
@@ -195,7 +195,7 @@ __attribute__((naked, used)) void ContextSwitch(void)
 	asm("POP     {R4-R7}");
 
 	// 使能中断
-	ENABLE_IRQ();
+	MOS_ENABLE_IRQ();
 
 	// 从中断返回
 	asm("BX      LR");
