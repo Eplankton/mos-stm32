@@ -221,66 +221,6 @@
         "files": [],
         "folders": [
           {
-            "name": "nuts",
-            "files": [
-              {
-                "path": "../USR/nuts/concepts.hpp"
-              },
-              {
-                "path": "../USR/nuts/delay.hpp"
-              },
-              {
-                "path": "../USR/nuts/dma.hpp"
-              },
-              {
-                "path": "../USR/nuts/exti.hpp"
-              },
-              {
-                "path": "../USR/nuts/gpio.hpp"
-              },
-              {
-                "path": "../USR/nuts/i2c.hpp"
-              },
-              {
-                "path": "../USR/nuts/io.hpp"
-              },
-              {
-                "path": "../USR/nuts/key.hpp"
-              },
-              {
-                "path": "../USR/nuts/led.hpp"
-              },
-              {
-                "path": "../USR/nuts/mod.hpp"
-              },
-              {
-                "path": "../USR/nuts/nvic.hpp"
-              },
-              {
-                "path": "../USR/nuts/pipe.hpp"
-              },
-              {
-                "path": "../USR/nuts/rcc.hpp"
-              },
-              {
-                "path": "../USR/nuts/syscfg.hpp"
-              },
-              {
-                "path": "../USR/nuts/systick.hpp"
-              },
-              {
-                "path": "../USR/nuts/task.hpp"
-              },
-              {
-                "path": "../USR/nuts/type.hpp"
-              },
-              {
-                "path": "../USR/nuts/usart.hpp"
-              }
-            ],
-            "folders": []
-          },
-          {
             "name": "src",
             "files": [
               {
@@ -312,7 +252,8 @@
         "<virtual_root>/USR/led.cpp",
         "<virtual_root>/USR/printf.c",
         "<virtual_root>/USR/nuts/io.c",
-        "<virtual_root>/USR/nuts/io.cpp"
+        "<virtual_root>/USR/nuts/io.cpp",
+        "<virtual_root>/USR/nuts"
       ],
       "toolchain": "AC6",
       "compileConfig": {

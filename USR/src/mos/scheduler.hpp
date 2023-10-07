@@ -1,7 +1,7 @@
 #ifndef _MOS_SCHEDULER_
 #define _MOS_SCHEDULER_
 
-#include "nuts/systick.hpp"
+#include "drivers/systick.hpp"
 #include "config.h"
 #include "task.hpp"
 
@@ -126,7 +126,7 @@ namespace MOS::Scheduler
 
 	inline void launch()
 	{
-		nuts::SysTick_t::config(Macro::SYSCLK);
+		Driver::SysTick_t::config(Macro::SYSCLK);
 		curTCB = (TCB_t*) ready_list.begin();
 		curTCB->set_status(Status_t::RUNNING);
 		init();
@@ -172,7 +172,9 @@ namespace MOS::Scheduler
 			if (!curTCB->empty() && !curTCB->is_status(Status_t::BLOCKED)) {
 				curTCB->set_status(Status_t::READY);
 			}
+
 			auto res = (TCB_t*) ready_list.begin();
+
 			ready_list.iter([&](const Node_t& node) {
 				auto& tmp = (TCB_t&) node;
 				if (tmp.get_priority() < res->get_priority()) {

@@ -1,10 +1,10 @@
-#ifndef _NUTS_I2C_
-#define _NUTS_I2C_
+#ifndef _MOS_DRIVER_I2C_
+#define _MOS_DRIVER_I2C_
 
-#include "stm32f4xx.h"
+#include "../config.h"
 #include "gpio.hpp"
 
-namespace nuts
+namespace MOS::Driver
 {
 	struct I2C_t : public I2C_TypeDef
 	{

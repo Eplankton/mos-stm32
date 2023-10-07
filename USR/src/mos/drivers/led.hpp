@@ -1,10 +1,10 @@
-#ifndef _NUTS_LED_
-#define _NUTS_LED_
+#ifndef _MOS_DRIVER_LED_
+#define _MOS_DRIVER_LED_
 
 #include "gpio.hpp"
 #include "delay.hpp"
 
-namespace nuts
+namespace MOS::Driver
 {
 	struct LED_t
 	{

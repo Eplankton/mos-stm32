@@ -32,28 +32,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"
 #include "etl_profile.h"
-#include "nuts/mod.hpp"
 
-// Modules begin
-
-#define MODULE(MOD) using nuts::MOD;
-
-MODULE(convert)
-MODULE(delay)
-MODULE(GPIO_t)
-MODULE(RCC_t)
-MODULE(NVIC_t)
-MODULE(EXTI_t)
-MODULE(SYSCFG_t)
-MODULE(SysTick_t)
-MODULE(USART_t)
-MODULE(LED_t)
-MODULE(KEY_t)
-MODULE(DMA_Stream_t)
-MODULE(I2C_t)
-MODULE(TIM_t)
-
-// Modules end
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

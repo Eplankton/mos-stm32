@@ -1,11 +1,10 @@
 #ifndef _MOS_CONF_
 #define _MOS_CONF_
 
-// Choose platform
+// Platform
 #define _DEVICE_STM32F4_
 
 #if defined(_DEVICE_STM32F4_)
-
 #include "stm32f4xx.h"
 #define MOS_TRIGGER_SYSTICK() (SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk)
 #define MOS_DISABLE_IRQ()     asm("CPSID I")

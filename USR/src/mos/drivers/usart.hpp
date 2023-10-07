@@ -1,10 +1,10 @@
-#ifndef _NUTS_USART_
-#define _NUTS_USART_
+#ifndef _MOS_DRIVER_USART_
+#define _MOS_DRIVER_USART_
 
-#include "stm32f4xx.h"
+#include "../config.h"
 #include "gpio.hpp"
 
-namespace nuts
+namespace MOS::Driver
 {
 	struct USART_t : public USART_TypeDef
 	{

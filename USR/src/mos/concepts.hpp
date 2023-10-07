@@ -1,11 +1,11 @@
-#ifndef _NUTS_CONCEPTS_
-#define _NUTS_CONCEPTS_
+#ifndef _MOS_CONCEPTS_
+#define _MOS_CONCEPTS_
 
 // Since C++20.
 
 #include "type.hpp"
 
-namespace nuts
+namespace MOS
 {
 	// clang-format off
 

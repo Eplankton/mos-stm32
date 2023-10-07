@@ -4,6 +4,8 @@
 // Put all global resource here
 namespace MOS::GlobalRes
 {
+	using namespace Driver;
+
 	// Serial input and output
 	auto& uart = convert(USART3);
 
@@ -17,6 +19,8 @@ namespace MOS::GlobalRes
 
 namespace MOS::Bsp
 {
+	using namespace Driver;
+
 	// For printf_
 	extern "C" void _putchar(char ch)
 	{
@@ -86,7 +90,6 @@ namespace MOS::App
 	void Task0(void* argv = nullptr)
 	{
 		using namespace MOS;
-
 		while (true) {
 			Task::delay_ms(500);
 			GlobalRes::leds[0].toggle();
@@ -98,8 +101,7 @@ namespace MOS::App
 	void Task1(void* argv = nullptr)
 	{
 		using namespace MOS;
-
-		for (uint8_t i = 0; i < 20; i++) {
+		for (uint32_t i = 0; i < 20; i++) {
 			if (i % 2 == 0) {
 				Task::delay_ms(750);
 				GlobalRes::leds[1].toggle();
@@ -109,15 +111,13 @@ namespace MOS::App
 				Task::yield();
 			}
 		}
-
 		Task::terminate();
 	}
 
 	void Task2(void* argv = nullptr)
 	{
 		using namespace MOS;
-
-		for (uint8_t i = 0; i < 10; i++) {
+		for (uint32_t i = 0; i < 10; i++) {
 			Task::delay_ms(1000);
 			GlobalRes::leds[2].toggle();
 			Task::print_name();
@@ -125,36 +125,31 @@ namespace MOS::App
 				Task::create(Task2, nullptr, 12, "T2x");
 			}
 		}
-
 		Task::terminate();
 	}
 
 	void Task3(void* argv = nullptr)
 	{
 		using namespace MOS;
-
-		for (uint8_t i = 0; i < 10; i++) {
+		for (uint32_t i = 0; i < 10; i++) {
 			Task::delay_ms(1500);
 			Task::print_name();
 		}
-
 		Task::terminate();
 	}
 
 	void Task4(void* argv = nullptr)
 	{
 		using namespace MOS;
-
 		Task::create(Task1, nullptr, 0, "S1");
 
-		for (uint8_t i = 0; i < 10; i++) {
+		for (uint32_t i = 0; i < 10; i++) {
 			Task::delay_ms(2000);
 			Task::print_name();
 			if (i == 5) {
 				Task::block();
 			}
 		}
-
 		Task::terminate();
 	}
 }
@@ -165,7 +160,7 @@ void idle(void* argv = nullptr)
 	using namespace MOS::App;
 
 	// Create user tasks
-	Task::create(Task0, nullptr, 10, "T0");
+	Task::create(Task0, nullptr, 9, "T0");
 	Task::create(Task1, nullptr, 1, "T1");
 	Task::create(Task2, nullptr, 2, "T2");
 	Task::create(Task3, nullptr, 3, "T3");
@@ -176,7 +171,7 @@ void idle(void* argv = nullptr)
 
 	while (true) {
 		// Idle does nothing but loop...
-		Task::delay_ms(1000);
+		Task::delay_ms(5000);
 		Task::print_name();
 	}
 }
@@ -191,17 +186,10 @@ int main(void)
 {
 	using namespace MOS;
 
-	// Init resource
-	Bsp::config();
-
-	// Show slogan
-	Welcome();
-
-	// Create idle task
-	Task::create(idle, nullptr, 15, "idle");
-
-	// Start Scheduling
-	Scheduler::launch();
+	Bsp::config();                          // Init resource
+	Welcome();                              // Show slogan
+	Task::create(idle, nullptr, 15, "idle");// Create idle task
+	Scheduler::launch();                    // Start Scheduling
 
 	while (true) {
 		// loop!()

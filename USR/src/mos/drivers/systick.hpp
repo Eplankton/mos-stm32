@@ -1,10 +1,10 @@
-#ifndef _NUTS_SYSTICK_
-#define _NUTS_SYSTICK_
+#ifndef _MOS_DRIVER_SYSTICK_
+#define _MOS_DRIVER_SYSTICK_
 
-#include "stm32f4xx.h"
+#include "../config.h"
 #include "delay.hpp"
 
-namespace nuts
+namespace MOS::Driver
 {
 	struct SysTick_t : public SysTick_Type
 	{

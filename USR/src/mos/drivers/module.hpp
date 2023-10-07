@@ -1,8 +1,9 @@
-#ifndef _NUTS_MOD_
-#define _NUTS_MOD_
+#ifndef _MOS_DRIVERS_MODULE_
+#define _MOS_DRIVERS_MODULE_
 
-#include "type.hpp"
-#include "concepts.hpp"
+#include "../type.hpp"
+#include "../concepts.hpp"
+#include "../config.h"
 
 #include "gpio.hpp"
 #include "delay.hpp"
@@ -14,18 +15,17 @@
 #include "nvic.hpp"
 #include "systick.hpp"
 #include "usart.hpp"
-// #include "io.hpp"
 #include "dma.hpp"
 #include "i2c.hpp"
 #include "tim.hpp"
 
-namespace nuts
+namespace MOS::Driver
 {
 	template <typename Raw>
 	inline constexpr auto&
 	convert(Raw)
 	{
-		// Empty
+		// ...
 	}
 
 	template <>

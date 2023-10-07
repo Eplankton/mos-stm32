@@ -1,9 +1,9 @@
-#ifndef _NUTS_EXTI_
-#define _NUTS_EXTI_
+#ifndef _MOS_DRIVER_EXTI_
+#define _MOS_DRIVER_EXTI_
 
-#include "stm32f4xx.h"
+#include "../config.h"
 
-namespace nuts
+namespace MOS::Driver
 {
 	struct EXTI_t : public EXTI_TypeDef
 	{

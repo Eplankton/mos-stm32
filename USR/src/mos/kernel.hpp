@@ -8,5 +8,6 @@
 #include "global_res.hpp"
 #include "task.hpp"
 #include "scheduler.hpp"
+#include "drivers/module.hpp"
 
 #endif

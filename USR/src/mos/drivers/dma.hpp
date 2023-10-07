@@ -1,9 +1,9 @@
-#ifndef _NUTS_DMA_
-#define _NUTS_DMA_
+#ifndef _MOS_DRIVER_DMA_
+#define _MOS_DRIVER_DMA_
 
-#include "stm32f4xx.h"
+#include "../config.h"
 
-namespace nuts
+namespace MOS::Driver
 {
 	struct DMA_Stream_t : public DMA_Stream_TypeDef
 	{

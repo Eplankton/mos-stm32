@@ -1,9 +1,9 @@
-#ifndef _NUTS_RCC_
-#define _NUTS_RCC_
+#ifndef _MOS_DRIVER_RCC_
+#define _MOS_DRIVER_RCC_
 
-#include "stm32f4xx.h"
+#include "../config.h"
 
-namespace nuts
+namespace MOS::Driver
 {
 	struct RCC_t : public RCC_TypeDef
 	{

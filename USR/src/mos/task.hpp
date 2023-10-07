@@ -1,7 +1,7 @@
 #ifndef _MOS_TASK_
 #define _MOS_TASK_
 
-#include "nuts/concepts.hpp"
+#include "concepts.hpp"
 #include "util.hpp"
 #include "global_res.hpp"
 
@@ -82,33 +82,36 @@ namespace MOS::Task
 		MOS_TRIGGER_SYSTICK();
 	}
 
-	inline void block()
+	inline void block(TCB_t* tcb = (TCB_t*) curTCB)
 	{
+		if (tcb == nullptr || tcb->is_status(Status_t::BLOCKED))
+			return;
+
 		// Disable interrupt to enter critical section
 		MOS_DISABLE_IRQ();
 
-		auto& cur_tcb = (TCB_t&) *curTCB;
-
 		// Remove the task from the task list and kids list
-		cur_tcb.set_status(Status_t::BLOCKED);
-		ready_list.remove(cur_tcb.node);
-		blocked_list.add(cur_tcb.node);
+		tcb->set_status(Status_t::BLOCKED);
+		ready_list.remove(tcb->node);
+		blocked_list.add(tcb->node);
 
 		// Enable interrupt, leave critical section
 		MOS_ENABLE_IRQ();
 
-		// Give out the CPU
-		yield();
+		if (tcb == curTCB) {
+			// Give out the CPU
+			yield();
+		}
 	}
 
-	inline void resume(TCB_t* blocked)
+	inline void resume(TCB_t* tcb)
 	{
-		if (blocked == nullptr || !blocked->is_status(Status_t::BLOCKED))
+		if (tcb == nullptr || !tcb->is_status(Status_t::BLOCKED))
 			return;
 		MOS_DISABLE_IRQ();
-		blocked_list.remove(blocked->node);
-		ready_list.add(blocked->node);
-		blocked->set_status(Status_t::READY);
+		blocked_list.remove(tcb->node);
+		ready_list.add(tcb->node);
+		tcb->set_status(Status_t::READY);
 		MOS_ENABLE_IRQ();
 		yield();
 	}
@@ -142,7 +145,7 @@ namespace MOS::Task
 
 	__attribute__((always_inline)) inline void
 	for_all_tasks(auto&& fn)
-	    requires nuts::Invocable<decltype(fn), const Node_t&>
+	    requires Invocable<decltype(fn), const Node_t&>
 	{
 		ready_list.iter(fn);
 		blocked_list.iter(fn);
@@ -182,8 +185,6 @@ namespace MOS::Task
 
 	inline TCB_t* find_by(auto info)
 	{
-		using nuts::Same;
-
 		if constexpr (Same<decltype(info), Tid_t>) {
 			return find_by_id(info);
 		}

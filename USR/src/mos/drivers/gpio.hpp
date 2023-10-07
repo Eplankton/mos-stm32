@@ -1,9 +1,9 @@
-#ifndef _NUTS_GPIO_
-#define _NUTS_GPIO_
+#ifndef _MOS_DRIVER_GPIO_
+#define _MOS_DRIVER_GPIO_
 
-#include "stm32f4xx.h"
+#include "../config.h"
 
-namespace nuts
+namespace MOS::Driver
 {
 	struct GPIO_t : public GPIO_TypeDef
 	{

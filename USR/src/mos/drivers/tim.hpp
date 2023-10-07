@@ -1,9 +1,9 @@
-#ifndef _NUTS_TIM_
-#define _NUTS_TIM_
+#ifndef _MOS_DRIVER_TIM_
+#define _MOS_DRIVER_TIM_
 
-#include "stm32f4xx.h"
+#include "../config.h"
 
-namespace nuts
+namespace MOS::Driver
 {
 	struct TIM_t : TIM_TypeDef
 	{

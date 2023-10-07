@@ -1,9 +1,9 @@
-#ifndef _NUTS_NVIC_
-#define _NUTS_NVIC_
+#ifndef _MOS_DRIVER_NVIC_
+#define _MOS_DRIVER_NVIC_
 
-#include "stm32f4xx.h"
+#include "../config.h"
 
-namespace nuts
+namespace MOS::Driver
 {
 	struct NVIC_t : public NVIC_Type
 	{

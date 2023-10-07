@@ -1,9 +1,9 @@
-#ifndef _NUTS_SYSCFG_
-#define _NUTS_SYSCFG_
+#ifndef _MOS_DRIVER_SYSCFG_
+#define _MOS_DRIVER_SYSCFG_
 
-#include "stm32f4xx.h"
+#include "../config.h"
 
-namespace nuts
+namespace MOS::Driver
 {
 	struct SYSCFG_t : public SYSCFG_TypeDef
 	{

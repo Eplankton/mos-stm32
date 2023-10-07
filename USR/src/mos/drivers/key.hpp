@@ -1,10 +1,10 @@
-#ifndef _NUTS_KEY_
-#define _NUTS_KEY_
+#ifndef _MOS_DRIVER_KEY_
+#define _MOS_DRIVER_KEY_
 
 #include "gpio.hpp"
 #include "delay.hpp"
 
-namespace nuts
+namespace MOS::Driver
 {
 	struct KEY_t
 	{

@@ -6,14 +6,20 @@
 #include "config.h"
 #include "printf.h"
 
-#include "nuts/delay.hpp"
-
 namespace MOS::Util
 {
+	inline void
+	portable_delay(volatile uint32_t n)
+	{
+		while (n--) {
+			asm volatile("");
+		}
+	}
+
 	__attribute__((always_inline)) inline void
 	delay(const uint32_t n, const uint32_t unit = 1000)
 	{
-		nuts::delay(n, unit);
+		portable_delay(n * unit);
 	}
 }
 

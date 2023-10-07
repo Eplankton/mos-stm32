@@ -1,10 +1,10 @@
-#ifndef _NUTS_TYPE_
-#define _NUTS_TYPE_
+#ifndef _MOS_DRIVER_TYPE_
+#define _MOS_DRIVER_TYPE_
 
 #include <stdint.h>
 
 // Primitive data types
-namespace nuts
+namespace MOS
 {
 	using i8  = int8_t;
 	using i16 = int16_t;
