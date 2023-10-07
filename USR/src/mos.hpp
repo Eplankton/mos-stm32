@@ -34,13 +34,13 @@ namespace MOS
 
 	namespace DataType
 	{
-		template <u32 N>
-		struct BitSet_t
+		template <u32 SIZE>
+		struct BitMap_t
 		{
-			static constexpr u32 num = (N + 31) / 32;
-			u32 data[num]            = {0};
+			static constexpr u32 NUM = (SIZE + 31) / 32;
+			u32 data[NUM]            = {0};
 
-			BitSet_t() = default;
+			BitMap_t() = default;
 
 			void set(u32 pos)
 			{
