@@ -45,7 +45,8 @@
         "C_Cpp.default.intelliSenseMode": "",
         "clangd.checkUpdates": false,
         "clangd.arguments": [
-            "--header-insertion=never"
+            "--header-insertion=never",
+            "--query-driver=C:\\Keil_v5\\ARM\\ARMCLANG"
         ],
         "clangd.path": "c:\\Users\\Wike Chao\\AppData\\Roaming\\Code\\User\\globalStorage\\llvm-vs-code-extensions.vscode-clangd\\install\\16.0.2\\clangd_16.0.2\\bin\\clangd.exe",
         "editor.inlayHints.enabled": "offUnlessPressed",

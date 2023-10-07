@@ -111,7 +111,7 @@ namespace MOS::App
 			Task::delay_ms(1000);
 			GlobalRes::leds[2].toggle();
 			Task::print_name();
-			if (i == 5 && Task::num()) {
+			if (i == 5 && Task::num() < Macro::MAX_TASK_NUM) {
 				Task::create(Task2, nullptr, 12, "T2x");
 			}
 		}
@@ -176,7 +176,7 @@ extern "C" void EXTI15_10_IRQHandler()
 {
 	using namespace MOS;
 	EXTI_t::handle_line(EXTI_Line13, [] {
-		debug_info("[MOS]: K1 IRQ!\n");
+		printf("[MOS]: K1 IRQ!\n");
 		Task::print_all_tasks();
 	});
 }
@@ -184,7 +184,7 @@ extern "C" void EXTI15_10_IRQHandler()
 static inline void Welcome()
 {
 	using namespace MOS;
-	printf("[MOS]: Hello :)   Date: %s\n", __DATE__);
+	printf("[MOS]: Hello :)  Build Time: %s, %s\n", __TIME__, __DATE__);
 }
 
 int main(void)
