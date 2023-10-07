@@ -33,8 +33,6 @@
 #include "stm32f4xx.h"
 #include "etl_profile.h"
 #include "nuts/mod.hpp"
-#include "printf.h"
-#include "mos_config.h"
 
 // Modules begin
 

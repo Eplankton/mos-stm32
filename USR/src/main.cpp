@@ -1,10 +1,10 @@
 #include "main.h"
-#include "mos.hpp"
+#include "mos/kernel.hpp"
 
 // Put all global resource here
 namespace MOS::GlobalRes
 {
-	// Serial input && output
+	// Serial input and output
 	auto& uart = convert(USART3);
 
 	// LED red, green, blue
@@ -47,6 +47,16 @@ namespace MOS::Bsp
 		SYSCFG_t::exti_line_config(EXTI_PortSourceGPIOC, EXTI_PinSource13);
 		EXTI_t::init(EXTI_Line13, EXTI_Mode_Interrupt, EXTI_Trigger_Rising, ENABLE);
 		NVIC_t::init(EXTI15_10_IRQn, 1, 1, ENABLE);
+	}
+
+	// K1 IRQ Handler
+	extern "C" void EXTI15_10_IRQHandler()
+	{
+		using namespace MOS;
+		EXTI_t::handle_line(EXTI_Line13, [] {
+			printf("[MOS]: K1 IRQ!\n");
+			Task::print_all_tasks();
+		});
 	}
 
 	static inline void USART_Config()
@@ -169,16 +179,6 @@ void idle(void* argv = nullptr)
 		Task::delay_ms(1000);
 		Task::print_name();
 	}
-}
-
-// K1 IRQ Handler
-extern "C" void EXTI15_10_IRQHandler()
-{
-	using namespace MOS;
-	EXTI_t::handle_line(EXTI_Line13, [] {
-		printf("[MOS]: K1 IRQ!\n");
-		Task::print_all_tasks();
-	});
 }
 
 static inline void Welcome()
