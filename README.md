@@ -90,7 +90,7 @@ void idle(void* argv = nullptr)
 	using namespace MOS;
 
 	// 创建用户任务
-	Task::create(App::Task0, nullptr, 9, "T0");
+	Task::create(App::Task0, nullptr, 0, "T0");
 
 	// 打印所有任务信息
 	Task::print_all_tasks();
