@@ -96,6 +96,9 @@ namespace MOS::DataType
 	{
 		volatile bool is_used          = false;
 		uint32_t raw[Macro::PAGE_SIZE] = {0};
+
+		__attribute__((always_inline)) inline void
+		deinit() { new ((void*) this) Page_t {}; }
 	};
 
 	struct __attribute__((packed)) TCB_t
@@ -242,8 +245,8 @@ namespace MOS::DataType
 		__attribute__((always_inline)) inline void
 		release_page() volatile
 		{
-			page->is_used = false;
-			page          = nullptr;
+			page->deinit();
+			page = nullptr;
 		}
 
 		__attribute__((always_inline)) inline bool

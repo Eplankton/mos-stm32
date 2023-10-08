@@ -57,8 +57,8 @@ namespace MOS::Scheduler
 	ContextSwitch(void)
 	{
 		// 步骤1 - 保存当前任务的上下文
-		// 处理器已经将 xPSR, PC, LR, R12, R3, R2, R1 和 R0 压入处理器堆栈。
-		// 需要压入剩下的寄存器 {R4-R11} 以保存当前任务的上下文。
+		// 中断时，处理器已经将 xPSR, PC, LR, R12, R3, R2, R1, R0 这8个寄存器压入处理器堆栈。
+		// 所以这里需要压入剩下的8个寄存器 {R4-R11} 以保存当前任务的上下文。
 
 		// 禁用中断
 		MOS_DISABLE_IRQ();
@@ -93,7 +93,7 @@ namespace MOS::Scheduler
 		asm("MOV     R1, R0"); // R1 = R0
 		asm("POP     {R0,LR}");// 恢复 R0，LR 的值
 
-		// curTCB = curTCB.next
+		// curTCB = next
 		asm("STR     R1, [R0]");
 
 		// 将下一个任务的堆栈指针的内容加载到 curTCB，相当于将 curTCB 指向新任务的 TCB
@@ -126,7 +126,7 @@ namespace MOS::Scheduler
 
 	inline void launch()
 	{
-		Driver::SysTick_t::config(Macro::SYSCLK);
+		Driver::SysTick_t::config(Macro::SYSTICK);
 		curTCB = (TCB_t*) ready_list.begin();
 		curTCB->set_status(Status_t::RUNNING);
 		init();

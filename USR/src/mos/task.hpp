@@ -44,6 +44,8 @@ namespace MOS::Task
 		// Construct TCB at head of a page
 		auto& tcb = *new (p->raw) TCB_t {fn, argv, pr, name};
 
+		MOS_ASSERT(sizeof(TCB_t) < sizeof(p->raw), "Page size too small!");
+
 		// Give TID
 		tcb.set_tid(tids++);
 
@@ -55,7 +57,7 @@ namespace MOS::Task
 		tcb.set_SP(&p->raw[Macro::PAGE_SIZE - 16]);
 
 		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the thumb state.
-		// V6-m and V7-m cores can only support thumb state hence it should always be set to '1'.
+		// V6-m and V7-m cores can only support thumb state so it should always be set to '1'.
 		tcb.set_xPSR((uint32_t) 0x01000000);
 
 		// Set the stacked PC to point to the task
@@ -76,10 +78,11 @@ namespace MOS::Task
 		return &tcb;
 	}
 
-	__attribute__((always_inline)) inline void yield()
+	__attribute__((always_inline)) inline void
+	yield()
 	{
 		// Trigger SysTick Interrupt -> SysTick_Handler
-		MOS_TRIGGER_SYSTICK();
+		MOS_TRIGGER_SYSTICK_INTR();
 	}
 
 	inline void block(TCB_t* tcb = (TCB_t*) curTCB)
@@ -116,30 +119,30 @@ namespace MOS::Task
 		yield();
 	}
 
-	inline void terminate()
+	inline void terminate(TCB_t* tcb = (TCB_t*) curTCB)
 	{
+		if (tcb == nullptr || tcb->is_status(Status_t::TERMINATED))
+			return;
+
 		// Disable interrupt to enter critical section
 		MOS_DISABLE_IRQ();
 
-		auto& cur_tcb = (TCB_t&) *curTCB;
-
 		// Remove the task from the task list and kids list
-		ready_list.remove(cur_tcb.node);
-
-		// Clear the task's page
-		// todo!()
+		ready_list.remove(tcb->node);
 
 		// Mark the page as unused
-		cur_tcb.release_page();
+		tcb->release_page();
 
 		// Reset the TCB to default
-		cur_tcb.deinit();
+		tcb->deinit();
 
 		// Enable interrupt, leave critical section
 		MOS_ENABLE_IRQ();
 
-		while (true) {
-			// Never goes to scheduling again...
+		if (tcb == curTCB) {
+			while (true) {
+				// Never scheduling again...
+			}
 		}
 	}
 
@@ -183,7 +186,8 @@ namespace MOS::Task
 		return res;
 	}
 
-	inline TCB_t* find_by(auto info)
+	__attribute__((always_inline)) inline TCB_t*
+	find(auto info)
 	{
 		if constexpr (Same<decltype(info), Tid_t>) {
 			return find_by_id(info);

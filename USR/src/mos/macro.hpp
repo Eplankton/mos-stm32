@@ -8,7 +8,7 @@ namespace MOS::Macro
 {
 	constexpr uint32_t MAX_TASK_NUM = MOS_CONF_MAX_TASK_NUM;
 	constexpr uint32_t PAGE_SIZE    = MOS_CONF_PAGE_SIZE / 4;
-	constexpr uint32_t SYSCLK       = MOS_CONF_SYSCLK;
+	constexpr uint32_t SYSTICK      = MOS_CONF_SYSTICK;
 }
 
 #endif

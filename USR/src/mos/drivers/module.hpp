@@ -1,5 +1,5 @@
-#ifndef _MOS_DRIVERS_MODULE_
-#define _MOS_DRIVERS_MODULE_
+#ifndef _MOS_DRIVER_MODULE_
+#define _MOS_DRIVER_MODULE_
 
 #include "../type.hpp"
 #include "../concepts.hpp"
@@ -22,77 +22,77 @@
 namespace MOS::Driver
 {
 	template <typename Raw>
-	inline constexpr auto&
+	__attribute__((always_inline)) inline constexpr auto&
 	convert(Raw)
 	{
 		// ...
 	}
 
 	template <>
-	inline constexpr auto&
+	__attribute__((always_inline)) inline constexpr auto&
 	convert(GPIO_TypeDef* GPIOx)
 	{
 		return GPIO_t::convert(GPIOx);
 	}
 
 	template <>
-	inline constexpr auto&
+	__attribute__((always_inline)) inline constexpr auto&
 	convert(EXTI_TypeDef* base)
 	{
 		return EXTI_t::convert(base);
 	}
 
 	template <>
-	inline constexpr auto&
+	__attribute__((always_inline)) inline constexpr auto&
 	convert(NVIC_Type* base)
 	{
 		return NVIC_t::convert(base);
 	}
 
 	template <>
-	inline constexpr auto&
+	__attribute__((always_inline)) inline constexpr auto&
 	convert(SYSCFG_TypeDef* base)
 	{
 		return SYSCFG_t::convert(base);
 	}
 
 	template <>
-	inline constexpr auto&
+	__attribute__((always_inline)) inline constexpr auto&
 	convert(RCC_TypeDef* base)
 	{
 		return RCC_t::convert(base);
 	}
 
 	template <>
-	inline constexpr auto&
+	__attribute__((always_inline)) inline constexpr auto&
 	convert(USART_TypeDef* USARTx)
 	{
 		return USART_t::convert(USARTx);
 	}
 
 	template <>
-	inline constexpr auto&
+	__attribute__((always_inline)) inline constexpr auto&
 	convert(DMA_Stream_TypeDef* DMAy_Stream_x)
 	{
 		return DMA_Stream_t::convert(DMAy_Stream_x);
 	}
 
 	template <>
-	inline constexpr auto&
+	__attribute__((always_inline)) inline constexpr auto&
 	convert(I2C_TypeDef* I2Cx)
 	{
 		return I2C_t::convert(I2Cx);
 	}
 
 	template <>
-	inline constexpr auto&
+	__attribute__((always_inline)) inline constexpr auto&
 	convert(SysTick_Type* base)
 	{
 		return SysTick_t::convert(base);
 	}
 
 	template <>
-	inline constexpr auto&
+	__attribute__((always_inline)) inline constexpr auto&
 	convert(TIM_TypeDef* TIMx)
 	{
 		return TIM_t::convert(TIMx);

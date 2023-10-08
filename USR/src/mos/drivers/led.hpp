@@ -46,7 +46,10 @@ namespace MOS::Driver
 		}
 
 		// Toggle the led
-		inline void toggle() { port.toggle_bits(pin); }
+		inline void toggle()
+		{
+			port.toggle_bits(pin);
+		}
 
 		// Blink the led
 		inline void blink(Time_t t = 1000)
