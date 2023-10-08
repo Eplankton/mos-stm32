@@ -124,6 +124,7 @@ namespace MOS::Scheduler
 		asm("B     ContextSwitch");
 	}
 
+	// Only called once
 	inline void launch()
 	{
 		Driver::SysTick_t::config(Macro::SYSTICK);
