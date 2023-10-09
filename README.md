@@ -1,40 +1,37 @@
 # MOS-STM32
 
-#### 介绍
+#### Introduction
 ```
  A_A       _
 o'' )_____//
- `_/  MOS  )    STM32F4上的简单RTOS，适配Cortex-M系列
- (_(_/--(_/	 	MOS <=> Mini-RTOS
+ `_/  MOS  )    RTOS on STM32F4 
+ (_(_/--(_/	MOS <=> Mini-RTOS
 
 - MCU: STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 - Board：Nucleo-144 F429ZI
 ```
 
-#### 主要结构
+#### Main Structure
 ```
 mos/.
-    | drivers/  	驱动抽象层(SPL/HAL)
-    | task.hpp      任务创建、阻塞、挂起、终止
-    | scheduler.hpp 调度器、上下文切换
-    | globalres.hpp 全局变量
-    | config.h      配置系统设定资源、宏
+    | drivers/      Hardware Drivers (SPL/HAL)
+    | task.hpp      Task create, yield, terminate, block
+    | scheduler.hpp Context switch
+    | globalres.hpp Global Resources like ready_list and block_list
+    | config.h      System Configuration
 
     kernel = task + scheduler + globalres
-
-main.cpp    主函数入口
 ```
-#### 使用
+#### Usage
 ```C++
 #include "mos/kernel.hpp"
 
-
-namespace MOS::GlobalRes // 全局外设
+namespace MOS::GlobalRes
 {
 	// 串口
 	auto& uart = Driver::convert(USART3);
 
-	// LED 红、绿、蓝
+	// LED red, green, blue
 	Driver::LED_t leds[] = {
 	    {GPIOB,  GPIO_Pin_14},
 	    {GPIOB,  GPIO_Pin_0},
@@ -42,33 +39,33 @@ namespace MOS::GlobalRes // 全局外设
 	};
 }
 
-namespace MOS::Bsp // 硬件配置
+namespace MOS::Bsp
 {
     using namespace Driver;
 
     void LED_Config()
-	{
+    {
 		using GlobalRes::leds;
         ...
 		for (auto& led: leds) {
-			led.init();
+	    	led.init();
 		}
-	}
+    }
 
-	void USART_Config()
-	{
+    void USART_Config()
+    {
 		using GlobalRes::uart;
-        ...
+		...
 		uart.init(...);
-	}
+    }
 
-	void config()
-	{
+    void config()
+    {
 		...
 		LED_Config();
 		USART_Config();
 		...
-	}
+    }
 }
 
 namespace MOS::App // 用户任务函数
@@ -91,7 +88,7 @@ void idle(void* argv = nullptr)
 	Task::print_all_tasks(); // 打印所有任务列表
 
 	while (true) {
-        // ...
+            // ...
 	}
 }
 
@@ -104,12 +101,12 @@ int main(void) // 主函数入口
 	Scheduler::launch(); // 调度开始，不再返回
 
 	while (true) {
-		// ...
+            // ...
 	}
 }
 ```
 
-#### 烧录启动
+#### Boot up
 ```
  A_A       _
 o'' )_____//
@@ -122,17 +119,18 @@ Tid  Name   Priority    Status   MemUsage
 =========================================
 #0   idle      15       RUNNING    10%
 #1   T0        0        READY       9%
+...
 =========================================
 ```
 
-#### 版本
+#### Version
 ```
-初始版本(0.0.1)，完成基本的调度器设计，计划完成以下部分：
-1. 定时器，挂起队列，时间片轮转调度
-2. 进程间通信 IPC，管道、消息队列
-3. 进程同步 Sync，信号量、互斥锁
-4. 移植简单的Shell
-5. 可变页面大小，内存分配器
-6. SPI 驱动开发，移植LVGL图形库
-7. 移植到 ESP32-C3，RISC-V架构 
+The initial version (0.0.1), which completes the basic scheduler design, is planned to do the following:
+1. Timers, pending queues
+2. Inter-process communication(IPC), pipes, message queues
+3. Process synchronization Sync, semaphores, mutex lock
+4. Porting simple shells
+5. Variable page size, memory allocator
+6. SPI driver development, transplant LVGL graphics library
+7. Porting to ESP32-C3, RISC-V Architecture
 ```
