@@ -68,7 +68,7 @@ namespace MOS::Bsp
     }
 }
 
-namespace MOS::App // 用户任务函数
+namespace MOS::App // User tasks
 {
 	void Task0(void* argv = nullptr)
 	{
@@ -78,27 +78,28 @@ namespace MOS::App // 用户任务函数
 			Task::delay_ms(500);
 		}
 	}
+	...
 }
 
 void idle(void* argv = nullptr)
 {
 	using namespace MOS;
 
-	Task::create(App::Task0, nullptr, 0, "T0");	// 创建用户任务
-	Task::print_all_tasks(); // 打印所有任务列表
+	Task::create(App::Task0, nullptr, 0, "T0");
+	Task::print_all_tasks();
 
 	while (true) {
             // ...
 	}
 }
 
-int main(void) // 主函数入口
+int main(void)
 {
 	using namespace MOS;
 
-	Bsp::config(); // 硬件资源配置
-	Task::create(idle, nullptr, 15, "idle"); // 创建 idle 任务
-	Scheduler::launch(); // 调度开始，不再返回
+	Bsp::config();
+	Task::create(idle, nullptr, 15, "idle");
+	Scheduler::launch(); // Begin Scheduling, never return
 
 	while (true) {
             // ...
