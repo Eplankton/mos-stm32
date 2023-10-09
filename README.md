@@ -28,7 +28,7 @@ mos/.
 
 namespace MOS::GlobalRes
 {
-	// 串口
+	// Serial in and out
 	auto& uart = Driver::convert(USART3);
 
 	// LED red, green, blue
