@@ -169,21 +169,12 @@ namespace MOS::Scheduler
 		}
 
 		if constexpr (policy == Policy::PreemptivePriority) {
-			// Find the task with the highest priority from ready_list
 			if (!curTCB->empty() && !curTCB->is_status(Status_t::BLOCKED)) {
 				curTCB->set_status(Status_t::READY);
 			}
 
-			auto res = (TCB_t*) ready_list.begin();
-
-			ready_list.iter([&](const Node_t& node) {
-				auto& tmp = (TCB_t&) node;
-				if (tmp.get_priority() < res->get_priority()) {
-					res = &tmp;
-				}
-			});
-
-			return switch_to(res);
+			// Since the ready_list is always ordered, just return the first TCB.
+			return switch_to((TCB_t*) ready_list.begin());
 		}
 	}
 
@@ -191,6 +182,19 @@ namespace MOS::Scheduler
 	nextTCB()// Don't change this name which used in asm
 	{
 		return next_tcb<Policy::MOS_CONF_SCHEDULER_POLICY>();
+	}
+
+	__attribute__((always_inline)) inline constexpr auto
+	policy_name()
+	{
+		switch (Policy::MOS_CONF_SCHEDULER_POLICY) {
+			case Policy::RoundRobin:
+				return "RoundRobin";
+			case Policy::PreemptivePriority:
+				return "PreemptivePriority";
+			default:
+				return "INVALID";
+		}
 	}
 }
 

@@ -93,7 +93,7 @@ namespace MOS::App
 			Task::delay_ms(500);
 			GlobalRes::leds[0].toggle();
 			Task::print_name();
-			Task::resume(Task::find_by_name("T4"));
+			Task::resume(Task::find("T4"));
 		}
 	}
 
@@ -119,7 +119,7 @@ namespace MOS::App
 			GlobalRes::leds[2].toggle();
 			Task::print_name();
 			if (i == 5 && Task::num() < Macro::MAX_TASK_NUM) {
-				Task::create(Task2, nullptr, 12, "T2x");
+				Task::create(Task2, nullptr, 10, "T2x");
 			}
 		}
 		Task::terminate();
@@ -172,11 +172,11 @@ void idle(void* argv = nullptr)
 
 static inline void Welcome()
 {
-	printf(" A_A       _\n"
-	       "o'' )_____//\n"
-	       " `_/  MOS  )\n"
-	       " (_(_/--(_/ \n");
-	printf("[MOS]: Hello :)  Build Time: %s, %s\n", __TIME__, __DATE__);
+	printf("  A_A       _\n"
+	       " o'' )_____//    Build Time = %s, %s\n"
+	       "  `_/  MOS  )	 Policy = %s\n"
+	       "  (_(_/--(_/\n",
+	       __TIME__, __DATE__, MOS::Scheduler::policy_name());
 }
 
 int main(void)

@@ -70,7 +70,7 @@ namespace MOS::Task
 		tcb.set_parent((TCB_t*) curTCB);
 
 		// Add to TCBs list
-		ready_list.add(tcb.node);
+		ready_list.insert_in_order(tcb.node, &TCB_t::priority_cmp);
 
 		// Enable interrupt, leave critical section
 		MOS_ENABLE_IRQ();
@@ -113,7 +113,7 @@ namespace MOS::Task
 			return;
 		MOS_DISABLE_IRQ();
 		blocked_list.remove(tcb->node);
-		ready_list.add(tcb->node);
+		ready_list.insert_in_order(tcb->node, &TCB_t::priority_cmp);
 		tcb->set_status(Status_t::READY);
 		MOS_ENABLE_IRQ();
 		yield();
@@ -130,7 +130,7 @@ namespace MOS::Task
 		// Remove the task from the task list and kids list
 		ready_list.remove(tcb->node);
 
-		// Mark the page as unused
+		// Mark the page as unused and deinit the page
 		tcb->release_page();
 
 		// Reset the TCB to default
@@ -154,48 +154,31 @@ namespace MOS::Task
 		blocked_list.iter(fn);
 	}
 
-	inline TCB_t* find_by_id(Tid_t id)
-	{
-		TCB_t* res = nullptr;
-
-		auto fetch = [id, &res](const Node_t& node) {
-			auto& tcb = (TCB_t&) node;
-			if (tcb.get_tid() == id) {
-				res = &tcb;
-				return;
-			}
-		};
-
-		for_all_tasks(fetch);
-		return res;
-	}
-
-	inline TCB_t* find_by_name(Name_t name)
-	{
-		TCB_t* res = nullptr;
-
-		auto fetch = [name, &res](const Node_t& node) {
-			auto& tcb = (TCB_t&) node;
-			if (tcb.get_name() == name) {
-				res = &tcb;
-				return;
-			}
-		};
-
-		for_all_tasks(fetch);
-		return res;
-	}
-
 	__attribute__((always_inline)) inline TCB_t*
 	find(auto info)
 	{
-		if constexpr (Same<decltype(info), Tid_t>) {
-			return find_by_id(info);
-		}
+		TCB_t* res = nullptr;
 
-		if constexpr (Same<decltype(info), Name_t>) {
-			return find_by_name(info);
-		}
+		auto fetch = [info, &res](const Node_t& node) {
+			auto& tcb = (TCB_t&) node;
+
+			if constexpr (Same<decltype(info), Tid_t>) {
+				if (tcb.get_tid() == info) {
+					res = &tcb;
+					return;
+				}
+			}
+
+			if constexpr (Same<decltype(info), Name_t>) {
+				if (tcb.get_name() == info) {
+					res = &tcb;
+					return;
+				}
+			}
+		};
+
+		for_all_tasks(fetch);
+		return res;
 	}
 
 	inline void print_name()
@@ -221,6 +204,8 @@ namespace MOS::Task
 					return "BLOCKED";
 				case Status_t::TERMINATED:
 					return "TERMINATED";
+				default:
+					return "INVALID";
 			}
 		};
 
@@ -230,7 +215,7 @@ namespace MOS::Task
 			printf("#%-2d %-10s %-5d %-9s %2d%%\n",
 			       tcb.get_tid(),
 			       tcb.get_name(),
-			       (int8_t) tcb.get_priority(),
+			       tcb.get_priority(),
 			       stos(tcb.get_status()),
 			       tcb.page_usage());
 		};

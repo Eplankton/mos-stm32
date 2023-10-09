@@ -1,6 +1,7 @@
 #ifndef _MOS_DATATYPE_
 #define _MOS_DATATYPE_
 
+#include "concepts.hpp"
 #include "util.hpp"
 #include "macro.hpp"
 
@@ -62,14 +63,39 @@ namespace MOS::DataType
 		__attribute__((always_inline)) inline Node_t*
 		begin() const { return head.next; }
 
-		void add(Node_t& node)
+		__attribute__((always_inline)) inline void
+		iter(auto&& fn) const
 		{
-			Node_t* last = head.prev;
-			node.next    = &head;
-			node.prev    = last;
-			head.prev    = &node;
-			last->next   = &node;
+			for (auto it = begin(); it != end(); it = it->next) {
+				fn(*it);
+			}
+		}
+
+		__attribute__((always_inline)) inline void
+		add(Node_t& node)
+		{
+			insert(node, head.prev);
+		}
+
+		void insert(Node_t& node, Node_t* pos)
+		{
+			if (pos == nullptr)
+				return;
+			node.next       = pos->next;
+			node.prev       = pos;
+			pos->next->prev = &node;
+			pos->next       = &node;
 			len++;
+		}
+
+		void insert_in_order(Node_t& node, auto&& cmp)
+		    requires Invocable<decltype(cmp), const Node_t&, const Node_t&>
+		{
+			auto tmp = begin();
+			while (tmp != end() && cmp(*tmp, node)) {
+				tmp = tmp->next;
+			}
+			insert(node, tmp->prev);
 		}
 
 		void remove(Node_t& node)
@@ -81,14 +107,6 @@ namespace MOS::DataType
 			node.next        = &node;
 			node.prev        = &node;
 			len--;
-		}
-
-		__attribute__((always_inline)) inline void
-		iter(auto&& fn) const
-		{
-			for (auto it = begin(); it != end(); it = it->next) {
-				fn(*it);
-			}
 		}
 	};
 
@@ -139,11 +157,10 @@ namespace MOS::DataType
 		Name_t name        = "";
 
 		TCB_t() = default;
-		TCB_t(Fn_t fn,
-		      Argv_t argv      = nullptr,
-		      Prior_t pr       = 15,
-		      const char* name = ""): fn(fn), argv(argv),
-		                              priority(pr), name(name) {}
+		TCB_t(Fn_t fn, Argv_t argv = nullptr,
+		      Prior_t pr = 15, Name_t name = "")
+		    : fn(fn), argv(argv),
+		      priority(pr), name(name) {}
 
 		__attribute__((always_inline)) inline void
 		set_tid(Tid_t id) volatile
@@ -258,8 +275,16 @@ namespace MOS::DataType
 		__attribute__((always_inline)) inline uint32_t
 		page_usage() volatile const
 		{
-			const uint32_t atu = ((uint32_t) &page->raw[Macro::PAGE_SIZE] - (uint32_t) sp + sizeof(TCB_t)) / 4;
-			return atu * 100 / Macro::PAGE_SIZE;
+			const uint32_t stk_top = (uint32_t) &page->raw[Macro::PAGE_SIZE];
+			const uint32_t atu     = (stk_top - (uint32_t) sp + sizeof(TCB_t));
+			return atu * 25 / Macro::PAGE_SIZE;
+		}
+
+		__attribute__((always_inline)) static inline bool
+		priority_cmp(const Node_t& lhs, const Node_t& rhs)
+		{
+			return ((TCB_t&) lhs).get_priority() <
+			       ((TCB_t&) rhs).get_priority();
 		}
 	};
 }
