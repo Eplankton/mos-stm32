@@ -33,9 +33,9 @@ namespace MOS::GlobalRes
 
 	// LED red, green, blue
 	Driver::LED_t leds[] = {
-	    {GPIOB,  GPIO_Pin_14},
-	    {GPIOB,  GPIO_Pin_0},
-	    {GPIOB,  GPIO_Pin_7},
+		{GPIOB,  GPIO_Pin_14},
+		{GPIOB,  GPIO_Pin_0},
+		{GPIOB,  GPIO_Pin_7},
 	};
 }
 
@@ -43,14 +43,14 @@ namespace MOS::Bsp
 {
     using namespace Driver;
 
-    void LED_Config()
-    {
+	void LED_Config()
+	{
 		using GlobalRes::leds;
-        ...
+		...
 		for (auto& led: leds) {
-	    	led.init();
+			led.init();
 		}
-    }
+	}
 
     void USART_Config()
     {
@@ -89,7 +89,7 @@ void idle(void* argv = nullptr)
 	Task::print_all_tasks();
 
 	while (true) {
-            // ...
+		// ...
 	}
 }
 
@@ -102,7 +102,7 @@ int main(void)
 	Scheduler::launch(); // Begin Scheduling, never return
 
 	while (true) {
-            // ...
+		// ...
 	}
 }
 ```
