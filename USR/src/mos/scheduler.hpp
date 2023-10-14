@@ -9,6 +9,12 @@ namespace MOS::Scheduler
 {
 	using namespace Task;
 
+	enum class Policy
+	{
+		RoundRobin,
+		PreemptivePriority,
+	};
+
 	__attribute__((naked)) inline void init()
 	{
 		MOS_DISABLE_IRQ();
@@ -53,7 +59,7 @@ namespace MOS::Scheduler
 		asm("BX      LR");
 	}
 
-	__attribute__((naked, used)) extern "C" void
+	__attribute__((naked, used)) extern "C" inline void
 	ContextSwitch(void)
 	{
 		// 步骤1 - 保存当前任务的上下文
@@ -119,12 +125,19 @@ namespace MOS::Scheduler
 	}
 
 	__attribute__((naked, used)) extern "C" void
-	SysTick_Handler(void)
+	PendSV_Handler(void)
 	{
 		asm("B     ContextSwitch");
 	}
 
-	// Only called once
+	__attribute__((used)) extern "C" void
+	SysTick_Handler(void)
+	{
+		//Trigger PendSV
+		MOS_TRIGGER_PENDSV_INTR();
+	}
+
+	// Called only once
 	inline void launch()
 	{
 		Driver::SysTick_t::config(Macro::SYSTICK);
@@ -132,12 +145,6 @@ namespace MOS::Scheduler
 		curTCB->set_status(Status_t::RUNNING);
 		init();
 	}
-
-	enum class Policy
-	{
-		RoundRobin,
-		PreemptivePriority,
-	};
 
 	// Custom Scheduler Policy, return TCB* as the next task to run
 	template <Policy policy = Policy::RoundRobin>
@@ -148,22 +155,29 @@ namespace MOS::Scheduler
 			return t;
 		};
 
+		auto idle = (TCB_t*) ready_list.end()->prev;
+		auto st   = (TCB_t*) ready_list.begin();
+		auto ed   = (TCB_t*) ready_list.end();
+
 		if constexpr (policy == Policy::RoundRobin) {
 			if (curTCB->empty() || curTCB->is_status(Status_t::BLOCKED)) {
-				return switch_to((TCB_t*) ready_list.begin());
+				if (curTCB == st)
+					return switch_to(idle);
+				else
+					return switch_to(st);
 			}
 			else {
 				// curTCB -> READY
 				curTCB->set_status(Status_t::READY);
 
 				// Return the next task of curTCB
-				if (curTCB->next() != (TCB_t*) ready_list.end()) {
+				if (curTCB->next() != ed) {
 					// The next task is not the head, return it
 					return switch_to(curTCB->next());
 				}
 				else {
 					// The next task is the head, return the first task in the list
-					return switch_to((TCB_t*) ready_list.begin());
+					return switch_to(st);
 				}
 			}
 		}
@@ -174,7 +188,7 @@ namespace MOS::Scheduler
 			}
 
 			// Since the ready_list is always ordered, just return the first TCB.
-			return switch_to((TCB_t*) ready_list.begin());
+			return switch_to(st);
 		}
 	}
 

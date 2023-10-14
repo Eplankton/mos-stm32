@@ -10,7 +10,7 @@ namespace MOS::GlobalRes
 	using namespace DataType;
 
 	Page_t pages[MAX_TASK_NUM];
-	list_t ready_list, blocked_list;
+	List_t ready_list, blocked_list;
 	TCB_t::Tid_t tids = 0;
 
 	// Put it in extern "C" because the name is referred in asm("") and don't change it.

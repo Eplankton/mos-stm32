@@ -29,6 +29,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
+#include "mos/config.h"
 
 /** @addtogroup Template_Project
   * @{
@@ -121,15 +122,6 @@ void SVC_Handler(void)
   * @retval None
   */
 void DebugMon_Handler(void)
-{
-}
-
-/**
-  * @brief  This function handles PendSVC exception.
-  * @param  None
-  * @retval None
-  */
-void PendSV_Handler(void)
 {
 }
 

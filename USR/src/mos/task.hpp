@@ -8,6 +8,7 @@
 namespace MOS::Task
 {
 	using namespace GlobalRes;
+	using namespace Util;
 
 	using Status_t = TCB_t::Status_t;
 	using Node_t   = TCB_t::Node_t;
@@ -17,22 +18,64 @@ namespace MOS::Task
 	__attribute__((always_inline)) inline uint32_t
 	num() { return ready_list.size() + blocked_list.size(); }
 
-	inline TCB_t* create(TCB_t::Fn_t&& fn   = nullptr,
+	inline void terminate(TCB_t* tcb = (TCB_t*) curTCB)
+	{
+		if (tcb == nullptr || tcb->is_status(Status_t::TERMINATED))
+			return;
+
+		// Assert if irq disabled
+		MOS_ASSERT(test_irq(), "");
+
+		// Disable interrupt to enter critical section
+		MOS_DISABLE_IRQ();
+
+		// Remove the task from list
+		if (tcb->is_status(Status_t::RUNNING) || tcb->is_status(Status_t::READY))
+			ready_list.remove(tcb->node);
+		else
+			blocked_list.remove(tcb->node);
+
+		// Mark the page as unused and deinit the page
+		tcb->release_page();
+
+		// Reset the TCB to default
+		tcb->deinit();
+
+		// Enable interrupt, leave critical section
+		MOS_ENABLE_IRQ();
+
+		if (tcb == curTCB) {
+			while (true) {
+				// Wait for scheduler
+				asm volatile("");
+			}
+		}
+	}
+
+	__attribute__((always_inline)) extern "C" inline void
+	ending() { terminate(); }
+
+	__attribute__((always_inline)) inline void
+	yield() { MOS_TRIGGER_SYSTICK_INTR(); }
+
+	inline TCB_t* create(TCB_t::Fn_t&& fn,
 	                     TCB_t::Argv_t argv = nullptr,
 	                     TCB_t::Prior_t pr  = 15,
 	                     TCB_t::Name_t name = "")
 	{
+		if (num() >= MAX_TASK_NUM) {
+			return nullptr;
+		}
+
+		// Assert if irq disabled
+		MOS_ASSERT(test_irq(), "");
+
 		// Disable interrupt to enter critical section
 		MOS_DISABLE_IRQ();
 
 		TCB_t::PagePtr_t p = nullptr;
 
 		MOS_ASSERT(fn != nullptr, "fn == null");
-
-		if (num() >= MAX_TASK_NUM) {
-			// Failed, no enough page
-			return nullptr;
-		}
 
 		for (auto& page: pages) {
 			if (!page.is_used) {
@@ -63,6 +106,9 @@ namespace MOS::Task
 		// Set the stacked PC to point to the task
 		tcb.set_PC((uint32_t) tcb.fn);
 
+		// Automatically termination
+		tcb.set_LR((uint32_t) ending);
+
 		// Set TCB to ready
 		tcb.set_status(Status_t::READY);
 
@@ -75,20 +121,20 @@ namespace MOS::Task
 		// Enable interrupt, leave critical section
 		MOS_ENABLE_IRQ();
 
-		return &tcb;
-	}
+		if (TCB_t::priority_cmp((Node_t&) tcb, (Node_t&) *curTCB)) {
+			yield();
+		}
 
-	__attribute__((always_inline)) inline void
-	yield()
-	{
-		// Trigger SysTick Interrupt -> SysTick_Handler
-		MOS_TRIGGER_SYSTICK_INTR();
+		return &tcb;
 	}
 
 	inline void block(TCB_t* tcb = (TCB_t*) curTCB)
 	{
 		if (tcb == nullptr || tcb->is_status(Status_t::BLOCKED))
 			return;
+
+		// Assert if irq disabled
+		MOS_ASSERT(test_irq(), "");
 
 		// Disable interrupt to enter critical section
 		MOS_DISABLE_IRQ();
@@ -111,6 +157,9 @@ namespace MOS::Task
 	{
 		if (tcb == nullptr || !tcb->is_status(Status_t::BLOCKED))
 			return;
+
+		// Assert if irq disabled
+		MOS_ASSERT(test_irq(), "");
 		MOS_DISABLE_IRQ();
 		blocked_list.remove(tcb->node);
 		ready_list.insert_in_order(tcb->node, &TCB_t::priority_cmp);
@@ -119,31 +168,17 @@ namespace MOS::Task
 		yield();
 	}
 
-	inline void terminate(TCB_t* tcb = (TCB_t*) curTCB)
+	__attribute__((always_inline)) inline void
+	change_priority(TCB_t::Prior_t pr)// Change priority for curTCB
 	{
-		if (tcb == nullptr || tcb->is_status(Status_t::TERMINATED))
-			return;
-
-		// Disable interrupt to enter critical section
+		MOS_ASSERT(test_irq(), "");
 		MOS_DISABLE_IRQ();
-
-		// Remove the task from the task list and kids list
-		ready_list.remove(tcb->node);
-
-		// Mark the page as unused and deinit the page
-		tcb->release_page();
-
-		// Reset the TCB to default
-		tcb->deinit();
-
-		// Enable interrupt, leave critical section
+		auto& cur = (TCB_t&) *curTCB;
+		cur.set_priority(pr);
+		ready_list.remove(cur.node);
+		ready_list.insert_in_order(cur.node, &TCB_t::priority_cmp);
 		MOS_ENABLE_IRQ();
-
-		if (tcb == curTCB) {
-			while (true) {
-				// Never scheduling again...
-			}
-		}
+		yield();
 	}
 
 	__attribute__((always_inline)) inline void
@@ -190,9 +225,6 @@ namespace MOS::Task
 
 	inline void print_all_tasks()
 	{
-		if (Task::num() <= 1)// If only idle exists, just return.
-			return;
-
 		// Status to String
 		static auto stos = [](const Status_t s) constexpr {
 			switch (s) {

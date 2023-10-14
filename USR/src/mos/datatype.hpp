@@ -15,21 +15,21 @@ namespace MOS::DataType
 
 		BitMap_t() = default;
 
-		void set(uint32_t pos)
+		inline void set(uint32_t pos)
 		{
 			uint32_t index = pos / 32;
 			uint32_t bit   = pos % 32;
 			data[index] |= (1 << bit);
 		}
 
-		void reset(uint32_t pos)
+		inline void reset(uint32_t pos)
 		{
 			uint32_t index = pos / 32;
 			uint32_t bit   = pos % 32;
 			data[index] &= ~(1 << bit);
 		}
 
-		bool test(uint32_t pos) const
+		inline bool test(uint32_t pos) const
 		{
 			uint32_t index = pos / 32;
 			uint32_t bit   = pos % 32;
@@ -37,16 +37,18 @@ namespace MOS::DataType
 		}
 	};
 
-	struct list_node_t
+	struct ListNode_t
 	{
-		using SelfPtr_t = list_node_t*;
+		using SelfPtr_t = ListNode_t*;
+
 		SelfPtr_t prev, next;
-		list_node_t(): prev(this), next(this) {}
+		// Make it self-linked
+		ListNode_t(): prev(this), next(this) {}
 	};
 
-	struct list_t
+	struct List_t
 	{
-		using Node_t = list_node_t;
+		using Node_t = ListNode_t;
 
 		Node_t head;
 		uint32_t len = 0;
@@ -57,45 +59,46 @@ namespace MOS::DataType
 		__attribute__((always_inline)) inline bool
 		empty() const { return size() == 0; }
 
-		__attribute__((always_inline)) inline const Node_t*
-		end() const { return &head; }
-
 		__attribute__((always_inline)) inline Node_t*
 		begin() const { return head.next; }
 
+		__attribute__((always_inline)) inline Node_t*
+		end() const { return (Node_t*) &head; }
+
 		__attribute__((always_inline)) inline void
 		iter(auto&& fn) const
+		    requires Invocable<decltype(fn), const Node_t&>
 		{
 			for (auto it = begin(); it != end(); it = it->next) {
 				fn(*it);
 			}
 		}
 
-		__attribute__((always_inline)) inline void
-		add(Node_t& node)
-		{
-			insert(node, head.prev);
-		}
-
 		void insert(Node_t& node, Node_t* pos)
 		{
 			if (pos == nullptr)
 				return;
-			node.next       = pos->next;
-			node.prev       = pos;
-			pos->next->prev = &node;
-			pos->next       = &node;
+			node.next       = pos;
+			node.prev       = pos->prev;
+			pos->prev->next = &node;
+			pos->prev       = &node;
 			len++;
 		}
 
 		void insert_in_order(Node_t& node, auto&& cmp)
 		    requires Invocable<decltype(cmp), const Node_t&, const Node_t&>
 		{
-			auto tmp = begin();
-			while (tmp != end() && cmp(*tmp, node)) {
-				tmp = tmp->next;
+			auto st = begin();
+			while (st != end() && cmp(*st, node)) {
+				st = st->next;
 			}
-			insert(node, tmp->prev);
+			insert(node, st);
+		}
+
+		__attribute__((always_inline)) inline void
+		add(Node_t& node)
+		{
+			insert(node, &head);
 		}
 
 		void remove(Node_t& node)
@@ -116,7 +119,7 @@ namespace MOS::DataType
 		uint32_t raw[Macro::PAGE_SIZE] = {0};
 
 		__attribute__((always_inline)) inline void
-		deinit() { new ((void*) this) Page_t {}; }
+		reset() { is_used = false; }
 	};
 
 	struct __attribute__((packed)) TCB_t
@@ -126,7 +129,7 @@ namespace MOS::DataType
 		using SelfPtr_t   = TCB_t*;
 		using ParentPtr_t = TCB_t*;
 		using StackPtr_t  = uint32_t*;
-		using Node_t      = list_node_t;
+		using Node_t      = ListNode_t;
 		using PagePtr_t   = Page_t*;
 		using Ret_t       = void;
 		using Argv_t      = void*;
@@ -253,6 +256,12 @@ namespace MOS::DataType
 		}
 
 		__attribute__((always_inline)) inline void
+		set_LR(uint32_t lr_val) volatile
+		{
+			page->raw[Macro::PAGE_SIZE - 3] = lr_val;
+		}
+
+		__attribute__((always_inline)) inline void
 		attach_page(PagePtr_t page_ptr) volatile
 		{
 			page          = page_ptr;
@@ -262,7 +271,7 @@ namespace MOS::DataType
 		__attribute__((always_inline)) inline void
 		release_page() volatile
 		{
-			page->deinit();
+			page->reset();
 			page = nullptr;
 		}
 

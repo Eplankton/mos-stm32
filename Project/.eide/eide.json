@@ -272,16 +272,6 @@
               },
               "isChecked": true,
               "noInit": false
-            },
-            {
-              "tag": "IRAM",
-              "id": 2,
-              "mem": {
-                "startAddr": "0x10000000",
-                "size": "0x10000"
-              },
-              "isChecked": false,
-              "noInit": false
             }
           ],
           "ROM": [
@@ -289,7 +279,7 @@
               "tag": "IROM",
               "id": 1,
               "mem": {
-                "startAddr": "0x8000000",
+                "startAddr": "0x08000000",
                 "size": "0x200000"
               },
               "isChecked": true,

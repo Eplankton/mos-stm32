@@ -21,6 +21,12 @@ namespace MOS::Util
 	{
 		portable_delay(n * unit);
 	}
+
+	__attribute__((always_inline)) inline bool
+	test_irq()
+	{
+		return MOS_TEST_IRQ();
+	}
 }
 
 #ifdef MOS_CONF_ASSERT

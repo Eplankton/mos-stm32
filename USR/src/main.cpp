@@ -15,6 +15,8 @@ namespace MOS::GlobalRes
 	        {GPIOB,  GPIO_Pin_0},
 	        {GPIOB,  GPIO_Pin_7},
 	};
+
+	Sync::Lock_t m;
 }
 
 namespace MOS::Bsp
@@ -53,16 +55,6 @@ namespace MOS::Bsp
 		NVIC_t::init(EXTI15_10_IRQn, 1, 1, ENABLE);
 	}
 
-	// K1 IRQ Handler
-	extern "C" void EXTI15_10_IRQHandler()
-	{
-		using namespace MOS;
-		EXTI_t::handle_line(EXTI_Line13, [] {
-			printf("[MOS]: K1 IRQ!\n");
-			Task::print_all_tasks();
-		});
-	}
-
 	static inline void USART_Config()
 	{
 		using GlobalRes::uart;
@@ -87,81 +79,80 @@ namespace MOS::Bsp
 
 namespace MOS::App
 {
-	void Task0(void* argv = nullptr)
+	void Task1(void* argv)
 	{
-		while (true) {
+		for (uint32_t i = 0; i < 20; i++) {
+			Task::delay_ms(500);
+			GlobalRes::leds[1].toggle();
+			Task::print_name();
+			if (i == 10)
+				Task::change_priority(3);
+		}
+	}
+
+	void Task0(void* argv)
+	{
+		for (uint32_t i = 0; i < 20; i++) {
 			Task::delay_ms(500);
 			GlobalRes::leds[0].toggle();
 			Task::print_name();
-			Task::resume(Task::find("T4"));
+			if (i == 10)
+				Task::create(Task1, nullptr, 1, "T1");
 		}
 	}
 
-	void Task1(void* argv = nullptr)
+	void test(void* argv)
 	{
-		for (uint32_t i = 0; i < 20; i++) {
-			if (i % 2 == 0) {
-				Task::delay_ms(750);
-				GlobalRes::leds[1].toggle();
-				Task::print_name();
-			}
-			else {
-				Task::yield();
-			}
-		}
-		Task::terminate();
-	}
-
-	void Task2(void* argv = nullptr)
-	{
-		for (uint32_t i = 0; i < 10; i++) {
+		for (uint32_t i = 0; i < 5; i++) {
 			Task::delay_ms(1000);
 			GlobalRes::leds[2].toggle();
 			Task::print_name();
-			if (i == 5 && Task::num() < Macro::MAX_TASK_NUM) {
-				Task::create(Task2, nullptr, 10, "T2x");
-			}
 		}
-		Task::terminate();
 	}
 
-	void Task3(void* argv = nullptr)
+	// K1 IRQ Handler
+	extern "C" void EXTI15_10_IRQHandler()
 	{
-		for (uint32_t i = 0; i < 10; i++) {
-			Task::delay_ms(1500);
-			Task::print_name();
-		}
-		Task::terminate();
+		Bsp::EXTI_t::handle_line(EXTI_Line13, [] {
+			printf("[MOS]: K1 IRQ!\n");
+			Task::create(test, nullptr, 0, "IRQ1");
+			Task::print_all_tasks();
+		});
 	}
 
-	void Task4(void* argv = nullptr)
-	{
-		Task::create(Task1, nullptr, 0, "S1");
-		for (uint32_t i = 0; i < 10; i++) {
-			Task::delay_ms(2000);
-			Task::print_name();
-			if (i == 5) {
-				Task::block();
-			}
-		}
-		Task::terminate();
-	}
+	// void p1(void*)
+	// {
+	// 	while (true) {
+	// 		Task::delay_ms(500);
+	// 		GlobalRes::m.acquire();
+	// 		Task::print_name();
+	// 		GlobalRes::m.release();
+	// 	}
+	// }
+
+	// void p2(void*)
+	// {
+	// 	while (true) {
+	// 		Task::delay_ms(1000);
+	// 		GlobalRes::m.acquire();
+	// 		Task::print_name();
+	// 		GlobalRes::m.release();
+	// 	}
+	// }
 }
 
-void idle(void* argv = nullptr)
+void idle(void* argv)
 {
 	using namespace MOS;
 	using namespace App;
 
 	// Create user tasks
-	Task::create(Task0, nullptr, 9, "T0");
-	Task::create(Task1, nullptr, 1, "T1");
-	Task::create(Task2, nullptr, 2, "T2");
-	Task::create(Task3, nullptr, 3, "T3");
-	Task::create(Task4, nullptr, 4, "T4");
+	Task::create(Task0, nullptr, 2, "T0");
 
 	// Print tasks
 	Task::print_all_tasks();
+
+	Task::change_priority(15);
 
 	while (true) {
 		// Idle does nothing but loop...
@@ -172,10 +163,10 @@ void idle(void* argv = nullptr)
 
 static inline void Welcome()
 {
-	printf("  A_A       _\n"
-	       " o'' )_____//    Build Time = %s, %s\n"
-	       "  `_/  MOS  )	 Policy = %s\n"
-	       "  (_(_/--(_/\n",
+	printf(" A_A       _\n"
+	       "o'' )_____//    Build Time = %s, %s\n"
+	       " `_/  MOS  )    Policy = %s\n"
+	       " (_(_/--(_/\n",
 	       __TIME__, __DATE__, MOS::Scheduler::policy_name());
 }
 
@@ -183,12 +174,19 @@ int main(void)
 {
 	using namespace MOS;
 
-	Bsp::config();                          // Init resource
-	Welcome();                              // Show slogan
-	Task::create(idle, nullptr, 15, "idle");// Create idle task
-	Scheduler::launch();                    // Start Scheduling
+	// Init resource
+	Bsp::config();
+
+	// Show slogan
+	Welcome();
+
+	// Create idle task
+	Task::create(idle, nullptr, 0, "idle");
+
+	// Start scheduling, never return
+	Scheduler::launch();
 
 	while (true) {
-		// loop!()
+		// loop
 	}
 }
