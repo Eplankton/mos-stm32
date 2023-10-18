@@ -27,10 +27,10 @@ namespace MOS
 	template <typename T, typename U>
 	concept Same = is_same_v<T, U>;
 
-	template <typename Fn, typename... T>
-	concept Invocable = requires(Fn&& fn, T&&... args)
+	template <typename Fn, typename... Argv>
+	concept Invocable = requires(Fn&& fn, Argv&&... argv)
 	{
-		fn(args...);
+		fn(argv...);
 	};
 
 	template <typename Box>

@@ -23,11 +23,14 @@ namespace MOS::Util
 	}
 
 	__attribute__((always_inline)) inline bool
-	test_irq()
-	{
-		return MOS_TEST_IRQ();
-	}
+	test_irq() { return MOS_TEST_IRQ(); }
 }
+
+#ifdef MOS_CONF_PRINTF
+#define MOS_MSG(format, ...) printf(format, ##__VA_ARGS__)
+#else
+#define MOS_MSG(format, ...) ((void) 0)
+#endif
 
 #ifdef MOS_CONF_ASSERT
 #define MOS_ASSERT(expr, format, ...) \
@@ -42,7 +45,7 @@ inline void mos_assert_failed(uint8_t* file, uint32_t line, const char* message)
 }
 
 #else
-#define MOS_ASSERT(expr) ((void) 0)
+#define MOS_ASSERT(expr, format, ...) ((void) 0)
 #endif
 
 // placement new

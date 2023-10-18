@@ -10,21 +10,29 @@ namespace MOS::Task
 	using namespace GlobalRes;
 	using namespace Util;
 
-	using Status_t = TCB_t::Status_t;
-	using Node_t   = TCB_t::Node_t;
-	using Name_t   = TCB_t::Name_t;
-	using Tid_t    = TCB_t::Tid_t;
+	using Status_t  = TCB_t::Status_t;
+	using Node_t    = TCB_t::Node_t;
+	using Name_t    = TCB_t::Name_t;
+	using Tid_t     = TCB_t::Tid_t;
+	using TcbPtr_t  = TCB_t::TcbPtr_t;
+	using PagePtr_t = TCB_t::PagePtr_t;
+
+	__attribute__((always_inline)) inline constexpr auto&
+	current_task() { return (TcbPtr_t&) curTCB; }
+
+	__attribute__((always_inline)) inline void
+	yield() { MOS_TRIGGER_SYSTICK_INTR(); }
 
 	__attribute__((always_inline)) inline uint32_t
 	num() { return ready_list.size() + blocked_list.size(); }
 
-	inline void terminate(TCB_t* tcb = (TCB_t*) curTCB)
+	inline void terminate(TcbPtr_t tcb = current_task())
 	{
 		if (tcb == nullptr || tcb->is_status(Status_t::TERMINATED))
 			return;
 
 		// Assert if irq disabled
-		MOS_ASSERT(test_irq(), "");
+		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
 		// Disable interrupt to enter critical section
 		MOS_DISABLE_IRQ();
@@ -45,49 +53,40 @@ namespace MOS::Task
 		MOS_ENABLE_IRQ();
 
 		if (tcb == curTCB) {
-			while (true) {
-				// Wait for scheduler
-				asm volatile("");
-			}
+			yield();
 		}
 	}
 
-	__attribute__((always_inline)) extern "C" inline void
-	ending() { terminate(); }
-
 	__attribute__((always_inline)) inline void
-	yield() { MOS_TRIGGER_SYSTICK_INTR(); }
+	ending() { terminate(current_task()); }
 
-	inline TCB_t* create(TCB_t::Fn_t&& fn,
-	                     TCB_t::Argv_t argv = nullptr,
-	                     TCB_t::Prior_t pr  = 15,
-	                     TCB_t::Name_t name = "")
+	inline TcbPtr_t create(TCB_t::Fn_t&& fn, TCB_t::Argv_t argv = nullptr,
+	                       TCB_t::Prior_t pr = 15, TCB_t::Name_t name = "")
 	{
 		if (num() >= MAX_TASK_NUM) {
 			return nullptr;
 		}
 
 		// Assert if irq disabled
-		MOS_ASSERT(test_irq(), "");
+		MOS_ASSERT(test_irq(), "Disabled Interrupt");
+		MOS_ASSERT(fn != nullptr, "fn ptr can't be null");
 
 		// Disable interrupt to enter critical section
 		MOS_DISABLE_IRQ();
 
-		TCB_t::PagePtr_t p = nullptr;
-
-		MOS_ASSERT(fn != nullptr, "fn == null");
+		PagePtr_t p = nullptr;
 
 		for (auto& page: pages) {
-			if (!page.is_used) {
+			if (!page.is_used()) {
 				p = &page;
 				break;
 			}
 		}
 
-		// Construct TCB at head of a page
-		auto& tcb = *new (p->raw) TCB_t {fn, argv, pr, name};
+		MOS_ASSERT(p != nullptr, "Page error");
 
-		MOS_ASSERT(sizeof(TCB_t) < sizeof(p->raw), "Page size too small!");
+		// Construct a TCB at the head of a page block
+		auto& tcb = *new (p->raw) TCB_t {fn, argv, pr, name};
 
 		// Give TID
 		tcb.set_tid(tids++);
@@ -113,7 +112,7 @@ namespace MOS::Task
 		tcb.set_status(Status_t::READY);
 
 		// Add parent
-		tcb.set_parent((TCB_t*) curTCB);
+		tcb.set_parent(curTCB);
 
 		// Add to TCBs list
 		ready_list.insert_in_order(tcb.node, &TCB_t::priority_cmp);
@@ -121,20 +120,21 @@ namespace MOS::Task
 		// Enable interrupt, leave critical section
 		MOS_ENABLE_IRQ();
 
-		if (TCB_t::priority_cmp((Node_t&) tcb, (Node_t&) *curTCB)) {
+		// If the new task's priority is higher, switch at once
+		if (TCB_t::priority_cmp(tcb.node, curTCB->node)) {
 			yield();
 		}
 
 		return &tcb;
 	}
 
-	inline void block(TCB_t* tcb = (TCB_t*) curTCB)
+	inline void block(TcbPtr_t tcb = current_task())
 	{
 		if (tcb == nullptr || tcb->is_status(Status_t::BLOCKED))
 			return;
 
 		// Assert if irq disabled
-		MOS_ASSERT(test_irq(), "");
+		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
 		// Disable interrupt to enter critical section
 		MOS_DISABLE_IRQ();
@@ -153,32 +153,37 @@ namespace MOS::Task
 		}
 	}
 
-	inline void resume(TCB_t* tcb)
+	inline void resume(TcbPtr_t tcb)
 	{
 		if (tcb == nullptr || !tcb->is_status(Status_t::BLOCKED))
 			return;
 
 		// Assert if irq disabled
-		MOS_ASSERT(test_irq(), "");
+		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		MOS_DISABLE_IRQ();
 		blocked_list.remove(tcb->node);
 		ready_list.insert_in_order(tcb->node, &TCB_t::priority_cmp);
 		tcb->set_status(Status_t::READY);
 		MOS_ENABLE_IRQ();
-		yield();
+		if (curTCB != (TcbPtr_t) ready_list.begin()) {
+			// if curTCB isn't the highest priority
+			yield();
+		}
 	}
 
 	__attribute__((always_inline)) inline void
-	change_priority(TCB_t::Prior_t pr)// Change priority for curTCB
+	change_priority(TcbPtr_t tcb, TCB_t::Prior_t pr)
 	{
-		MOS_ASSERT(test_irq(), "");
+		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		MOS_DISABLE_IRQ();
-		auto& cur = (TCB_t&) *curTCB;
-		cur.set_priority(pr);
-		ready_list.remove(cur.node);
-		ready_list.insert_in_order(cur.node, &TCB_t::priority_cmp);
+		tcb->set_priority(pr);
+		ready_list.remove(tcb->node);// Re-insert and sort
+		ready_list.insert_in_order(tcb->node, &TCB_t::priority_cmp);
 		MOS_ENABLE_IRQ();
-		yield();
+		if (curTCB != (TcbPtr_t) ready_list.begin()) {
+			// if curTCB isn't the highest priority
+			yield();
+		}
 	}
 
 	__attribute__((always_inline)) inline void
@@ -189,10 +194,10 @@ namespace MOS::Task
 		blocked_list.iter(fn);
 	}
 
-	__attribute__((always_inline)) inline TCB_t*
+	__attribute__((always_inline)) inline TcbPtr_t
 	find(auto info)
 	{
-		TCB_t* res = nullptr;
+		TcbPtr_t res = nullptr;
 
 		auto fetch = [info, &res](const Node_t& node) {
 			auto& tcb = (TCB_t&) node;
@@ -212,14 +217,16 @@ namespace MOS::Task
 			}
 		};
 
+		MOS_DISABLE_IRQ();
 		for_all_tasks(fetch);
+		MOS_ENABLE_IRQ();
 		return res;
 	}
 
 	inline void print_name()
 	{
 		MOS_DISABLE_IRQ();
-		printf("%s\n", curTCB->get_name());
+		MOS_MSG("%s\n", curTCB->get_name());
 		MOS_ENABLE_IRQ();
 	}
 
@@ -244,18 +251,18 @@ namespace MOS::Task
 		// Print to screen
 		static auto prts = [](const Node_t& node) {
 			auto& tcb = (TCB_t&) node;
-			printf("#%-2d %-10s %-5d %-9s %2d%%\n",
-			       tcb.get_tid(),
-			       tcb.get_name(),
-			       tcb.get_priority(),
-			       stos(tcb.get_status()),
-			       tcb.page_usage());
+			MOS_MSG("#%-2d %-10s %-5d %-9s %2d%%\n",
+			        tcb.get_tid(),
+			        tcb.get_name(),
+			        tcb.get_priority(),
+			        stos(tcb.get_status()),
+			        tcb.page_usage());
 		};
 
 		MOS_DISABLE_IRQ();
-		printf("=====================================\n");
+		MOS_MSG("=====================================\n");
 		for_all_tasks(prts);
-		printf("=====================================\n");
+		MOS_MSG("=====================================\n");
 		MOS_ENABLE_IRQ();
 	}
 

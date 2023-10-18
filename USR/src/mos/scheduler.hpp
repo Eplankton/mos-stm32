@@ -95,12 +95,9 @@ namespace MOS::Scheduler
 
 		// 步骤2：更新 curTCB，从其堆栈加载新任务上下文到 CPU 寄存器
 		asm("PUSH    {R0,LR}");// 保存上下文 R0，LR 的值
-		asm("BL      nextTCB");// 自定义调度函数，将下一个 TCB* 返回到R0
-		asm("MOV     R1, R0"); // R1 = R0
+		asm("BL      nextTCB");// 自定义调度函数，curTCB = next
 		asm("POP     {R0,LR}");// 恢复 R0，LR 的值
-
-		// curTCB = next
-		asm("STR     R1, [R0]");
+		asm("LDR     R1, [R0]");
 
 		// 将下一个任务的堆栈指针的内容加载到 curTCB，相当于将 curTCB 指向新任务的 TCB
 		// 使用 R4 将新任务的 sp 加载到 SP
@@ -141,27 +138,27 @@ namespace MOS::Scheduler
 	inline void launch()
 	{
 		Driver::SysTick_t::config(Macro::SYSTICK);
-		curTCB = (TCB_t*) ready_list.begin();
+		curTCB = (TcbPtr_t) ready_list.begin();
 		curTCB->set_status(Status_t::RUNNING);
 		init();
 	}
 
 	// Custom Scheduler Policy, return TCB* as the next task to run
 	template <Policy policy = Policy::RoundRobin>
-	inline TCB_t* next_tcb()
+	inline void next_tcb()
 	{
-		static auto switch_to = [](TCB_t* t) {
-			t->set_status(Status_t::RUNNING);
-			return t;
+		static auto switch_to = [](TcbPtr_t tcb) {
+			tcb->set_status(Status_t::RUNNING);
+			curTCB = tcb;
 		};
 
-		auto idle = (TCB_t*) ready_list.end()->prev;
-		auto st   = (TCB_t*) ready_list.begin();
-		auto ed   = (TCB_t*) ready_list.end();
+		auto idle = (TcbPtr_t) ready_list.end()->prev,
+		     st   = (TcbPtr_t) ready_list.begin(),
+		     ed   = (TcbPtr_t) ready_list.end();
 
 		if constexpr (policy == Policy::RoundRobin) {
 			if (curTCB->empty() || curTCB->is_status(Status_t::BLOCKED)) {
-				if (curTCB == st)
+				if (st == curTCB)
 					return switch_to(idle);
 				else
 					return switch_to(st);
@@ -186,16 +183,15 @@ namespace MOS::Scheduler
 			if (!curTCB->empty() && !curTCB->is_status(Status_t::BLOCKED)) {
 				curTCB->set_status(Status_t::READY);
 			}
-
 			// Since the ready_list is always ordered, just return the first TCB.
 			return switch_to(st);
 		}
 	}
 
-	__attribute__((used, always_inline)) extern "C" inline TCB_t*
+	__attribute__((used, always_inline)) extern "C" inline void
 	nextTCB()// Don't change this name which used in asm
 	{
-		return next_tcb<Policy::MOS_CONF_SCHEDULER_POLICY>();
+		next_tcb<Policy::MOS_CONF_SCHEDULER_POLICY>();
 	}
 
 	__attribute__((always_inline)) inline constexpr auto

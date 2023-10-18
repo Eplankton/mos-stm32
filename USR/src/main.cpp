@@ -16,7 +16,7 @@ namespace MOS::GlobalRes
 	        {GPIOB,  GPIO_Pin_7},
 	};
 
-	Sync::Lock_t m;
+	Sync::Semaphore_t sema {1};
 }
 
 namespace MOS::Bsp
@@ -85,8 +85,9 @@ namespace MOS::App
 			Task::delay_ms(500);
 			GlobalRes::leds[1].toggle();
 			Task::print_name();
-			if (i == 10)
-				Task::change_priority(3);
+			if (i == 10) {
+				Task::change_priority(Task::current_task(), 3);
+			}
 		}
 	}
 
@@ -96,12 +97,13 @@ namespace MOS::App
 			Task::delay_ms(500);
 			GlobalRes::leds[0].toggle();
 			Task::print_name();
-			if (i == 10)
+			if (i == 10) {
 				Task::create(Task1, nullptr, 1, "T1");
+			}
 		}
 	}
 
-	void test(void* argv)
+	void IRQ1(void* argv)
 	{
 		for (uint32_t i = 0; i < 5; i++) {
 			Task::delay_ms(1000);
@@ -113,9 +115,9 @@ namespace MOS::App
 	// K1 IRQ Handler
 	extern "C" void EXTI15_10_IRQHandler()
 	{
-		Bsp::EXTI_t::handle_line(EXTI_Line13, [] {
-			printf("[MOS]: K1 IRQ!\n");
-			Task::create(test, nullptr, 0, "IRQ1");
+		Driver::EXTI_t::handle_line(EXTI_Line13, [] {
+			MOS_MSG("[MOS]: K1 IRQ!\n");
+			Task::create(IRQ1, nullptr, 0, "IRQ1");
 			Task::print_all_tasks();
 		});
 	}
@@ -124,9 +126,9 @@ namespace MOS::App
 	// {
 	// 	while (true) {
 	// 		Task::delay_ms(500);
-	// 		GlobalRes::m.acquire();
+	// 		GlobalRes::sema.down();
 	// 		Task::print_name();
-	// 		GlobalRes::m.release();
+	// 		GlobalRes::sema.up();
 	// 	}
 	// }
 
@@ -134,9 +136,9 @@ namespace MOS::App
 	// {
 	// 	while (true) {
 	// 		Task::delay_ms(1000);
-	// 		GlobalRes::m.acquire();
+	// 		GlobalRes::sema.down();
 	// 		Task::print_name();
-	// 		GlobalRes::m.release();
+	// 		GlobalRes::sema.up();
 	// 	}
 	// }
 }
@@ -148,11 +150,14 @@ void idle(void* argv)
 
 	// Create user tasks
 	Task::create(Task0, nullptr, 2, "T0");
+	// Task::create(p1, nullptr, 1, "p1");
+	// Task::create(p2, nullptr, 1, "p2");
 
 	// Print tasks
 	Task::print_all_tasks();
 
-	Task::change_priority(15);
+	// Set idle as the lowest priority
+	Task::change_priority(Task::current_task(), Macro::PRI_MIN);
 
 	while (true) {
 		// Idle does nothing but loop...
@@ -163,11 +168,11 @@ void idle(void* argv)
 
 static inline void Welcome()
 {
-	printf(" A_A       _\n"
-	       "o'' )_____//    Build Time = %s, %s\n"
-	       " `_/  MOS  )    Policy = %s\n"
-	       " (_(_/--(_/\n",
-	       __TIME__, __DATE__, MOS::Scheduler::policy_name());
+	MOS_MSG(" A_A       _\n"
+	        "o'' )_____//  Build Time = %s, %s\n"
+	        " `_/  MOS  )  Policy = %s\n"
+	        " (_(_/--(_/\n",
+	        __TIME__, __DATE__, MOS::Scheduler::policy_name());
 }
 
 int main(void)
@@ -181,12 +186,12 @@ int main(void)
 	Welcome();
 
 	// Create idle task
-	Task::create(idle, nullptr, 0, "idle");
+	Task::create(idle, nullptr, Macro::PRI_MAX, "idle");
 
 	// Start scheduling, never return
 	Scheduler::launch();
 
 	while (true) {
-		// loop
+		// Never comes here
 	}
 }

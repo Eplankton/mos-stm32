@@ -13,57 +13,72 @@ namespace MOS::Sync
 	{
 		using Atomic_i32_t = volatile int32_t;
 
-		Atomic_i32_t cnt = 0;
+		Atomic_i32_t cnt;
 		List_t waiting_list;
 
-		Semaphore_t() = default;
+		// Must set a original value
+		Semaphore_t() = delete;
 		Semaphore_t(int32_t val): cnt(val) {}
 
-		__attribute__((always_inline)) inline void
-		up()// V
+		void up()// V
 		{
 			// Assert if irq disabled
-			MOS_ASSERT(test_irq(), "");
+			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 			MOS_DISABLE_IRQ();
 			if (cnt < 0) {
-				auto& t = (TCB_t&) *waiting_list.begin();
-				t.set_status(Status_t::READY);
-				waiting_list.remove(t.node);
-				ready_list.insert_in_order(t.node, &TCB_t::priority_cmp);
+				auto& tcb = (TCB_t&) *waiting_list.begin();
+				tcb.set_status(Status_t::READY);
+				waiting_list.remove(tcb.node);
+				ready_list.insert_in_order(tcb.node, &TCB_t::priority_cmp);
 			}
 			cnt += 1;
 			MOS_ENABLE_IRQ();
+			if (curTCB != (TcbPtr_t) ready_list.begin()) {
+				yield();
+			}
 		}
 
 		void down()// P
 		{
 			// Assert if irq disabled
-			MOS_ASSERT(test_irq(), "");
+			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 			MOS_DISABLE_IRQ();
 			cnt -= 1;
 			if (cnt < 0) {
 				curTCB->set_status(Status_t::BLOCKED);
-				ready_list.remove((Node_t&) curTCB->node);
-				waiting_list.add((Node_t&) curTCB->node);
+				ready_list.remove(curTCB->node);
+				waiting_list.add(curTCB->node);
 				MOS_ENABLE_IRQ();
 				yield();
 			}
-			MOS_ENABLE_IRQ();
+			else {
+				MOS_ENABLE_IRQ();
+			}
 		}
 	};
 
 	struct Lock_t
 	{
-		TCB_t* holder;
+		TcbPtr_t holder;
 		Semaphore_t sema;
 
-		Lock_t(): holder((TCB_t*) curTCB), sema(1) {}
+		Lock_t(): holder(nullptr), sema(1) {}
 
 		__attribute__((always_inline)) inline void
-		acquire() { sema.down(); };
+		acquire()
+		{
+			MOS_ASSERT(holder != current_task(), "Non-recursive lock");
+			holder = current_task();
+			sema.down();
+		}
 
 		__attribute__((always_inline)) inline void
-		release() { sema.up(); };
+		release()
+		{
+			MOS_ASSERT(holder == current_task(), "Lock can only be released by holder");
+			sema.up();
+			holder = nullptr;
+		}
 	};
 }
 

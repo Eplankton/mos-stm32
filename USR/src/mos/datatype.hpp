@@ -48,7 +48,8 @@ namespace MOS::DataType
 
 	struct List_t
 	{
-		using Node_t = ListNode_t;
+		using Node_t    = ListNode_t;
+		using NodePtr_t = Node_t*;
 
 		Node_t head;
 		uint32_t len = 0;
@@ -59,11 +60,11 @@ namespace MOS::DataType
 		__attribute__((always_inline)) inline bool
 		empty() const { return size() == 0; }
 
-		__attribute__((always_inline)) inline Node_t*
+		__attribute__((always_inline)) inline NodePtr_t
 		begin() const { return head.next; }
 
-		__attribute__((always_inline)) inline Node_t*
-		end() const { return (Node_t*) &head; }
+		__attribute__((always_inline)) inline NodePtr_t
+		end() const { return (NodePtr_t) &head; }
 
 		__attribute__((always_inline)) inline void
 		iter(auto&& fn) const
@@ -74,7 +75,7 @@ namespace MOS::DataType
 			}
 		}
 
-		void insert(Node_t& node, Node_t* pos)
+		void insert(Node_t& node, NodePtr_t pos)
 		{
 			if (pos == nullptr)
 				return;
@@ -82,7 +83,7 @@ namespace MOS::DataType
 			node.prev       = pos->prev;
 			pos->prev->next = &node;
 			pos->prev       = &node;
-			len++;
+			len += 1;
 		}
 
 		void insert_in_order(Node_t& node, auto&& cmp)
@@ -103,23 +104,26 @@ namespace MOS::DataType
 
 		void remove(Node_t& node)
 		{
-			Node_t* prevNode = node.prev;
-			Node_t* nextNode = node.next;
-			prevNode->next   = nextNode;
-			nextNode->prev   = prevNode;
-			node.next        = &node;
-			node.prev        = &node;
-			len--;
+			NodePtr_t prev = node.prev;
+			NodePtr_t next = node.next;
+			prev->next     = next;
+			next->prev     = prev;
+			node.next      = &node;
+			node.prev      = &node;
+			len -= 1;
 		}
 	};
 
 	struct Page_t
 	{
-		volatile bool is_used          = false;
+		volatile bool used             = false;
 		uint32_t raw[Macro::PAGE_SIZE] = {0};
 
 		__attribute__((always_inline)) inline void
-		reset() { is_used = false; }
+		reset() { used = false; }
+
+		__attribute__((always_inline)) inline bool
+		is_used() const { return used; }
 	};
 
 	struct __attribute__((packed)) TCB_t
@@ -127,7 +131,8 @@ namespace MOS::DataType
 		using Tid_t       = int16_t;
 		using Self_t      = TCB_t;
 		using SelfPtr_t   = TCB_t*;
-		using ParentPtr_t = TCB_t*;
+		using TcbPtr_t    = SelfPtr_t;
+		using ParentPtr_t = TcbPtr_t;
 		using StackPtr_t  = uint32_t*;
 		using Node_t      = ListNode_t;
 		using PagePtr_t   = Page_t*;
@@ -264,8 +269,8 @@ namespace MOS::DataType
 		__attribute__((always_inline)) inline void
 		attach_page(PagePtr_t page_ptr) volatile
 		{
-			page          = page_ptr;
-			page->is_used = true;
+			page       = page_ptr;
+			page->used = true;
 		}
 
 		__attribute__((always_inline)) inline void
@@ -292,8 +297,7 @@ namespace MOS::DataType
 		__attribute__((always_inline)) static inline bool
 		priority_cmp(const Node_t& lhs, const Node_t& rhs)
 		{
-			return ((TCB_t&) lhs).get_priority() <
-			       ((TCB_t&) rhs).get_priority();
+			return ((TCB_t&) lhs).get_priority() < ((TCB_t&) rhs).get_priority();
 		}
 	};
 }

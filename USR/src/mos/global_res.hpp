@@ -8,14 +8,15 @@ namespace MOS::GlobalRes
 {
 	using namespace Macro;
 	using namespace DataType;
+	using TcbPtr_t = TCB_t::TcbPtr_t;
 
 	Page_t pages[MAX_TASK_NUM];
 	List_t ready_list, blocked_list;
 	TCB_t::Tid_t tids = 0;
 
 	// Put it in extern "C" because the name is referred in asm("") and don't change it.
-	// Anytime when a task is running, the curTCB points to its function.
-	extern "C" __attribute__((used)) volatile TCB_t* curTCB = nullptr;
+	// At anytime, the curTCB points to current running task.
+	extern "C" __attribute__((used)) volatile TcbPtr_t curTCB = nullptr;
 }
 
 #endif
