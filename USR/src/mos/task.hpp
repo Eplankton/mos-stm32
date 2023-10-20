@@ -135,18 +135,11 @@ namespace MOS::Task
 
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
-
-		// Disable interrupt to enter critical section
 		MOS_DISABLE_IRQ();
-
-		// Remove the task from the task list and kids list
 		tcb->set_status(Status_t::BLOCKED);
 		ready_list.remove(tcb->node);
 		blocked_list.add(tcb->node);
-
-		// Enable interrupt, leave critical section
 		MOS_ENABLE_IRQ();
-
 		if (tcb == curTCB) {
 			// Give out the CPU
 			yield();

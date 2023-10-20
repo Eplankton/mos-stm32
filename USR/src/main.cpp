@@ -79,11 +79,13 @@ namespace MOS::Bsp
 
 namespace MOS::App
 {
+	using namespace GlobalRes;
+
 	void Task1(void* argv)
 	{
 		for (uint32_t i = 0; i < 20; i++) {
 			Task::delay_ms(500);
-			GlobalRes::leds[1].toggle();
+			leds[1].toggle();
 			Task::print_name();
 			if (i == 10) {
 				Task::change_priority(Task::current_task(), 3);
@@ -95,7 +97,7 @@ namespace MOS::App
 	{
 		for (uint32_t i = 0; i < 20; i++) {
 			Task::delay_ms(500);
-			GlobalRes::leds[0].toggle();
+			leds[0].toggle();
 			Task::print_name();
 			if (i == 10) {
 				Task::create(Task1, nullptr, 1, "T1");
@@ -107,7 +109,7 @@ namespace MOS::App
 	{
 		for (uint32_t i = 0; i < 5; i++) {
 			Task::delay_ms(1000);
-			GlobalRes::leds[2].toggle();
+			leds[2].toggle();
 			Task::print_name();
 		}
 	}
@@ -122,25 +124,13 @@ namespace MOS::App
 		});
 	}
 
-	// void p1(void*)
-	// {
-	// 	while (true) {
-	// 		Task::delay_ms(500);
-	// 		GlobalRes::sema.down();
-	// 		Task::print_name();
-	// 		GlobalRes::sema.up();
-	// 	}
-	// }
-
-	// void p2(void*)
-	// {
-	// 	while (true) {
-	// 		Task::delay_ms(1000);
-	// 		GlobalRes::sema.down();
-	// 		Task::print_name();
-	// 		GlobalRes::sema.up();
-	// 	}
-	// }
+	void RR_TEST(void*)
+	{
+		for (uint32_t i = 0; i < 10; i++) {
+			Task::delay_ms(500);
+			Task::print_name();
+		}
+	}
 }
 
 void idle(void* argv)
@@ -149,9 +139,10 @@ void idle(void* argv)
 	using namespace App;
 
 	// Create user tasks
-	Task::create(Task0, nullptr, 2, "T0");
-	// Task::create(p1, nullptr, 1, "p1");
-	// Task::create(p2, nullptr, 1, "p2");
+	// Task::create(Task0, nullptr, 2, "T0");
+	Task::create(RR_TEST, nullptr, 1, "p1");
+	Task::create(RR_TEST, nullptr, 1, "p2");
+	Task::create(RR_TEST, nullptr, 1, "p3");
 
 	// Print tasks
 	Task::print_all_tasks();

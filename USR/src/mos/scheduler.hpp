@@ -17,6 +17,7 @@ namespace MOS::Scheduler
 
 	__attribute__((naked)) inline void init()
 	{
+		// Disable irq to enter critical section
 		MOS_DISABLE_IRQ();
 
 		// R0 contains the address of curTCB
@@ -53,7 +54,7 @@ namespace MOS::Scheduler
 		asm("MOV     LR, R4");
 		asm("ADD     SP,SP,#4");
 
-		// Enable interrupts
+		// Enable irq to leave critical section
 		MOS_ENABLE_IRQ();
 
 		asm("BX      LR");
@@ -130,7 +131,7 @@ namespace MOS::Scheduler
 	__attribute__((used)) extern "C" void
 	SysTick_Handler(void)
 	{
-		//Trigger PendSV
+		// Trigger PendSV
 		MOS_TRIGGER_PENDSV_INTR();
 	}
 
@@ -156,40 +157,29 @@ namespace MOS::Scheduler
 		     st   = (TcbPtr_t) ready_list.begin(),
 		     ed   = (TcbPtr_t) ready_list.end();
 
-		if constexpr (policy == Policy::RoundRobin) {
-			if (curTCB->empty() || curTCB->is_status(Status_t::BLOCKED)) {
-				if (st == curTCB)
-					return switch_to(idle);
-				else
-					return switch_to(st);
-			}
-			else {
-				// curTCB -> READY
-				curTCB->set_status(Status_t::READY);
+		if (curTCB->is_status(Status_t::TERMINATED) ||
+		    curTCB->is_status(Status_t::BLOCKED)) {
+			// curTCB has been removed from ready_list
+			return switch_to(st);
+		}
 
-				// Return the next task of curTCB
-				if (curTCB->next() != ed) {
-					// The next task is not the head, return it
-					return switch_to(curTCB->next());
-				}
-				else {
-					// The next task is the head, return the first task in the list
-					return switch_to(st);
-				}
+		if constexpr (policy == Policy::RoundRobin) {
+			if (--curTCB->ticks <= 0) {
+				auto next     = curTCB->next();
+				curTCB->ticks = Macro::TICKS;
+				curTCB->set_status(Status_t::READY);
+				return switch_to((next == ed) ? st : next);
 			}
 		}
 
 		if constexpr (policy == Policy::PreemptivePriority) {
-			if (!curTCB->empty() && !curTCB->is_status(Status_t::BLOCKED)) {
-				curTCB->set_status(Status_t::READY);
-			}
-			// Since the ready_list is always ordered, just return the first TCB.
+			curTCB->set_status(Status_t::READY);
 			return switch_to(st);
 		}
 	}
 
 	__attribute__((used, always_inline)) extern "C" inline void
-	nextTCB()// Don't change this name which used in asm
+	nextTCB()// Don't change this name which used in asm("")
 	{
 		next_tcb<Policy::MOS_CONF_SCHEDULER_POLICY>();
 	}

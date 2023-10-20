@@ -51,9 +51,7 @@ namespace MOS::Sync
 				MOS_ENABLE_IRQ();
 				yield();
 			}
-			else {
-				MOS_ENABLE_IRQ();
-			}
+			MOS_ENABLE_IRQ();
 		}
 	};
 

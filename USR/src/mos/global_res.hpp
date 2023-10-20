@@ -15,7 +15,7 @@ namespace MOS::GlobalRes
 	TCB_t::Tid_t tids = 0;
 
 	// Put it in extern "C" because the name is referred in asm("") and don't change it.
-	// At anytime, the curTCB points to current running task.
+	// At anytime, the curTCB points to task running currently.
 	extern "C" __attribute__((used)) volatile TcbPtr_t curTCB = nullptr;
 }
 

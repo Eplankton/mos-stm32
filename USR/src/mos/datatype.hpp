@@ -162,6 +162,7 @@ namespace MOS::DataType
 		PagePtr_t page     = nullptr;
 		ParentPtr_t parent = nullptr;
 		Status_t status    = Status_t::TERMINATED;
+		uint16_t ticks     = Macro::TICKS;
 		Name_t name        = "";
 
 		TCB_t() = default;

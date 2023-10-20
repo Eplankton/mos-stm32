@@ -11,6 +11,7 @@ namespace MOS::Macro
 	constexpr uint32_t SYSTICK      = MOS_CONF_SYSTICK;
 	constexpr int8_t PRI_MAX        = MOS_CONF_PRI_MAX;
 	constexpr int8_t PRI_MIN        = MOS_CONF_PRI_MIN;
+	constexpr uint16_t TICKS        = MOS_CONF_TICKS;
 }
 
 #endif
