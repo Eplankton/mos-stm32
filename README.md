@@ -4,10 +4,10 @@
 ```
  A_A       _
 o'' )_____//
- `_/  MOS  )    RTOS on STM32F4 
- (_(_/--(_/	MOS <=> Mini-RTOS
+ `_/  MOS  )    Mini RTOS on STM32F4 
+ (_(_/--(_/     MOS <=> Mini-RTOS
 
-- MCU: STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
+- MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 - Board：Nucleo-144 F429ZI
 ```
 
@@ -28,82 +28,83 @@ mos/.
 
 namespace MOS::GlobalRes
 {
-	// Serial in and out
-	auto& uart = Driver::convert(USART3);
+    // Serial in and out
+    auto& uart = Driver::convert(USART3);
 
-	// LED red, green, blue
-	Driver::LED_t leds[] = {
-		{GPIOB,  GPIO_Pin_14},
-		{GPIOB,  GPIO_Pin_0},
-		{GPIOB,  GPIO_Pin_7},
-	};
+    // LED red, green, blue
+    Driver::LED_t leds[] = {
+        {GPIOB,  GPIO_Pin_14},
+        {GPIOB,  GPIO_Pin_0},
+        {GPIOB,  GPIO_Pin_7},
+    };
 }
 
 namespace MOS::Bsp
 {
     using namespace Driver;
 
-	void LED_Config()
-	{
-		using GlobalRes::leds;
-		...
-		for (auto& led: leds) {
-			led.init();
-		}
-	}
+    void LED_Config()
+    {
+        using GlobalRes::leds;
+        ...
+        for (auto& led: leds) {
+            led.init();
+        }
+    }
 
     void USART_Config()
     {
-		using GlobalRes::uart;
-		...
-		uart.init(...);
+        using GlobalRes::uart;
+        ...
+        uart.init(...);
     }
 
     void config()
     {
-		...
-		LED_Config();
-		USART_Config();
-		...
+        ...
+        LED_Config();
+        USART_Config();
+        ...
     }
 }
 
 namespace MOS::App // User tasks
 {
-	void Task0(void* argv = nullptr)
-	{
-		while (true) {
-			GlobalRes::leds[0].toggle();
-			Task::print_name();
-			Task::delay_ms(500);
-		}
-	}
-	...
+    using namespace GlobalRes;
+    void Task0(void* argv)
+    {
+        while (true) {
+            leds[0].toggle();
+            Task::print_name();
+            Task::delay_ms(500);
+        }
+    }
+    ...
 }
 
 void idle(void* argv = nullptr)
 {
-	using namespace MOS;
+    using namespace MOS;
+    using namespace App;
 
-	Task::create(App::Task0, nullptr, 0, "T0");
-	Task::print_all_tasks();
+    Task::create(Task0, nullptr, 0, "T0");
+    Task::print_all_tasks();
 
-	while (true) {
-		// ...
-	}
+    while (true) {
+        // ...
+    }
 }
 
 int main(void)
 {
-	using namespace MOS;
+    using namespace MOS;
+    Bsp::config();
+    Task::create(idle, nullptr, 15, "idle");
+    Scheduler::launch(); // Begin Scheduling, never return
 
-	Bsp::config();
-	Task::create(idle, nullptr, 15, "idle");
-	Scheduler::launch(); // Begin Scheduling, never return
-
-	while (true) {
-		// ...
-	}
+    while (true) {
+        // ...
+    }
 }
 ```
 
