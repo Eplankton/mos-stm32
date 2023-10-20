@@ -124,7 +124,7 @@ namespace MOS::App
 		});
 	}
 
-	void RR_TEST(void*)
+	void RoundRobinTest(void* argv)
 	{
 		for (uint32_t i = 0; i < 10; i++) {
 			Task::delay_ms(500);
@@ -140,9 +140,10 @@ void idle(void* argv)
 
 	// Create user tasks
 	// Task::create(Task0, nullptr, 2, "T0");
-	Task::create(RR_TEST, nullptr, 1, "p1");
-	Task::create(RR_TEST, nullptr, 1, "p2");
-	Task::create(RR_TEST, nullptr, 1, "p3");
+
+	Task::create(RoundRobinTest, nullptr, 1, "p1");
+	Task::create(RoundRobinTest, nullptr, 1, "p2");
+	Task::create(RoundRobinTest, nullptr, 1, "p3");
 
 	// Print tasks
 	Task::print_all_tasks();

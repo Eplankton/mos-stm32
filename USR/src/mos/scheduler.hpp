@@ -19,7 +19,6 @@ namespace MOS::Scheduler
 	{
 		// Disable irq to enter critical section
 		MOS_DISABLE_IRQ();
-
 		// R0 contains the address of curTCB
 		asm("LDR     R0, =curTCB");
 
@@ -53,6 +52,8 @@ namespace MOS::Scheduler
 		asm("POP     {R4}");
 		asm("MOV     LR, R4");
 		asm("ADD     SP,SP,#4");
+
+		asm("POP     {R0}");
 
 		// Enable irq to leave critical section
 		MOS_ENABLE_IRQ();
@@ -132,7 +133,9 @@ namespace MOS::Scheduler
 	SysTick_Handler(void)
 	{
 		// Trigger PendSV
+		MOS_DISABLE_IRQ();
 		MOS_TRIGGER_PENDSV_INTR();
+		MOS_ENABLE_IRQ();
 	}
 
 	// Called only once

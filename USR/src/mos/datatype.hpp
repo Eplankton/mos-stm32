@@ -155,15 +155,18 @@ namespace MOS::DataType
 		StackPtr_t sp = nullptr;
 
 		// Add more members here
-		Tid_t tid          = -1;
-		Fn_t fn            = nullptr;
-		Argv_t argv        = nullptr;
+		Tid_t tid = -1;
+
+		// Only for debug
+		Fn_t fn     = nullptr;
+		Argv_t argv = nullptr;
+		Name_t name = "";
+
 		Prior_t priority   = 15;// Low-High = 15-0
 		PagePtr_t page     = nullptr;
 		ParentPtr_t parent = nullptr;
 		Status_t status    = Status_t::TERMINATED;
 		uint16_t ticks     = Macro::TICKS;
-		Name_t name        = "";
 
 		TCB_t() = default;
 		TCB_t(Fn_t fn, Argv_t argv = nullptr,
@@ -268,6 +271,12 @@ namespace MOS::DataType
 		}
 
 		__attribute__((always_inline)) inline void
+		set_param(uint32_t param) volatile
+		{
+			page->raw[Macro::PAGE_SIZE - 8] = param;
+		}
+
+		__attribute__((always_inline)) inline void
 		attach_page(PagePtr_t page_ptr) volatile
 		{
 			page       = page_ptr;
@@ -279,12 +288,6 @@ namespace MOS::DataType
 		{
 			page->reset();
 			page = nullptr;
-		}
-
-		__attribute__((always_inline)) inline bool
-		empty() volatile const
-		{
-			return fn == nullptr;
 		}
 
 		__attribute__((always_inline)) inline uint32_t

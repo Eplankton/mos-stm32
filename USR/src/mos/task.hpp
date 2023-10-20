@@ -96,6 +96,8 @@ namespace MOS::Task
 
 		// Setup the stack to hold task context.
 		// Remember it is a descending stack and a context consists of 16 registers.
+		// high -> low, descending
+		// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
 		tcb.set_SP(&p->raw[Macro::PAGE_SIZE - 16]);
 
 		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the thumb state.
@@ -103,12 +105,15 @@ namespace MOS::Task
 		tcb.set_xPSR((uint32_t) 0x01000000);
 
 		// Set the stacked PC to point to the task
-		tcb.set_PC((uint32_t) tcb.fn);
+		tcb.set_PC((uint32_t) fn);
 
-		// Automatically termination
+		// Call terminate() automatically
 		tcb.set_LR((uint32_t) ending);
 
-		// Set TCB to ready
+		// Set arguments
+		tcb.set_param((uint32_t) argv);
+
+		// Set TCB to be READY
 		tcb.set_status(Status_t::READY);
 
 		// Add parent
