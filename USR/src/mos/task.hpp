@@ -146,7 +146,6 @@ namespace MOS::Task
 		blocked_list.add(tcb->node);
 		MOS_ENABLE_IRQ();
 		if (tcb == curTCB) {
-			// Give out the CPU
 			yield();
 		}
 	}
@@ -175,7 +174,7 @@ namespace MOS::Task
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		MOS_DISABLE_IRQ();
 		tcb->set_priority(pr);
-		ready_list.remove(tcb->node);// Re-insert and sort
+		ready_list.remove(tcb->node);// Re-insert
 		ready_list.insert_in_order(tcb->node, &TCB_t::priority_cmp);
 		MOS_ENABLE_IRQ();
 		if (curTCB != (TcbPtr_t) ready_list.begin()) {

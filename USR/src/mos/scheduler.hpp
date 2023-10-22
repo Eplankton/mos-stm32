@@ -147,8 +147,8 @@ namespace MOS::Scheduler
 		init();
 	}
 
-	// Custom Scheduler Policy, return TCB* as the next task to run
-	template <Policy policy = Policy::RoundRobin>
+	// Custom Scheduler Policy
+	template <Policy policy>
 	inline void next_tcb()
 	{
 		static auto switch_to = [](TcbPtr_t tcb) {
@@ -156,9 +156,9 @@ namespace MOS::Scheduler
 			curTCB = tcb;
 		};
 
-		auto idle = (TcbPtr_t) ready_list.end()->prev,
-		     st   = (TcbPtr_t) ready_list.begin(),
-		     ed   = (TcbPtr_t) ready_list.end();
+		auto st  = (TcbPtr_t) ready_list.begin(),
+		     ed  = (TcbPtr_t) ready_list.end(),
+		     nxt = curTCB->next();
 
 		if (curTCB->is_status(Status_t::TERMINATED) ||
 		    curTCB->is_status(Status_t::BLOCKED)) {
@@ -168,29 +168,41 @@ namespace MOS::Scheduler
 
 		if constexpr (policy == Policy::RoundRobin) {
 			if (--curTCB->ticks <= 0) {
-				auto next     = curTCB->next();
-				curTCB->ticks = Macro::TICKS;
 				curTCB->set_status(Status_t::READY);
-				return switch_to((next == ed) ? st : next);
+				curTCB->ticks = Macro::TICKS;
+				return switch_to((nxt == ed) ? st : nxt);
 			}
 		}
 
 		if constexpr (policy == Policy::PreemptivePriority) {
-			curTCB->set_status(Status_t::READY);
-			return switch_to(st);
+			if (TCB_t::priority_cmp(st->node, curTCB->node)) {
+				curTCB->set_status(Status_t::READY);
+				return switch_to(st);
+			}
+
+			if (--curTCB->ticks <= 0) {
+				curTCB->set_status(Status_t::READY);
+				curTCB->ticks = Macro::TICKS;
+				if (nxt != ed && TCB_t::priority_equal(nxt->node, curTCB->node)) {
+					return switch_to(nxt);
+				}
+				else {
+					return switch_to(st);
+				}
+			}
 		}
 	}
 
 	__attribute__((used, always_inline)) extern "C" inline void
 	nextTCB()// Don't change this name which used in asm("")
 	{
-		next_tcb<Policy::MOS_CONF_SCHEDULER_POLICY>();
+		next_tcb<Policy::MOS_CONF_POLICY>();
 	}
 
 	__attribute__((always_inline)) inline constexpr auto
 	policy_name()
 	{
-		switch (Policy::MOS_CONF_SCHEDULER_POLICY) {
+		switch (Policy::MOS_CONF_POLICY) {
 			case Policy::RoundRobin:
 				return "RoundRobin";
 			case Policy::PreemptivePriority:

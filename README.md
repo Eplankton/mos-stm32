@@ -145,3 +145,16 @@ The initial version (0.0.1), which completes the basic scheduler design, is plan
 6. SPI driver development, transplant LVGL graphics library
 7. Porting to ESP32-C3, RISC-V Architecture
 ```
+
+```
+Version 0.0.2:
+1. Sync::{Semaphore_t, Lock_t}
+2. Policy::{PreemptivePriority}, allows tasks of the same priority to be scheduled in round-robin
+3. Task::terminate is called implicitly when the task exits
+
+To do:
+1. Mutex_t with priority inheritance mechanism
+2. Inter-process communication: pipes, message queues, etc.
+3. Simple dynamic memory allocator
+```
+

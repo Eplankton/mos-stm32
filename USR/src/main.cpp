@@ -131,6 +131,31 @@ namespace MOS::App
 			Task::print_name();
 		}
 	}
+
+	int x = 0;
+	Sync::Semaphore_t s {1};
+
+	void threadA(void*)
+	{
+		while (true) {
+			s.down();
+			x++;
+			printf("Thread A: x = %d\n", x);
+			Task::delay_ms(1000);
+			s.up();
+		}
+	}
+
+	void threadB(void*)
+	{
+		while (true) {
+			s.down();
+			x--;
+			printf("Thread B: x = %d\n", x);
+			Task::delay_ms(1000);
+			s.up();
+		}
+	}
 }
 
 void idle(void* argv)
@@ -144,6 +169,9 @@ void idle(void* argv)
 	Task::create(RoundRobinTest, nullptr, 1, "p1");
 	Task::create(RoundRobinTest, nullptr, 1, "p2");
 	Task::create(RoundRobinTest, nullptr, 1, "p3");
+
+	// Task::create(threadA, nullptr, 1, "A");
+	// Task::create(threadB, nullptr, 1, "B");
 
 	// Print tasks
 	Task::print_all_tasks();
