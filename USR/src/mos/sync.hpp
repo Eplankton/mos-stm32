@@ -47,7 +47,7 @@ namespace MOS::Sync
 				auto& tcb = (TCB_t&) *waiting_list.begin();
 				tcb.set_status(Status_t::READY);
 				waiting_list.remove(tcb.node);
-				ready_list.insert_in_order(tcb.node, &TCB_t::priority_cmp);
+				ready_list.insert_in_order(tcb.node, TCB_t::priority_cmp);
 			}
 			cnt += 1;
 			MOS_ENABLE_IRQ();

@@ -2,7 +2,7 @@
 #define _MOS_GLOBALRES_
 
 #include "macro.hpp"
-#include "datatype.hpp"
+#include "data_type.hpp"
 
 namespace MOS::GlobalRes
 {

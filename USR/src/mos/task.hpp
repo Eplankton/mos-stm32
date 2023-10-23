@@ -120,7 +120,7 @@ namespace MOS::Task
 		tcb.set_parent(curTCB);
 
 		// Add to TCBs list
-		ready_list.insert_in_order(tcb.node, &TCB_t::priority_cmp);
+		ready_list.insert_in_order(tcb.node, TCB_t::priority_cmp);
 
 		// Enable interrupt, leave critical section
 		MOS_ENABLE_IRQ();
@@ -159,7 +159,7 @@ namespace MOS::Task
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		MOS_DISABLE_IRQ();
 		blocked_list.remove(tcb->node);
-		ready_list.insert_in_order(tcb->node, &TCB_t::priority_cmp);
+		ready_list.insert_in_order(tcb->node, TCB_t::priority_cmp);
 		tcb->set_status(Status_t::READY);
 		MOS_ENABLE_IRQ();
 		if (curTCB != (TcbPtr_t) ready_list.begin()) {
@@ -175,7 +175,7 @@ namespace MOS::Task
 		MOS_DISABLE_IRQ();
 		tcb->set_priority(pr);
 		ready_list.remove(tcb->node);// Re-insert
-		ready_list.insert_in_order(tcb->node, &TCB_t::priority_cmp);
+		ready_list.insert_in_order(tcb->node, TCB_t::priority_cmp);
 		MOS_ENABLE_IRQ();
 		if (curTCB != (TcbPtr_t) ready_list.begin()) {
 			// if curTCB isn't the highest priority
@@ -207,7 +207,7 @@ namespace MOS::Task
 			}
 
 			if constexpr (Same<decltype(info), Name_t>) {
-				if (tcb.get_name() == info) {
+				if (strcmp(tcb.get_name(), info) == 0) {
 					res = &tcb;
 					return;
 				}
@@ -227,39 +227,45 @@ namespace MOS::Task
 		MOS_ENABLE_IRQ();
 	}
 
+	__attribute__((always_inline)) inline constexpr auto
+	status_name(const Status_t s)// Status to String
+	{
+		switch (s) {
+			case Status_t::READY:
+				return "READY";
+			case Status_t::RUNNING:
+				return "RUNNING";
+			case Status_t::BLOCKED:
+				return "BLOCKED";
+			case Status_t::TERMINATED:
+				return "TERMINATED";
+			default:
+				return "INVALID";
+		}
+	};
+
+	inline void
+	print_task(const Node_t& node, const char* format = "#%-2d %-10s %-5d %-9s %2d%%\n")
+	{
+		auto& tcb = (TCB_t&) node;
+		MOS_MSG(format,
+		        tcb.get_tid(),
+		        tcb.get_name(),
+		        tcb.get_priority(),
+		        status_name(tcb.get_status()),
+		        tcb.page_usage());
+	};
+
 	inline void print_all_tasks()
 	{
-		// Status to String
-		static auto stos = [](const Status_t s) constexpr {
-			switch (s) {
-				case Status_t::READY:
-					return "READY";
-				case Status_t::RUNNING:
-					return "RUNNING";
-				case Status_t::BLOCKED:
-					return "BLOCKED";
-				case Status_t::TERMINATED:
-					return "TERMINATED";
-				default:
-					return "INVALID";
-			}
-		};
-
-		// Print to screen
-		static auto prts = [](const Node_t& node) {
-			auto& tcb = (TCB_t&) node;
-			MOS_MSG("#%-2d %-10s %-5d %-9s %2d%%\n",
-			        tcb.get_tid(),
-			        tcb.get_name(),
-			        tcb.get_priority(),
-			        stos(tcb.get_status()),
-			        tcb.page_usage());
+		static auto prtsl = [](const Node_t& node) {
+			print_task(node);
 		};
 
 		MOS_DISABLE_IRQ();
-		MOS_MSG("=====================================\n");
-		for_all_tasks(prts);
-		MOS_MSG("=====================================\n");
+		MOS_MSG("-------------------------------------\n");
+		for_all_tasks(prtsl);
+		MOS_MSG("-------------------------------------\n");
 		MOS_ENABLE_IRQ();
 	}
 

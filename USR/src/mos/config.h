@@ -8,6 +8,9 @@
 #include "stm32f4xx.h"
 #include "core_cm4.h"
 
+#define MOS_REBOOT() \
+	NVIC_SystemReset()
+
 #define MOS_TRIGGER_SYSTICK_INTR() \
 	SCB->ICSR |= SCB_ICSR_PENDSTSET_Msk
 

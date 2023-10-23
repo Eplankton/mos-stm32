@@ -1,10 +1,11 @@
 # MOS-STM32
 
 #### Introduction
+
 ```
  A_A       _
 o'' )_____//
- `_/  MOS  )    Mini RTOS on STM32F4 
+ `_/  MOS  )    Mini RTOS on STM32F4, Cortex-M
  (_(_/--(_/     MOS <=> Mini-RTOS
 
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
@@ -31,6 +32,7 @@ mos/.
 
 ```C++
 #include "mos/kernel.hpp"
+#include "mos/shell.hpp"
 
 namespace MOS::GlobalRes
 {
@@ -43,6 +45,8 @@ namespace MOS::GlobalRes
         {GPIOB,  GPIO_Pin_0},
         {GPIOB,  GPIO_Pin_7},
     };
+
+    RxBuffer<32> rx_buf;
 }
 
 namespace MOS::Bsp
@@ -77,6 +81,7 @@ namespace MOS::Bsp
 namespace MOS::App // User tasks
 {
     using namespace GlobalRes;
+
     void Task0(void* argv)
     {
         while (true) {
@@ -85,16 +90,17 @@ namespace MOS::App // User tasks
             Task::delay_ms(500);
         }
     }
-    ...
 }
 
-void idle(void* argv = nullptr)
+void idle(void* argv)
 {
     using namespace MOS;
     using namespace App;
 
+    Task::create(Shell::launch, &rx_buf, 1, "Shell");
     Task::create(Task0, nullptr, 0, "T0");
     Task::print_all_tasks();
+    Task::change_priority(Task::current_task(), Macro::PRI_MIN);
 
     while (true) {
         // ...
@@ -105,7 +111,7 @@ int main(void)
 {
     using namespace MOS;
     Bsp::config();
-    Task::create(idle, nullptr, 15, "idle");
+    Task::create(idle, nullptr, Macro::PRI_MAX, "idle");
     Scheduler::launch(); // Begin Scheduling, never return
 
     while (true) {
@@ -114,47 +120,40 @@ int main(void)
 }
 ```
 
-
-
 #### Boot up
 
 ```
  A_A       _
 o'' )_____//
- `_/  MOS  )
- (_(_/--(_/   Build Time: xxx:xxx
+ `_/  MOS  )  Build Time: xx:xx:xx
+ (_(_/--(_/
 
-Tid  Name   Priority    Status    PageUsage
-===========================================
-#0   idle      15       RUNNING     10%
-#1   T0        0        READY        9%
-===========================================
+Tid  Name   Priority   Status    PageUsage
+-------------------------------------------
+#0   idle     15       RUNNING      10%
+#1   T0       0        READY         9%
+-------------------------------------------
 ```
-
-
 
 #### Version
 
 ```
-The initial version (0.0.1), which completes the basic scheduler design, is planned to do the following:
-1. Timers, pending queues
+The initial version (0.0.1) with basic scheduler, to do:
+1. Timers, RoundRobin
 2. Inter-process communication(IPC), pipes, message queues
 3. Process synchronization Sync, semaphores, mutex lock
 4. Porting simple shells
 5. Variable page size, memory allocator
-6. SPI driver development, transplant LVGL graphics library
-7. Porting to ESP32-C3, RISC-V Architecture
-```
-
-```
+6. SPI driver, transplant LVGL graphics library
+7. Port to ESP32-C3, RISC-V
 Version 0.0.2:
 1. Sync::{Semaphore_t, Lock_t}
 2. Policy::{PreemptivePriority}, allows tasks of the same priority to be scheduled in round-robin
 3. Task::terminate is called implicitly when the task exits
+4. Shell::{Command, CmdCall, launch}
 
 To do:
 1. Mutex_t with priority inheritance mechanism
-2. Inter-process communication: pipes, message queues, etc.
+2. Inter-process communication: pipes, message queues, etc
 3. Simple dynamic memory allocator
 ```
-

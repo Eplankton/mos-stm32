@@ -1,5 +1,6 @@
 #include "main.h"
 #include "mos/kernel.hpp"
+#include "mos/shell.hpp"
 
 // Put all global resource here
 namespace MOS::GlobalRes
@@ -16,7 +17,7 @@ namespace MOS::GlobalRes
 	        {GPIOB,  GPIO_Pin_7},
 	};
 
-	Sync::Semaphore_t sema {1};
+	RxBuffer<32> rx_buf;
 }
 
 namespace MOS::Bsp
@@ -32,11 +33,6 @@ namespace MOS::Bsp
 			;
 	}
 
-	static inline void NVIC_Config()
-	{
-		NVIC_t::group_config(NVIC_PriorityGroup_2);
-	}
-
 	static inline void LED_Config()
 	{
 		using GlobalRes::leds;
@@ -46,13 +42,19 @@ namespace MOS::Bsp
 		}
 	}
 
+	static inline void NVIC_Config()
+	{
+		NVIC_t::group_config(NVIC_PriorityGroup_2);
+		NVIC_t::init(EXTI15_10_IRQn, 1, 1, ENABLE);
+		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
+	}
+
 	static inline void K1_IRQ_Config()
 	{
 		RCC_t::AHB1::clock_cmd(RCC_AHB1Periph_GPIOC, ENABLE);
 		RCC_t::APB2::clock_cmd(RCC_APB2Periph_SYSCFG, ENABLE);
 		SYSCFG_t::exti_line_config(EXTI_PortSourceGPIOC, EXTI_PinSource13);
 		EXTI_t::init(EXTI_Line13, EXTI_Mode_Interrupt, EXTI_Trigger_Rising, ENABLE);
-		NVIC_t::init(EXTI15_10_IRQn, 1, 1, ENABLE);
 	}
 
 	static inline void USART_Config()
@@ -65,48 +67,34 @@ namespace MOS::Bsp
 		uart.init(9600, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
 		        .rx_config(GPIOD, GPIO_t::get_pin_src(9), GPIO_AF_USART3)
 		        .tx_config(GPIOD, GPIO_t::get_pin_src(8), GPIO_AF_USART3)
+		        .it_enable(USART_IT_RXNE)
 		        .enable();
 	}
 
 	static inline void config()
 	{
+		LED_Config();
 		NVIC_Config();
 		USART_Config();
-		LED_Config();
 		K1_IRQ_Config();
+	}
+
+	static inline void Welcome()
+	{
+		MOS_MSG(" A_A       _\n"
+		        "o'' )_____//  Build Time = %s, %s\n"
+		        " `_/  MOS  )  Policy = %s\n"
+		        " (_(_/--(_/\n",
+		        __TIME__, __DATE__, MOS::Scheduler::policy_name());
 	}
 }
 
-namespace MOS::App
+namespace MOS::IRQ
 {
-	using namespace GlobalRes;
-
-	void Task1(void* argv)
+	void K1_IRQ(void* argv)
 	{
-		for (uint32_t i = 0; i < 20; i++) {
-			Task::delay_ms(500);
-			leds[1].toggle();
-			Task::print_name();
-			if (i == 10) {
-				Task::change_priority(Task::current_task(), 3);
-			}
-		}
-	}
+		using GlobalRes::leds;
 
-	void Task0(void* argv)
-	{
-		for (uint32_t i = 0; i < 20; i++) {
-			Task::delay_ms(500);
-			leds[0].toggle();
-			Task::print_name();
-			if (i == 10) {
-				Task::create(Task1, nullptr, 1, "T1");
-			}
-		}
-	}
-
-	void IRQ1(void* argv)
-	{
 		for (uint32_t i = 0; i < 5; i++) {
 			Task::delay_ms(1000);
 			leds[2].toggle();
@@ -119,41 +107,44 @@ namespace MOS::App
 	{
 		Driver::EXTI_t::handle_line(EXTI_Line13, [] {
 			MOS_MSG("[MOS]: K1 IRQ!\n");
-			Task::create(IRQ1, nullptr, 0, "IRQ1");
+			Task::create(K1_IRQ, nullptr, 1, "K1");
 			Task::print_all_tasks();
 		});
 	}
 
-	void RoundRobinTest(void* argv)
+	// UART3 IRQ Handler
+	extern "C" void USART3_IRQHandler(void)
 	{
-		for (uint32_t i = 0; i < 10; i++) {
+		using GlobalRes::uart;
+		using GlobalRes::rx_buf;
+
+		if (uart.get_it_status(USART_IT_RXNE) != RESET) {
+			char data = uart.receive_data();
+			if (data != '\n' && !rx_buf.full()) {
+				rx_buf.add(data);
+			}
+		}
+	}
+}
+
+namespace MOS::App
+{
+	using namespace GlobalRes;
+
+	void Task1(void* argv)
+	{
+		for (uint32_t i = 0; i < 50; i++) {
 			Task::delay_ms(500);
-			Task::print_name();
+			leds[1].toggle();
 		}
 	}
 
-	int x = 0;
-	Sync::Semaphore_t s {1};
-
-	void threadA(void*)
+	void Task0(void* argv)
 	{
+		Task::create(Task1, nullptr, 1, "T1");
 		while (true) {
-			s.down();
-			x++;
-			printf("Thread A: x = %d\n", x);
-			Task::delay_ms(1000);
-			s.up();
-		}
-	}
-
-	void threadB(void*)
-	{
-		while (true) {
-			s.down();
-			x--;
-			printf("Thread B: x = %d\n", x);
-			Task::delay_ms(1000);
-			s.up();
+			Task::delay_ms(500);
+			leds[0].toggle();
 		}
 	}
 }
@@ -164,35 +155,20 @@ void idle(void* argv)
 	using namespace App;
 
 	// Create user tasks
-	// Task::create(Task0, nullptr, 2, "T0");
-
-	Task::create(RoundRobinTest, nullptr, 1, "p1");
-	Task::create(RoundRobinTest, nullptr, 1, "p2");
-	Task::create(RoundRobinTest, nullptr, 1, "p3");
-
-	// Task::create(threadA, nullptr, 1, "A");
-	// Task::create(threadB, nullptr, 1, "B");
+	Task::create(Shell::launch, &rx_buf, 1, "Shell");
+	Task::create(Task0, nullptr, 1, "T0");
 
 	// Print tasks
 	Task::print_all_tasks();
 
-	// Set idle as the lowest priority
+	// Set idle to the lowest priority
 	Task::change_priority(Task::current_task(), Macro::PRI_MIN);
 
 	while (true) {
 		// Idle does nothing but loop...
-		Task::delay_ms(5000);
-		Task::print_name();
+		Task::delay_ms(1000);
+		// Task::print_name();
 	}
-}
-
-static inline void Welcome()
-{
-	MOS_MSG(" A_A       _\n"
-	        "o'' )_____//  Build Time = %s, %s\n"
-	        " `_/  MOS  )  Policy = %s\n"
-	        " (_(_/--(_/\n",
-	        __TIME__, __DATE__, MOS::Scheduler::policy_name());
 }
 
 int main(void)
@@ -203,7 +179,7 @@ int main(void)
 	Bsp::config();
 
 	// Show slogan
-	Welcome();
+	Bsp::Welcome();
 
 	// Create idle task
 	Task::create(idle, nullptr, Macro::PRI_MAX, "idle");

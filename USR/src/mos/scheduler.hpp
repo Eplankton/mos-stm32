@@ -123,21 +123,6 @@ namespace MOS::Scheduler
 		asm("BX      LR");
 	}
 
-	__attribute__((naked, used)) extern "C" void
-	PendSV_Handler(void)
-	{
-		asm("B     ContextSwitch");
-	}
-
-	__attribute__((used)) extern "C" void
-	SysTick_Handler(void)
-	{
-		// Trigger PendSV
-		MOS_DISABLE_IRQ();
-		MOS_TRIGGER_PENDSV_INTR();
-		MOS_ENABLE_IRQ();
-	}
-
 	// Called only once
 	inline void launch()
 	{
