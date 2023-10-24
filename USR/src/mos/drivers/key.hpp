@@ -20,7 +20,7 @@ namespace MOS::Driver
 		KEY_t() = delete;
 
 		KEY_t(Port_t _port, Pin_t _pin)
-		    : port(_port), pin(_pin) { init(); }
+		    : port(_port), pin(_pin) {}
 
 		KEY_t(GPIO_t::Raw_t _port, Pin_t _pin)
 		    : KEY_t(GPIO_t::convert(_port), _pin) {}

@@ -24,8 +24,9 @@ namespace MOS::Shell
 
 		inline const char* match(const char* str) const
 		{
-			if (strncmp(str, text, len()) == 0) {
-				const char* argv = str + len();
+			auto xlen = len();
+			if (strncmp(str, text, xlen) == 0) {
+				const char* argv = str + xlen;
 				while (*argv == ' ') ++argv;
 				return argv;
 			}
@@ -87,21 +88,28 @@ namespace MOS::Shell
 			MOS_MSG("[MOS]: Reboot\n\n");
 			MOS_REBOOT();
 		}
+
+		static inline void uname_cmd(const char* argv)
+		{
+			MOS_MSG(" A_A       _\n"
+			        "o'' )_____//   Build    = %s, %s\n"
+			        " `_/  MOS  )   Version  = %s\n"
+			        " (_(_/--(_/    Platform = %s\n\n",
+			        __TIME__, __DATE__, MOS_VERSION, MOS_DEVICE);
+		}
 	}
 
 	// Add more cmds here...
-	constexpr Command cmds[] = {
+	static constexpr Command cmds[] = {
 	        {    "ls",     CmdCall::ls_cmd},
 	        {  "kill",   CmdCall::kill_cmd},
+	        { "uname",  CmdCall::uname_cmd},
 	        {"reboot", CmdCall::reboot_cmd},
 	};
 
-	// Always pass a RX Buffer as argv
 	inline void launch(void* argv)
 	{
-		using DataType::RxBuffer;
-
-		auto rx_buf = (RxBuffer<32>*) argv;
+		using KernelGlobal::rx_buf;
 
 		static auto parser = [](const char* str) {
 			for (auto& cmd: cmds) {
@@ -113,12 +121,14 @@ namespace MOS::Shell
 			MOS_MSG("[MOS]: Invalid Command\n");
 		};
 
+		CmdCall::uname_cmd(nullptr);
+
 		while (true) {
-			if (!rx_buf->empty()) {
-				auto str = rx_buf->c_str();
-				MOS_MSG("< %s\n", str);
-				parser(str);
-				rx_buf->clear();
+			if (!rx_buf.empty()) {
+				auto rx_str = rx_buf.c_str();
+				MOS_MSG("< %s\n", rx_str);
+				parser(rx_str);
+				rx_buf.clear();
 			}
 		}
 	}

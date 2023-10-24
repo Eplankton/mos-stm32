@@ -1,10 +1,12 @@
 #ifndef _MOS_CONF_
 #define _MOS_CONF_
 
-// Platform
-#define MOS_DEVICE_STM32F429
+#define MOS_VERSION "0.0.2"
 
-#if defined(MOS_DEVICE_STM32F429)
+// Platform
+#define MOS_DEVICE "STM32F429"
+
+#if defined(MOS_DEVICE)
 #include "stm32f4xx.h"
 #include "core_cm4.h"
 

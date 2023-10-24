@@ -2,32 +2,30 @@
 #include "mos/kernel.hpp"
 #include "mos/shell.hpp"
 
-// Put all global resource here
-namespace MOS::GlobalRes
+// Put user global data here
+namespace MOS::UserGlobal
 {
-	using namespace Driver;
+	using namespace DataType;
 
 	// Serial input and output
-	auto& uart = convert(USART3);
+	auto& uart = Driver::convert(USART3);
 
 	// LED red, green, blue
-	LED_t leds[] = {
+	Driver::LED_t leds[] = {
 	        {GPIOB, GPIO_Pin_14},
 	        {GPIOB,  GPIO_Pin_0},
 	        {GPIOB,  GPIO_Pin_7},
 	};
-
-	RxBuffer<32> rx_buf;
 }
 
 namespace MOS::Bsp
 {
+	using namespace UserGlobal;
 	using namespace Driver;
 
 	// For printf_
 	extern "C" void _putchar(char ch)
 	{
-		using GlobalRes::uart;
 		uart.send_data(ch);                                   /* 发送一个字节数据到串口 */
 		while (uart.get_flag_status(USART_FLAG_TXE) == RESET) /* 等待发送完毕 */
 			;
@@ -35,7 +33,6 @@ namespace MOS::Bsp
 
 	static inline void LED_Config()
 	{
-		using GlobalRes::leds;
 		RCC_t::AHB1::clock_cmd(RCC_AHB1Periph_GPIOB, ENABLE);
 		for (auto& led: leds) {
 			led.init();
@@ -59,8 +56,6 @@ namespace MOS::Bsp
 
 	static inline void USART_Config()
 	{
-		using GlobalRes::uart;
-
 		RCC_t::AHB1::clock_cmd(RCC_AHB1Periph_GPIOD, ENABLE);
 		RCC_t::APB1::clock_cmd(RCC_APB1Periph_USART3, ENABLE);
 
@@ -78,33 +73,21 @@ namespace MOS::Bsp
 		USART_Config();
 		K1_IRQ_Config();
 	}
-
-	static inline void Welcome()
-	{
-		MOS_MSG(" A_A       _\n"
-		        "o'' )_____//  Build Time = %s, %s\n"
-		        " `_/  MOS  )  Policy = %s\n"
-		        " (_(_/--(_/\n",
-		        __TIME__, __DATE__, MOS::Scheduler::policy_name());
-	}
 }
 
 namespace MOS::IRQ
 {
-	void K1_IRQ(void* argv)
-	{
-		using GlobalRes::leds;
-
-		for (uint32_t i = 0; i < 5; i++) {
-			Task::delay_ms(1000);
-			leds[2].toggle();
-			Task::print_name();
-		}
-	}
-
 	// K1 IRQ Handler
 	extern "C" void EXTI15_10_IRQHandler()
 	{
+		static auto K1_IRQ = [](void* argv) {
+			for (uint32_t i = 0; i < 5; i++) {
+				Task::delay_ms(1000);
+				UserGlobal::leds[2].toggle();
+				Task::print_name();
+			}
+		};
+
 		Driver::EXTI_t::handle_line(EXTI_Line13, [] {
 			MOS_MSG("[MOS]: K1 IRQ!\n");
 			Task::create(K1_IRQ, nullptr, 1, "K1");
@@ -115,8 +98,8 @@ namespace MOS::IRQ
 	// UART3 IRQ Handler
 	extern "C" void USART3_IRQHandler(void)
 	{
-		using GlobalRes::uart;
-		using GlobalRes::rx_buf;
+		using KernelGlobal::rx_buf;
+		using UserGlobal::uart;
 
 		if (uart.get_it_status(USART_IT_RXNE) != RESET) {
 			char data = uart.receive_data();
@@ -129,7 +112,7 @@ namespace MOS::IRQ
 
 namespace MOS::App
 {
-	using namespace GlobalRes;
+	using UserGlobal::leds;
 
 	void Task1(void* argv)
 	{
@@ -152,11 +135,10 @@ namespace MOS::App
 void idle(void* argv)
 {
 	using namespace MOS;
-	using namespace App;
 
 	// Create user tasks
-	Task::create(Shell::launch, &rx_buf, 1, "Shell");
-	Task::create(Task0, nullptr, 1, "T0");
+	Task::create(Shell::launch, nullptr, 1, "Shell");
+	Task::create(App::Task0, nullptr, 1, "T0");
 
 	// Print tasks
 	Task::print_all_tasks();
@@ -177,9 +159,6 @@ int main(void)
 
 	// Init resource
 	Bsp::config();
-
-	// Show slogan
-	Bsp::Welcome();
 
 	// Create idle task
 	Task::create(idle, nullptr, Macro::PRI_MAX, "idle");

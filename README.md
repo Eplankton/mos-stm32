@@ -9,7 +9,7 @@ o'' )_____//
  (_(_/--(_/     MOS <=> Mini-RTOS
 
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
-- Board：Nucleo-144 F429ZI
+- Board: Nucleo-144 F429ZI
 ```
 
 
@@ -18,10 +18,10 @@ o'' )_____//
 
 ```
 mos/.
-    | drivers/      Hardware Drivers (SPL/HAL)
+    | drivers/      Hardware Drivers (SPL/HAL/...)
     | task.hpp      Task create, yield, terminate, block
-    | scheduler.hpp Context switch
-    | globalres.hpp Global Resources like ready_list and block_list
+    | scheduler.hpp Scheduler, Context Switch
+    | global.hpp    Kernel Global Resources
     | config.h      System Configuration
 
     kernel = task + scheduler + globalres
@@ -34,7 +34,7 @@ mos/.
 #include "mos/kernel.hpp"
 #include "mos/shell.hpp"
 
-namespace MOS::GlobalRes
+namespace MOS::UserGlobal
 {
     // Serial in and out
     auto& uart = Driver::convert(USART3);
@@ -45,8 +45,6 @@ namespace MOS::GlobalRes
         {GPIOB,  GPIO_Pin_0},
         {GPIOB,  GPIO_Pin_7},
     };
-
-    RxBuffer<32> rx_buf;
 }
 
 namespace MOS::Bsp
@@ -55,7 +53,7 @@ namespace MOS::Bsp
 
     void LED_Config()
     {
-        using GlobalRes::leds;
+        using UserGlobal::leds;
         ...
         for (auto& led: leds) {
             led.init();
@@ -64,7 +62,7 @@ namespace MOS::Bsp
 
     void USART_Config()
     {
-        using GlobalRes::uart;
+        using UserGlobal::uart;
         ...
         uart.init(...);
     }
@@ -80,7 +78,7 @@ namespace MOS::Bsp
 
 namespace MOS::App // User tasks
 {
-    using namespace GlobalRes;
+    using namespace UserGlobal;
 
     void Task0(void* argv)
     {
@@ -95,12 +93,11 @@ namespace MOS::App // User tasks
 void idle(void* argv)
 {
     using namespace MOS;
-    using namespace App;
 
-    Task::create(Shell::launch, &rx_buf, 1, "Shell");
-    Task::create(Task0, nullptr, 0, "T0");
+	Task::create(Shell::launch, nullptr, 1, "Shell");
+    Task::create(App::Task0, nullptr, 0, "T0");
     Task::print_all_tasks();
-    Task::change_priority(Task::current_task(), Macro::PRI_MIN);
+	Task::change_priority(Task::current_task(), Macro::PRI_MIN);
 
     while (true) {
         // ...
@@ -146,6 +143,9 @@ The initial version (0.0.1) with basic scheduler, to do:
 5. Variable page size, memory allocator
 6. SPI driver, transplant LVGL graphics library
 7. Port to ESP32-C3, RISC-V
+```
+
+```
 Version 0.0.2:
 1. Sync::{Semaphore_t, Lock_t}
 2. Policy::{PreemptivePriority}, allows tasks of the same priority to be scheduled in round-robin

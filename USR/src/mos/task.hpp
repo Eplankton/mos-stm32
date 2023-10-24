@@ -3,11 +3,11 @@
 
 #include "concepts.hpp"
 #include "util.hpp"
-#include "global_res.hpp"
+#include "global.hpp"
 
 namespace MOS::Task
 {
-	using namespace GlobalRes;
+	using namespace KernelGlobal;
 	using namespace Util;
 
 	using Status_t  = TCB_t::Status_t;

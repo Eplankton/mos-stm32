@@ -18,7 +18,7 @@ namespace MOS::Util
 	}
 
 	__attribute__((always_inline)) inline void
-	delay(const uint32_t n, const uint32_t unit = 1000)
+	delay(const uint32_t n, const uint32_t unit = 2000)
 	{
 		portable_delay(n * unit);
 	}

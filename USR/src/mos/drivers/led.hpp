@@ -21,7 +21,7 @@ namespace MOS::Driver
 		LED_t() = delete;
 
 		LED_t(Port_t _port, Pin_t _pin)
-		    : port(_port), pin(_pin) { init(); }
+		    : port(_port), pin(_pin) {}
 
 		LED_t(GPIO_t::Raw_t _port, Pin_t _pin)
 		    : LED_t(GPIO_t::convert(_port), _pin) {}

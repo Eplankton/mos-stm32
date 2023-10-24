@@ -5,7 +5,7 @@
 #include "util.hpp"
 #include "macro.hpp"
 #include "data_type.hpp"
-#include "global_res.hpp"
+#include "global.hpp"
 #include "task.hpp"
 #include "sync.hpp"
 #include "scheduler.hpp"
