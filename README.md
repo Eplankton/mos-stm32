@@ -86,7 +86,7 @@ void idle(void* argv)
 {
     using namespace MOS;
 
-	Task::create(Shell::launch, nullptr, 1, "Shell");
+    Task::create(Shell::launch, nullptr, 1, "Shell");
     Task::create(App::Task0, nullptr, 0, "T0");
     ...
 
@@ -143,12 +143,13 @@ Version 0.0.2:
 2. Policy::{PreemptivePriority}, for same priority -> {RoundRobin}
 3. Task::terminate() implicitly be called when task exits
 4. Shell::{Command, CmdCall, launch}
-5. Port LCD ST7735S, SPI driver
-6. os_ticks and Task::delay()
+5. os_ticks and Task::delay(ticks)
+6. Driver::{SPI_t, ST7735S}
 
 To do:
 1. Mutex_t with priority inheritance mechanism
 2. IPC: pipes, message queues, etc.
 3. Simple dynamic memory allocator
-4. Port GUILite/LVGL
+4. GUILite/LVGL
+5. Timers
 ```
