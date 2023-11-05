@@ -8,6 +8,8 @@
 namespace MOS::Scheduler
 {
 	using namespace Task;
+	using namespace KernelGlobal;
+	using Status_t = TCB_t::Status_t;
 
 	enum class Policy
 	{
@@ -19,6 +21,7 @@ namespace MOS::Scheduler
 	{
 		// Disable irq to enter critical section
 		MOS_DISABLE_IRQ();
+
 		// R0 contains the address of curTCB
 		asm("LDR     R0, =curTCB");
 
@@ -52,8 +55,6 @@ namespace MOS::Scheduler
 		asm("POP     {R4}");
 		asm("MOV     LR, R4");
 		asm("ADD     SP,SP,#4");
-
-		asm("POP     {R0}");
 
 		// Enable irq to leave critical section
 		MOS_ENABLE_IRQ();
@@ -124,26 +125,46 @@ namespace MOS::Scheduler
 	}
 
 	// Called only once
-	inline void launch()
+	static inline void launch()
 	{
-		Driver::SysTick_t::config(Macro::SYSTICK);
 		curTCB = (TcbPtr_t) ready_list.begin();
 		curTCB->set_status(Status_t::RUNNING);
 		init();
 	}
 
+	static inline void wake_up()
+	{
+		TcbPtr_t to_wake = nullptr;
+
+		blocked_list.iter([&to_wake](const Node_t& node) {
+			auto& tcb = (TCB_t&) node;
+			if (tcb.delay_ticks == os_ticks) {
+				tcb.delay_ticks = 0;
+				to_wake         = &tcb;
+			}
+		});
+
+		if (to_wake != nullptr) {
+			to_wake->set_status(Status_t::READY);
+			blocked_list.send_to_in_order(to_wake->node, ready_list, TCB_t::priority_cmp);
+		}
+	}
+
 	// Custom Scheduler Policy
 	template <Policy policy>
-	inline void next_tcb()
+	static inline void next_tcb()
 	{
+		os_ticks++;
+		wake_up();
+
 		static auto switch_to = [](TcbPtr_t tcb) {
 			tcb->set_status(Status_t::RUNNING);
 			curTCB = tcb;
 		};
 
-		auto st  = (TcbPtr_t) ready_list.begin(),
-		     ed  = (TcbPtr_t) ready_list.end(),
-		     nxt = curTCB->next();
+		auto st = (TcbPtr_t) ready_list.begin(),
+		     ed = (TcbPtr_t) ready_list.end(),
+		     nx = (TcbPtr_t) curTCB->next();
 
 		if (curTCB->is_status(Status_t::TERMINATED) ||
 		    curTCB->is_status(Status_t::BLOCKED)) {
@@ -152,10 +173,10 @@ namespace MOS::Scheduler
 		}
 
 		if constexpr (policy == Policy::RoundRobin) {
-			if (--curTCB->ticks <= 0) {
+			if (--curTCB->time_slice <= 0) {
 				curTCB->set_status(Status_t::READY);
-				curTCB->ticks = Macro::TICKS;
-				return switch_to((nxt == ed) ? st : nxt);
+				curTCB->time_slice = Macro::TIME_SLICE;
+				return switch_to((nx == ed) ? st : nx);
 			}
 		}
 
@@ -165,11 +186,11 @@ namespace MOS::Scheduler
 				return switch_to(st);
 			}
 
-			if (--curTCB->ticks <= 0) {
+			if (--curTCB->time_slice <= 0) {
 				curTCB->set_status(Status_t::READY);
-				curTCB->ticks = Macro::TICKS;
-				if (nxt != ed && TCB_t::priority_equal(nxt->node, curTCB->node)) {
-					return switch_to(nxt);
+				curTCB->time_slice = Macro::TIME_SLICE;
+				if (nx != ed && TCB_t::priority_equal(nx->node, curTCB->node)) {
+					return switch_to(nx);
 				}
 				else {
 					return switch_to(st);

@@ -1,12 +1,10 @@
 #ifndef _MOS_DRIVER_MODULE_
 #define _MOS_DRIVER_MODULE_
 
-#include "../type.hpp"
-#include "../concepts.hpp"
 #include "../config.h"
 
+// Core Periphs
 #include "gpio.hpp"
-#include "delay.hpp"
 #include "led.hpp"
 #include "key.hpp"
 #include "rcc.hpp"
@@ -16,8 +14,12 @@
 #include "systick.hpp"
 #include "usart.hpp"
 #include "dma.hpp"
-#include "i2c.hpp"
 #include "tim.hpp"
+#include "i2c.hpp"
+#include "spi.hpp"
+
+// Other Periphs
+#include "st7735s.hpp"
 
 namespace MOS::Driver
 {
@@ -96,6 +98,13 @@ namespace MOS::Driver
 	convert(TIM_TypeDef* TIMx)
 	{
 		return TIM_t::convert(TIMx);
+	}
+
+	template <>
+	__attribute__((always_inline)) inline constexpr auto&
+	convert(SPI_TypeDef* SPIx)
+	{
+		return SPI_t::convert(SPIx);
 	}
 }
 

@@ -1,6 +1,7 @@
 #ifndef _MOS_SHELL_
 #define _MOS_SHELL_
 
+#include "config.h"
 #include "util.hpp"
 #include "task.hpp"
 
@@ -40,11 +41,11 @@ namespace MOS::Shell
 	{
 		static inline void ls_cmd(const char* argv)
 		{
-			const char* name = (const char*) argv;
+			auto name = (const char*) argv;
 			if (*name != '\0') {
 				if (auto tcb = Task::find(name)) {
 					MOS_DISABLE_IRQ();
-					MOS_MSG("-------------------------------------\n");
+					MOS_MSG("-----------------------------------\n");
 					Task::print_task(tcb->node);
 
 					// for (auto t = tcb; t != nullptr; t = t->get_parent()) {
@@ -54,7 +55,7 @@ namespace MOS::Shell
 					// 	}
 					// }
 
-					MOS_MSG("-------------------------------------\n");
+					MOS_MSG("-----------------------------------\n");
 					MOS_ENABLE_IRQ();
 				}
 				else {
@@ -68,7 +69,7 @@ namespace MOS::Shell
 
 		static inline void kill_cmd(const char* argv)
 		{
-			const char* name = (const char*) argv;
+			auto name = (const char*) argv;
 			if (*name != '\0') {
 				if (auto tcb = Task::find(name)) {
 					Task::terminate(tcb);
@@ -94,7 +95,7 @@ namespace MOS::Shell
 			MOS_MSG(" A_A       _\n"
 			        "o'' )_____//   Build    = %s, %s\n"
 			        " `_/  MOS  )   Version  = %s\n"
-			        " (_(_/--(_/    Platform = %s\n\n",
+			        " (_(_/--(_/    Platform = %s\n",
 			        __TIME__, __DATE__, MOS_VERSION, MOS_DEVICE);
 		}
 	}
@@ -118,10 +119,11 @@ namespace MOS::Shell
 					return;
 				}
 			}
-			MOS_MSG("[MOS]: Invalid Command\n");
+			MOS_MSG("[MOS]: Unknown command '%s'\n", str);
 		};
 
 		CmdCall::uname_cmd(nullptr);
+		Task::print_all_tasks();
 
 		while (true) {
 			if (!rx_buf.empty()) {

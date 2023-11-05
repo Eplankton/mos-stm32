@@ -4,14 +4,20 @@
 #include "concepts.hpp"
 #include "util.hpp"
 #include "global.hpp"
+#include "alloc.hpp"
 
 namespace MOS::Task
 {
-	using namespace KernelGlobal;
-	using namespace Util;
+	using Util::test_irq;
+	using DataType::TCB_t;
+	using KernelGlobal::curTCB;
+	using KernelGlobal::ready_list;
+	using KernelGlobal::blocked_list;
+	using KernelGlobal::os_ticks;
+	using KernelGlobal::tids;
 
-	using Status_t  = TCB_t::Status_t;
 	using Node_t    = TCB_t::Node_t;
+	using Status_t  = TCB_t::Status_t;
 	using Name_t    = TCB_t::Name_t;
 	using Tid_t     = TCB_t::Tid_t;
 	using TcbPtr_t  = TCB_t::TcbPtr_t;
@@ -49,6 +55,9 @@ namespace MOS::Task
 		// Reset the TCB to default
 		tcb->deinit();
 
+		// For debug only
+		KernelGlobal::debug_tcbs.remove(tcb);
+
 		// Enable interrupt, leave critical section
 		MOS_ENABLE_IRQ();
 
@@ -57,13 +66,13 @@ namespace MOS::Task
 		}
 	}
 
-	__attribute__((always_inline)) inline void
+	__attribute__((always_inline)) static inline void
 	ending() { terminate(current_task()); }
 
 	inline TcbPtr_t create(TCB_t::Fn_t&& fn, TCB_t::Argv_t argv = nullptr,
 	                       TCB_t::Prior_t pr = 15, TCB_t::Name_t name = "")
 	{
-		if (num() >= MAX_TASK_NUM) {
+		if (num() >= Macro::MAX_TASK_NUM) {
 			return nullptr;
 		}
 
@@ -74,63 +83,55 @@ namespace MOS::Task
 		// Disable interrupt to enter critical section
 		MOS_DISABLE_IRQ();
 
-		PagePtr_t p = nullptr;
-
-		for (auto& page: pages) {
-			if (!page.is_used()) {
-				p = &page;
-				break;
-			}
-		}
-
-		MOS_ASSERT(p != nullptr, "Page error");
+		// Page Alloc
+		auto p = Alloc::page_alloc();
 
 		// Construct a TCB at the head of a page block
-		auto& tcb = *new (p->raw) TCB_t {fn, argv, pr, name};
+		auto tcb = TCB_t::build(p, fn, argv, pr, name);
 
 		// Give TID
-		tcb.set_tid(tids++);
-
-		// Set task page
-		tcb.attach_page(p);
+		tcb->set_tid(tids++);
 
 		// Setup the stack to hold task context.
 		// Remember it is a descending stack and a context consists of 16 registers.
 		// high -> low, descending
 		// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
-		tcb.set_SP(&p->raw[Macro::PAGE_SIZE - 16]);
+		tcb->set_SP(&tcb->page->raw[Macro::PAGE_SIZE - 16]);
 
 		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the thumb state.
 		// V6-m and V7-m cores can only support thumb state so it should always be set to '1'.
-		tcb.set_xPSR((uint32_t) 0x01000000);
+		tcb->set_xPSR((uint32_t) 0x01000000);
 
 		// Set the stacked PC to point to the task
-		tcb.set_PC((uint32_t) fn);
+		tcb->set_PC((uint32_t) fn);
 
 		// Call terminate() automatically
-		tcb.set_LR((uint32_t) ending);
+		tcb->set_LR((uint32_t) ending);
 
 		// Set arguments
-		tcb.set_param((uint32_t) argv);
+		tcb->set_param((uint32_t) argv);
 
 		// Set TCB to be READY
-		tcb.set_status(Status_t::READY);
+		tcb->set_status(Status_t::READY);
 
 		// Add parent
-		tcb.set_parent(curTCB);
+		tcb->set_parent(curTCB);
 
 		// Add to TCBs list
-		ready_list.insert_in_order(tcb.node, TCB_t::priority_cmp);
+		ready_list.insert_in_order(tcb->node, TCB_t::priority_cmp);
+
+		// For debug only
+		KernelGlobal::debug_tcbs.add(tcb);
 
 		// Enable interrupt, leave critical section
 		MOS_ENABLE_IRQ();
 
 		// If the new task's priority is higher, switch at once
-		if (TCB_t::priority_cmp(tcb.node, curTCB->node)) {
+		if (TCB_t::priority_cmp(tcb->node, curTCB->node)) {
 			yield();
 		}
 
-		return &tcb;
+		return tcb;
 	}
 
 	inline void block(TcbPtr_t tcb = current_task())
@@ -142,8 +143,7 @@ namespace MOS::Task
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		MOS_DISABLE_IRQ();
 		tcb->set_status(Status_t::BLOCKED);
-		ready_list.remove(tcb->node);
-		blocked_list.add(tcb->node);
+		ready_list.send_to(tcb->node, blocked_list);
 		MOS_ENABLE_IRQ();
 		if (tcb == curTCB) {
 			yield();
@@ -158,9 +158,8 @@ namespace MOS::Task
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		MOS_DISABLE_IRQ();
-		blocked_list.remove(tcb->node);
-		ready_list.insert_in_order(tcb->node, TCB_t::priority_cmp);
 		tcb->set_status(Status_t::READY);
+		blocked_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
 		MOS_ENABLE_IRQ();
 		if (curTCB != (TcbPtr_t) ready_list.begin()) {
 			// if curTCB isn't the highest priority
@@ -174,8 +173,7 @@ namespace MOS::Task
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		MOS_DISABLE_IRQ();
 		tcb->set_priority(pr);
-		ready_list.remove(tcb->node);// Re-insert
-		ready_list.insert_in_order(tcb->node, TCB_t::priority_cmp);
+		ready_list.re_insert(tcb->node, TCB_t::priority_cmp);
 		MOS_ENABLE_IRQ();
 		if (curTCB != (TcbPtr_t) ready_list.begin()) {
 			// if curTCB isn't the highest priority
@@ -228,9 +226,9 @@ namespace MOS::Task
 	}
 
 	__attribute__((always_inline)) inline constexpr auto
-	status_name(const Status_t s)// Status to String
+	status_name(const Status_t status)// Status to String
 	{
-		switch (s) {
+		switch (status) {
 			case Status_t::READY:
 				return "READY";
 			case Status_t::RUNNING:
@@ -244,8 +242,8 @@ namespace MOS::Task
 		}
 	};
 
-	inline void
-	print_task(const Node_t& node, const char* format = "#%-2d %-10s %-5d %-9s %2d%%\n")
+	inline void print_task(const Node_t& node,
+	                       const char* format = "#%-2d %-10s %-5d %-9s %2d%%\n")
 	{
 		auto& tcb = (TCB_t&) node;
 		MOS_MSG(format,
@@ -258,14 +256,18 @@ namespace MOS::Task
 
 	inline void print_all_tasks()
 	{
-		static auto prtsl = [](const Node_t& node) {
-			print_task(node);
-		};
-
 		MOS_DISABLE_IRQ();
-		MOS_MSG("-------------------------------------\n");
-		for_all_tasks(prtsl);
-		MOS_MSG("-------------------------------------\n");
+		MOS_MSG("-----------------------------------\n");
+
+		// For debug only
+		KernelGlobal::debug_tcbs.iter([](const volatile TcbPtr_t& tcb) {
+			if (tcb != nullptr &&
+			    !tcb->is_status(Status_t::TERMINATED)) {
+				print_task(tcb->node);
+			}
+		});
+
+		MOS_MSG("-----------------------------------\n");
 		MOS_ENABLE_IRQ();
 	}
 
@@ -273,6 +275,13 @@ namespace MOS::Task
 	delay_ms(const uint32_t n, const uint32_t unit = 1000)
 	{
 		Util::delay(n, unit);
+	}
+
+	__attribute__((always_inline)) inline void
+	delay(const uint32_t ticks)
+	{
+		curTCB->delay_ticks = os_ticks + ticks;
+		block();
 	}
 }
 

@@ -2,7 +2,6 @@
 #define _MOS_DRIVER_SYSTICK_
 
 #include "../config.h"
-#include "delay.hpp"
 
 namespace MOS::Driver
 {
@@ -30,12 +29,6 @@ namespace MOS::Driver
 			// SystemFrequency / 1000000 every 1us
 
 			SysTick_Config(SystemCoreClock / freq);
-		}
-
-		static inline void
-		delay_ms(Time_t t)
-		{
-			systick_delay_ms(t);
 		}
 	};
 }

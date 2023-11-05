@@ -76,7 +76,7 @@ namespace MOS::DataType
 	struct List_t
 	{
 		using Node_t    = ListNode_t;
-		using NodePtr_t = Node_t*;
+		using NodePtr_t = Node_t::SelfPtr_t;
 
 		Node_t head;
 		uint32_t len = 0;
@@ -139,15 +139,47 @@ namespace MOS::DataType
 			node.prev      = &node;
 			len -= 1;
 		}
+
+		__attribute__((always_inline)) inline void
+		send_to(Node_t& node, List_t& dest)
+		{
+			remove(node);
+			dest.add(node);
+		}
+
+		__attribute__((always_inline)) inline void
+		send_to_in_order(Node_t& node, List_t& dest, auto&& cmp)
+		{
+			remove(node);
+			dest.insert_in_order(node, cmp);
+		}
+
+		__attribute__((always_inline)) inline void
+		re_insert(Node_t& node, auto&& cmp)
+		{
+			send_to_in_order(node, *this, cmp);
+		}
+
+		__attribute__((always_inline)) inline bool
+		contains(const Node_t& node)
+		{
+			bool flag = false;
+			iter([&node, &flag](const Node_t& x) {
+				if (&node == &x) {
+					flag = true;
+					return;
+				}
+			});
+			return flag;
+		}
 	};
 
 	struct Page_t
 	{
+		using PagePtr_t = Page_t*;
+
 		volatile bool used             = false;
 		uint32_t raw[Macro::PAGE_SIZE] = {0};
-
-		__attribute__((always_inline)) inline void
-		reset() { used = false; }
 
 		__attribute__((always_inline)) inline bool
 		is_used() const { return used; }
@@ -162,7 +194,8 @@ namespace MOS::DataType
 		using ParentPtr_t = TcbPtr_t;
 		using StackPtr_t  = uint32_t*;
 		using Node_t      = ListNode_t;
-		using PagePtr_t   = Page_t*;
+		using PagePtr_t   = Page_t::PagePtr_t;
+		using Tick_t      = uint32_t;
 		using Ret_t       = void;
 		using Argv_t      = void*;
 		using Fn_t        = Ret_t (*)(Argv_t);
@@ -176,6 +209,8 @@ namespace MOS::DataType
 			BLOCKED,
 			TERMINATED,
 		};
+
+		using enum Status_t;
 
 		// Don't change the offset of node and sp, it's important for context switch routine
 		Node_t node;
@@ -192,14 +227,14 @@ namespace MOS::DataType
 		Prior_t priority   = 15;// Low-High = 15-0
 		PagePtr_t page     = nullptr;
 		ParentPtr_t parent = nullptr;
-		Status_t status    = Status_t::TERMINATED;
-		uint16_t ticks     = Macro::TICKS;
+		Status_t status    = TERMINATED;
+		Tick_t time_slice  = Macro::TIME_SLICE;
+		Tick_t delay_ticks = 0;
 
 		TCB_t() = default;
 		TCB_t(Fn_t fn, Argv_t argv = nullptr,
 		      Prior_t pr = 15, Name_t name = "")
-		    : fn(fn), argv(argv),
-		      priority(pr), name(name) {}
+		    : fn(fn), argv(argv), priority(pr), name(name) {}
 
 		__attribute__((always_inline)) inline void
 		set_tid(Tid_t id) volatile
@@ -313,8 +348,8 @@ namespace MOS::DataType
 		__attribute__((always_inline)) inline void
 		release_page() volatile
 		{
-			page->reset();
-			page = nullptr;
+			page->used = false;
+			page       = nullptr;
 		}
 
 		__attribute__((always_inline)) inline uint32_t
@@ -336,6 +371,54 @@ namespace MOS::DataType
 		{
 			return ((TCB_t&) lhs).get_priority() == ((TCB_t&) rhs).get_priority();
 		}
+
+		__attribute__((always_inline)) static inline TcbPtr_t
+		build(PagePtr_t page_ptr, Fn_t fn, Argv_t argv = nullptr,
+		      Prior_t pr = 15, Name_t name = "")
+		{
+			auto tcb = new (page_ptr->raw) TCB_t {fn, argv, pr, name};
+			tcb->attach_page(page_ptr);
+			return tcb;
+		}
+	};
+
+	struct DebugTasks
+	{
+		using enum TCB_t::Status_t;
+		using TcbPtr_t = TCB_t::TcbPtr_t;
+
+		volatile TcbPtr_t raw[Macro::MAX_TASK_NUM] = {nullptr};
+
+		__attribute__((always_inline)) inline void
+		add(TcbPtr_t tcb) volatile
+		{
+			for (auto& pt: raw) {
+				if (pt == nullptr) {
+					pt = tcb;
+					break;
+				}
+			}
+		}
+
+		__attribute__((always_inline)) inline void
+		remove(TcbPtr_t tcb) volatile
+		{
+			for (auto& pt: raw) {
+				if (pt == tcb) {
+					pt = nullptr;
+					break;
+				}
+			}
+		}
+
+		__attribute__((always_inline)) inline void
+		iter(auto&& fn) const volatile
+		{
+			for (const auto& pt: raw) {
+				fn(pt);
+			}
+		}
 	};
 }
+
 #endif

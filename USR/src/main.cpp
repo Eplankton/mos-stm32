@@ -5,8 +5,6 @@
 // Put user global data here
 namespace MOS::UserGlobal
 {
-	using namespace DataType;
-
 	// Serial input and output
 	auto& uart = Driver::convert(USART3);
 
@@ -16,6 +14,17 @@ namespace MOS::UserGlobal
 	        {GPIOB,  GPIO_Pin_0},
 	        {GPIOB,  GPIO_Pin_7},
 	};
+
+	Driver::ST7735S lcd {
+	        SPI1,
+	        {GPIOA,  GPIO_Pin_5}, // SCLK(SCL)  -> PA5
+	        {GPIOA,  GPIO_Pin_7}, // MOSI(SDA)  -> PA7
+	        {GPIOD, GPIO_Pin_14}, // CS(SS)     -> PD14
+	        {GPIOB,  GPIO_Pin_8}, // RESET(RES) -> PB8
+	        {GPIOB,  GPIO_Pin_9}, // DC(RS)     -> PB9
+	};
+
+	MOS::Sync::MutexImpl_t mutex;
 }
 
 namespace MOS::Bsp
@@ -39,11 +48,14 @@ namespace MOS::Bsp
 		}
 	}
 
-	static inline void NVIC_Config()
+	static inline void NVIC_GroupConfig()
 	{
 		NVIC_t::group_config(NVIC_PriorityGroup_2);
-		NVIC_t::init(EXTI15_10_IRQn, 1, 1, ENABLE);
-		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
+	}
+
+	static inline void SysTick_Config()
+	{
+		Driver::SysTick_t::config(Macro::SYSTICK);
 	}
 
 	static inline void K1_IRQ_Config()
@@ -52,12 +64,14 @@ namespace MOS::Bsp
 		RCC_t::APB2::clock_cmd(RCC_APB2Periph_SYSCFG, ENABLE);
 		SYSCFG_t::exti_line_config(EXTI_PortSourceGPIOC, EXTI_PinSource13);
 		EXTI_t::init(EXTI_Line13, EXTI_Mode_Interrupt, EXTI_Trigger_Rising, ENABLE);
+		NVIC_t::init(EXTI15_10_IRQn, 1, 1, ENABLE);
 	}
 
 	static inline void USART_Config()
 	{
 		RCC_t::AHB1::clock_cmd(RCC_AHB1Periph_GPIOD, ENABLE);
 		RCC_t::APB1::clock_cmd(RCC_APB1Periph_USART3, ENABLE);
+		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
 
 		uart.init(9600, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
 		        .rx_config(GPIOD, GPIO_t::get_pin_src(9), GPIO_AF_USART3)
@@ -66,32 +80,44 @@ namespace MOS::Bsp
 		        .enable();
 	}
 
+	static inline void LCD_Config()
+	{
+		RCC_t::APB2::enable(RCC_APB2Periph_SPI1);
+		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOD);
+
+		lcd.spi.sclk_config(GPIOA, GPIO_t::get_pin_src(5), GPIO_AF_SPI1)
+		        .mosi_config(GPIOA, GPIO_t::get_pin_src(7), GPIO_AF_SPI1);
+		lcd.init();
+	}
+
 	static inline void config()
 	{
 		LED_Config();
-		NVIC_Config();
+		NVIC_GroupConfig();
 		USART_Config();
 		K1_IRQ_Config();
+		LCD_Config();
+		SysTick_Config();
 	}
 }
 
-namespace MOS::IRQ
+namespace MOS::ISR
 {
 	// K1 IRQ Handler
 	extern "C" void EXTI15_10_IRQHandler()
 	{
 		static auto K1_IRQ = [](void* argv) {
-			for (uint32_t i = 0; i < 5; i++) {
-				Task::delay_ms(1000);
+			for (uint32_t i = 0; i < 10; i++) {
 				UserGlobal::leds[2].toggle();
 				Task::print_name();
+				Task::delay(100);
 			}
 		};
 
 		Driver::EXTI_t::handle_line(EXTI_Line13, [] {
 			MOS_MSG("[MOS]: K1 IRQ!\n");
 			Task::create(K1_IRQ, nullptr, 1, "K1");
-			Task::print_all_tasks();
+			// Task::print_all_tasks();
 		});
 	}
 
@@ -114,20 +140,61 @@ namespace MOS::App
 {
 	using UserGlobal::leds;
 
+	void LCD(void* argv)
+	{
+		using Color = Driver::ST7735S::Color;
+		using UserGlobal::lcd;
+
+		constexpr auto logo = " A_A       _\n"
+		                      "o'' )_____//\n"
+		                      " `_/  MOS  )\n"
+		                      " (_(_/--(_/\n";
+
+		while (true) {
+			lcd.show_string(1, 1, logo, Color::GBLUE);
+			Task::delay(250);
+			lcd.clear(lcd.bkgd);
+
+			lcd.show_string(1, 1, "Hello, World!", Color::GREEN);
+			Task::delay(250);
+			lcd.clear(lcd.bkgd);
+
+			lcd.test_gray16();
+			Task::delay(250);
+			lcd.clear(lcd.bkgd);
+		}
+	}
+
 	void Task1(void* argv)
 	{
-		for (uint32_t i = 0; i < 50; i++) {
-			Task::delay_ms(500);
+		for (uint32_t i = 0; i < 20; i++) {
 			leds[1].toggle();
+			Task::delay(100);
 		}
 	}
 
 	void Task0(void* argv)
 	{
-		Task::create(Task1, nullptr, 1, "T1");
+		Task::create(App::Task1, nullptr, 1, "T1");
 		while (true) {
-			Task::delay_ms(500);
 			leds[0].toggle();
+			Task::delay(200);
+		}
+	}
+
+	void MutexTest(void* argv)
+	{
+		using UserGlobal::mutex;
+
+		auto cur = Task::current_task();
+		while (true) {
+			mutex.lock();
+			for (uint8_t i = 0; i < 5; ++i) {
+				MOS_MSG("%s is working...\n", cur->get_name());
+				Task::delay(100);
+			}
+			mutex.unlock();
+			Task::delay(100);
 		}
 	}
 }
@@ -138,18 +205,19 @@ void idle(void* argv)
 
 	// Create user tasks
 	Task::create(Shell::launch, nullptr, 1, "Shell");
+	Task::create(App::LCD, nullptr, 1, "LCD");
 	Task::create(App::Task0, nullptr, 1, "T0");
 
-	// Print tasks
-	Task::print_all_tasks();
+	// Task::create(App::MutexTest, nullptr, 1, "T1");
+	// Task::create(App::MutexTest, nullptr, 2, "T2");
+	// Task::create(App::MutexTest, nullptr, 3, "T3");
 
 	// Set idle to the lowest priority
 	Task::change_priority(Task::current_task(), Macro::PRI_MIN);
 
 	while (true) {
-		// Idle does nothing but loop...
-		Task::delay_ms(1000);
-		// Task::print_name();
+		// nothing but loop...
+		asm volatile("");
 	}
 }
 

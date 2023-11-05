@@ -2,7 +2,6 @@
 #define _MOS_DRIVER_KEY_
 
 #include "gpio.hpp"
-#include "delay.hpp"
 
 namespace MOS::Driver
 {
@@ -41,22 +40,6 @@ namespace MOS::Driver
 		// Buttom not pressed
 		inline constexpr bool
 		is_reset() const { return !is_set(); }
-
-		// Buttom clicked
-		inline constexpr bool
-		click() const
-		{
-			// Action detected
-			if (is_set()) {
-				// Wait until loose
-				delay(100);
-				while (is_set())
-					;
-				return true;
-			}
-			else
-				return false;
-		}
 	};
 }
 

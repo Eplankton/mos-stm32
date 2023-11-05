@@ -2,7 +2,6 @@
 #define _MOS_DRIVER_LED_
 
 #include "gpio.hpp"
-#include "delay.hpp"
 
 namespace MOS::Driver
 {
@@ -49,15 +48,6 @@ namespace MOS::Driver
 		inline void toggle()
 		{
 			port.toggle_bits(pin);
-		}
-
-		// Blink the led
-		inline void blink(Time_t t = 1000)
-		{
-			delay(t);
-			on();
-			delay(t);
-			off();
 		}
 	};
 }

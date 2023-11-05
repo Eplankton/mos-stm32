@@ -8,11 +8,9 @@ o'' )_____//
  `_/  MOS  )    Mini RTOS on STM32F4, Cortex-M
  (_(_/--(_/     MOS <=> Mini-RTOS
 
-- MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 - Board: Nucleo-144 F429ZI
+- MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
-
-
 
 #### Main Structure
 
@@ -40,20 +38,16 @@ namespace MOS::UserGlobal
     auto& uart = Driver::convert(USART3);
 
     // LED red, green, blue
-    Driver::LED_t leds[] = {
-        {GPIOB,  GPIO_Pin_14},
-        {GPIOB,  GPIO_Pin_0},
-        {GPIOB,  GPIO_Pin_7},
-    };
+    Driver::LED_t leds[] = {...};
 }
 
 namespace MOS::Bsp
 {
     using namespace Driver;
+    using namespace UserGlobal;
 
     void LED_Config()
     {
-        using UserGlobal::leds;
         ...
         for (auto& led: leds) {
             led.init();
@@ -62,9 +56,8 @@ namespace MOS::Bsp
 
     void USART_Config()
     {
-        using UserGlobal::uart;
         ...
-        uart.init(...);
+        uart.init(9600-8-1-N);
     }
 
     void config()
@@ -84,8 +77,7 @@ namespace MOS::App // User tasks
     {
         while (true) {
             leds[0].toggle();
-            Task::print_name();
-            Task::delay_ms(500);
+            Task::delay(500);
         }
     }
 }
@@ -96,8 +88,7 @@ void idle(void* argv)
 
 	Task::create(Shell::launch, nullptr, 1, "Shell");
     Task::create(App::Task0, nullptr, 0, "T0");
-    Task::print_all_tasks();
-	Task::change_priority(Task::current_task(), Macro::PRI_MIN);
+    ...
 
     while (true) {
         // ...
@@ -107,7 +98,8 @@ void idle(void* argv)
 int main(void)
 {
     using namespace MOS;
-    Bsp::config();
+
+    Bsp::config(); // Init Hardware
     Task::create(idle, nullptr, Macro::PRI_MAX, "idle");
     Scheduler::launch(); // Begin Scheduling, never return
 
@@ -148,12 +140,15 @@ The initial version (0.0.1) with basic scheduler, to do:
 ```
 Version 0.0.2:
 1. Sync::{Semaphore_t, Lock_t}
-2. Policy::{PreemptivePriority}, allows tasks of the same priority to be scheduled in round-robin
-3. Task::terminate is called implicitly when the task exits
+2. Policy::{PreemptivePriority}, for same priority -> {RoundRobin}
+3. Task::terminate() implicitly be called when task exits
 4. Shell::{Command, CmdCall, launch}
+5. Port LCD ST7735S, SPI driver
+6. os_ticks and Task::delay()
 
 To do:
 1. Mutex_t with priority inheritance mechanism
-2. Inter-process communication: pipes, message queues, etc
+2. IPC: pipes, message queues, etc.
 3. Simple dynamic memory allocator
+4. Port GUILite/LVGL
 ```
