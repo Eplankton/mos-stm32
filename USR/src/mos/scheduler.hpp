@@ -1,7 +1,6 @@
 #ifndef _MOS_SCHEDULER_
 #define _MOS_SCHEDULER_
 
-#include "drivers/systick.hpp"
 #include "config.h"
 #include "task.hpp"
 
