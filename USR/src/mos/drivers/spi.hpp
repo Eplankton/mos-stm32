@@ -84,7 +84,12 @@ namespace MOS::Driver
 			return cmd(DISABLE);
 		}
 
-		// Do inline this function
+		__attribute__((always_inline)) inline constexpr auto
+		get_flag_status(Flag_t flag) const
+		{
+			return SPI_GetFlagStatus((Raw_t) this, flag);
+		}
+
 		__attribute__((noinline)) constexpr auto&
 		send_data(Data_t data)
 		{
@@ -92,13 +97,8 @@ namespace MOS::Driver
 			return *this;
 		}
 
-		inline constexpr auto
-		get_flag_status(Flag_t flag) const
-		{
-			return SPI_GetFlagStatus((Raw_t) this, flag);
-		}
-
-		inline void write_bus(uint8_t data)
+		__attribute__((noinline)) void
+		write_bus(uint8_t data)
 		{
 			send_data(data);
 			while (!get_flag_status(SPI_I2S_FLAG_TXE))

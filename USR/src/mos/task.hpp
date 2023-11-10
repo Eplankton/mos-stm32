@@ -15,7 +15,11 @@ namespace MOS::Task
 	using KernelGlobal::blocked_list;
 	using KernelGlobal::os_ticks;
 	using KernelGlobal::tids;
+	using KernelGlobal::debug_tcbs;
 
+	using Fn_t      = TCB_t::Fn_t;
+	using Argv_t    = TCB_t::Argv_t;
+	using Prior_t   = TCB_t::Prior_t;
 	using Node_t    = TCB_t::Node_t;
 	using Status_t  = TCB_t::Status_t;
 	using Name_t    = TCB_t::Name_t;
@@ -23,14 +27,14 @@ namespace MOS::Task
 	using TcbPtr_t  = TCB_t::TcbPtr_t;
 	using PagePtr_t = TCB_t::PagePtr_t;
 
-	__attribute__((always_inline)) inline constexpr auto&
-	current_task() { return (TcbPtr_t&) curTCB; }
+	__attribute__((always_inline)) inline auto
+	current_task() { return curTCB; }
 
 	__attribute__((always_inline)) inline void
 	yield() { MOS_TRIGGER_SYSTICK_INTR(); }
 
 	__attribute__((always_inline)) inline uint32_t
-	num() { return ready_list.size() + blocked_list.size(); }
+	num() { return debug_tcbs.size(); }
 
 	inline void terminate(TcbPtr_t tcb = current_task())
 	{
@@ -56,7 +60,7 @@ namespace MOS::Task
 		tcb->deinit();
 
 		// For debug only
-		KernelGlobal::debug_tcbs.remove(tcb);
+		debug_tcbs.remove(tcb);
 
 		// Enable interrupt, leave critical section
 		MOS_ENABLE_IRQ();
@@ -69,8 +73,7 @@ namespace MOS::Task
 	__attribute__((always_inline)) static inline void
 	ending() { terminate(current_task()); }
 
-	inline TcbPtr_t create(TCB_t::Fn_t&& fn, TCB_t::Argv_t argv = nullptr,
-	                       TCB_t::Prior_t pr = 15, TCB_t::Name_t name = "")
+	inline TcbPtr_t create(Fn_t&& fn, Argv_t argv = nullptr, Prior_t pr = 15, Name_t name = "")
 	{
 		if (num() >= Macro::MAX_TASK_NUM) {
 			return nullptr;
@@ -94,12 +97,12 @@ namespace MOS::Task
 
 		// Setup the stack to hold task context.
 		// Remember it is a descending stack and a context consists of 16 registers.
-		// high -> low, descending
+		// high -> low, descending stack
 		// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
 		tcb->set_SP(&tcb->page->raw[Macro::PAGE_SIZE - 16]);
 
-		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the thumb state.
-		// V6-m and V7-m cores can only support thumb state so it should always be set to '1'.
+		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the Thumb state.
+		// V6-m and V7-m cores can only support Thumb state so it should always be set to '1'.
 		tcb->set_xPSR((uint32_t) 0x01000000);
 
 		// Set the stacked PC to point to the task
@@ -121,7 +124,7 @@ namespace MOS::Task
 		ready_list.insert_in_order(tcb->node, TCB_t::priority_cmp);
 
 		// For debug only
-		KernelGlobal::debug_tcbs.add(tcb);
+		debug_tcbs.add(tcb);
 
 		// Enable interrupt, leave critical section
 		MOS_ENABLE_IRQ();
@@ -181,12 +184,12 @@ namespace MOS::Task
 		}
 	}
 
+	// For debug only
 	__attribute__((always_inline)) inline void
 	for_all_tasks(auto&& fn)
-	    requires Invocable<decltype(fn), const Node_t&>
+	    requires Invocable<decltype(fn), TcbPtr_t>
 	{
-		ready_list.iter(fn);
-		blocked_list.iter(fn);
+		debug_tcbs.iter(fn);
 	}
 
 	__attribute__((always_inline)) inline TcbPtr_t
@@ -194,19 +197,19 @@ namespace MOS::Task
 	{
 		TcbPtr_t res = nullptr;
 
-		auto fetch = [info, &res](const Node_t& node) {
-			auto& tcb = (TCB_t&) node;
-
+		auto fetch = [info, &res](TcbPtr_t tcb) {
+			if (tcb == nullptr)
+				return;
 			if constexpr (Same<decltype(info), Tid_t>) {
-				if (tcb.get_tid() == info) {
-					res = &tcb;
+				if (tcb->get_tid() == info) {
+					res = tcb;
 					return;
 				}
 			}
 
 			if constexpr (Same<decltype(info), Name_t>) {
-				if (strcmp(tcb.get_name(), info) == 0) {
-					res = &tcb;
+				if (strcmp(tcb->get_name(), info) == 0) {
+					res = tcb;
 					return;
 				}
 			}
@@ -260,7 +263,7 @@ namespace MOS::Task
 		MOS_MSG("-----------------------------------\n");
 
 		// For debug only
-		KernelGlobal::debug_tcbs.iter([](const volatile TcbPtr_t& tcb) {
+		debug_tcbs.iter([](TcbPtr_t tcb) {
 			if (tcb != nullptr &&
 			    !tcb->is_status(Status_t::TERMINATED)) {
 				print_task(tcb->node);
@@ -269,12 +272,6 @@ namespace MOS::Task
 
 		MOS_MSG("-----------------------------------\n");
 		MOS_ENABLE_IRQ();
-	}
-
-	__attribute__((always_inline)) inline void
-	delay_ms(const uint32_t n, const uint32_t unit = 1000)
-	{
-		Util::delay(n, unit);
 	}
 
 	__attribute__((always_inline)) inline void

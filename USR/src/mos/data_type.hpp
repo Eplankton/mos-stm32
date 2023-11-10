@@ -25,7 +25,20 @@ namespace MOS::DataType
 		__attribute__((always_inline)) inline void
 		add(char ch) volatile { raw[index++] = ch; }
 
-		inline void clear()
+		// If now empty
+		__attribute__((always_inline)) inline char
+		back() const volatile { return raw[index - 1]; }
+
+		__attribute__((always_inline)) inline void
+		pop() volatile
+		{
+			if (index > 0) {
+				raw[--index] = '\0';
+			}
+		}
+
+		__attribute__((always_inline)) inline void
+		clear()
 		{
 			while (--index >= 0) {
 				raw[index] = '\0';
@@ -317,25 +330,25 @@ namespace MOS::DataType
 		__attribute__((always_inline)) inline void
 		set_xPSR(uint32_t xpsr_val) volatile
 		{
-			page->raw[Macro::PAGE_SIZE - 1] = xpsr_val;
+			page->raw[Macro::PAGE_SIZE - 1U] = xpsr_val;
 		}
 
 		__attribute__((always_inline)) inline void
 		set_PC(uint32_t pc_val) volatile
 		{
-			page->raw[Macro::PAGE_SIZE - 2] = pc_val;
+			page->raw[Macro::PAGE_SIZE - 2U] = pc_val;
 		}
 
 		__attribute__((always_inline)) inline void
 		set_LR(uint32_t lr_val) volatile
 		{
-			page->raw[Macro::PAGE_SIZE - 3] = lr_val;
+			page->raw[Macro::PAGE_SIZE - 3U] = lr_val;
 		}
 
 		__attribute__((always_inline)) inline void
 		set_param(uint32_t param) volatile
 		{
-			page->raw[Macro::PAGE_SIZE - 8] = param;
+			page->raw[Macro::PAGE_SIZE - 8U] = param;
 		}
 
 		__attribute__((always_inline)) inline void
@@ -384,10 +397,13 @@ namespace MOS::DataType
 
 	struct DebugTasks
 	{
-		using enum TCB_t::Status_t;
 		using TcbPtr_t = TCB_t::TcbPtr_t;
 
 		volatile TcbPtr_t raw[Macro::MAX_TASK_NUM] = {nullptr};
+		volatile uint32_t len                      = 0;
+
+		__attribute__((always_inline)) inline auto
+		size() const volatile { return len; }
 
 		__attribute__((always_inline)) inline void
 		add(TcbPtr_t tcb) volatile
@@ -395,7 +411,8 @@ namespace MOS::DataType
 			for (auto& pt: raw) {
 				if (pt == nullptr) {
 					pt = tcb;
-					break;
+					len += 1;
+					return;
 				}
 			}
 		}
@@ -406,15 +423,16 @@ namespace MOS::DataType
 			for (auto& pt: raw) {
 				if (pt == tcb) {
 					pt = nullptr;
-					break;
+					len -= 1;
+					return;
 				}
 			}
 		}
 
 		__attribute__((always_inline)) inline void
-		iter(auto&& fn) const volatile
+		iter(auto&& fn) volatile
 		{
-			for (const auto& pt: raw) {
+			for (auto& pt: raw) {
 				fn(pt);
 			}
 		}

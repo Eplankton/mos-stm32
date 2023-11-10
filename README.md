@@ -22,7 +22,7 @@ mos/.
     | global.hpp    Kernel Global Resources
     | config.h      System Configuration
 
-    kernel = task + scheduler + globalres
+    kernel = task + scheduler + global
 ```
 
 

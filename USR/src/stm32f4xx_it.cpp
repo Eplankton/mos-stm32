@@ -125,24 +125,6 @@ void DebugMon_Handler(void)
 {
 }
 
-namespace MOS::IRQ
-{
-	__attribute__((naked, used)) extern "C" void
-	PendSV_Handler(void)
-	{
-		asm("B     ContextSwitch");
-	}
-
-	__attribute__((used)) extern "C" void
-	SysTick_Handler(void)
-	{
-		// Trigger PendSV
-		MOS_DISABLE_IRQ();
-		MOS_TRIGGER_PENDSV_INTR();
-		MOS_ENABLE_IRQ();
-	}
-}
-
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */

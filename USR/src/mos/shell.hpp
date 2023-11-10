@@ -25,11 +25,16 @@ namespace MOS::Shell
 
 		inline const char* match(const char* str) const
 		{
+			auto skip = [](const char* str) {
+				while (*str == ' ') ++str;
+				return str;
+			};
+
 			auto xlen = len();
+
+			str = skip(str);
 			if (strncmp(str, text, xlen) == 0) {
-				const char* argv = str + xlen;
-				while (*argv == ' ') ++argv;
-				return argv;
+				return skip(str + xlen);
 			}
 			else {
 				return nullptr;
@@ -93,14 +98,14 @@ namespace MOS::Shell
 		static inline void uname_cmd(const char* argv)
 		{
 			MOS_MSG(" A_A       _\n"
-			        "o'' )_____//   Build    = %s, %s\n"
-			        " `_/  MOS  )   Version  = %s\n"
-			        " (_(_/--(_/    Platform = %s\n",
-			        __TIME__, __DATE__, MOS_VERSION, MOS_DEVICE);
+			        "o'' )_____//   Version  @ %s\n"
+			        " `_/  MOS  )   Platform @ %s\n"
+			        " (_(_/--(_/    Build    @ %s, %s\n",
+			        MOS_VERSION, MOS_DEVICE, __TIME__, __DATE__);
 		}
 	}
 
-	// Add more cmds here...
+	// Add more cmds here with {"cmd", fn_ptr}
 	static constexpr Command cmds[] = {
 	        {    "ls",     CmdCall::ls_cmd},
 	        {  "kill",   CmdCall::kill_cmd},
@@ -122,13 +127,16 @@ namespace MOS::Shell
 			MOS_MSG("[MOS]: Unknown command '%s'\n", str);
 		};
 
+		MOS_DISABLE_IRQ();
 		CmdCall::uname_cmd(nullptr);
 		Task::print_all_tasks();
+		MOS_ENABLE_IRQ();
 
 		while (true) {
-			if (!rx_buf.empty()) {
-				auto rx_str = rx_buf.c_str();
-				MOS_MSG("< %s\n", rx_str);
+			if (!rx_buf.empty() && rx_buf.back() == '\n') {
+				rx_buf.pop();
+				const auto rx_str = rx_buf.c_str();
+				MOS_MSG("> %s\n", rx_str);
 				parser(rx_str);
 				rx_buf.clear();
 			}

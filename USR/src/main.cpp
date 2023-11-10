@@ -24,7 +24,7 @@ namespace MOS::UserGlobal
 	        {GPIOB,  GPIO_Pin_9}, // DC(RS)     -> PB9
 	};
 
-	MOS::Sync::MutexImpl_t mutex;
+	Sync::MutexImpl_t mutex;
 }
 
 namespace MOS::Bsp
@@ -35,8 +35,8 @@ namespace MOS::Bsp
 	// For printf_
 	extern "C" void _putchar(char ch)
 	{
-		uart.send_data(ch);                                   /* 发送一个字节数据到串口 */
-		while (uart.get_flag_status(USART_FLAG_TXE) == RESET) /* 等待发送完毕 */
+		uart.send_data(ch);
+		while (uart.get_flag_status(USART_FLAG_TXE) == RESET)
 			;
 	}
 
@@ -55,7 +55,7 @@ namespace MOS::Bsp
 
 	static inline void SysTick_Config()
 	{
-		Driver::SysTick_t::config(Macro::SYSTICK);
+		SysTick_t::config(Macro::SYSTICK);
 	}
 
 	static inline void K1_IRQ_Config()
@@ -92,9 +92,9 @@ namespace MOS::Bsp
 
 	static inline void config()
 	{
-		LED_Config();
 		NVIC_GroupConfig();
 		USART_Config();
+		LED_Config();
 		K1_IRQ_Config();
 		LCD_Config();
 		SysTick_Config();
@@ -103,18 +103,37 @@ namespace MOS::Bsp
 
 namespace MOS::ISR
 {
+	extern "C" void PendSV_Handler(void)
+	{
+		asm("B     ContextSwitch");
+	}
+
+	extern "C" void SysTick_Handler(void)
+	{
+		using KernelGlobal::os_ticks;
+
+		// Trigger PendSV
+		MOS_DISABLE_IRQ();
+		os_ticks++;
+		MOS_TRIGGER_PENDSV_INTR();
+		MOS_ENABLE_IRQ();
+	}
+
 	// K1 IRQ Handler
 	extern "C" void EXTI15_10_IRQHandler()
 	{
+		using UserGlobal::leds;
+		using Driver::EXTI_t;
+
 		static auto K1_IRQ = [](void* argv) {
 			for (uint32_t i = 0; i < 10; i++) {
-				UserGlobal::leds[2].toggle();
+				leds[2].toggle();
 				Task::print_name();
 				Task::delay(100);
 			}
 		};
 
-		Driver::EXTI_t::handle_line(EXTI_Line13, [] {
+		EXTI_t::handle_line(EXTI_Line13, [] {
 			MOS_MSG("[MOS]: K1 IRQ!\n");
 			Task::create(K1_IRQ, nullptr, 1, "K1");
 			// Task::print_all_tasks();
@@ -129,8 +148,12 @@ namespace MOS::ISR
 
 		if (uart.get_it_status(USART_IT_RXNE) != RESET) {
 			char data = uart.receive_data();
-			if (data != '\n' && !rx_buf.full()) {
+			if (!rx_buf.full()) {
 				rx_buf.add(data);
+			}
+			else {
+				rx_buf.clear();
+				MOS_MSG("[MOS]: Command too long\n\n");
 			}
 		}
 	}
@@ -138,23 +161,17 @@ namespace MOS::ISR
 
 namespace MOS::App
 {
-	using UserGlobal::leds;
-
 	void LCD(void* argv)
 	{
 		using Color = Driver::ST7735S::Color;
 		using UserGlobal::lcd;
 
-		constexpr auto logo = " A_A       _\n"
-		                      "o'' )_____//\n"
-		                      " `_/  MOS  )\n"
-		                      " (_(_/--(_/\n";
+		// constexpr auto logo = " A_A       _\n"
+		//                       "o'' )_____//\n"
+		//                       " `_/  MOS  )\n"
+		//                       " (_(_/--(_/\n";
 
 		while (true) {
-			lcd.show_string(1, 1, logo, Color::GBLUE);
-			Task::delay(250);
-			lcd.clear(lcd.bkgd);
-
 			lcd.show_string(1, 1, "Hello, World!", Color::GREEN);
 			Task::delay(250);
 			lcd.clear(lcd.bkgd);
@@ -167,6 +184,8 @@ namespace MOS::App
 
 	void Task1(void* argv)
 	{
+		using UserGlobal::leds;
+
 		for (uint32_t i = 0; i < 20; i++) {
 			leds[1].toggle();
 			Task::delay(100);
@@ -175,6 +194,8 @@ namespace MOS::App
 
 	void Task0(void* argv)
 	{
+		using UserGlobal::leds;
+
 		Task::create(App::Task1, nullptr, 1, "T1");
 		while (true) {
 			leds[0].toggle();
