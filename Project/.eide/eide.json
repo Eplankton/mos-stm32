@@ -480,7 +480,7 @@
           ".cmsis/include",
           "RTE/_Target",
           ".eide/deps",
-          "c:/Keil_v5/ARM/ARMCLANG/include"
+          "../../../../../../Keil_v5/ARM/ARMCLANG/include"
         ],
         "libList": [],
         "sourceDirList": [],

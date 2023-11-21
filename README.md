@@ -12,14 +12,10 @@ o'' )_____//
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
 
-
-
 #### Structure
 
 ```
 | mos/.
-|     | drivers/.               Hardware Drivers(SPL/HAL/...)
-|     | 
 |     | arch/. 
 |     |      | cpu.hpp          Arch-related code
 |     | 
@@ -28,6 +24,10 @@ o'' )_____//
 |              | task.hpp       Task create, yield, terminate, block...
 |              | scheduler.hpp  Scheduler
 |              | sync.hpp       Synchronization primitive
+|
+| drivers/.                     Hardware Drivers(SPL/HAL/...)
+|         | stm32f4xx           STM32F4xx on-chip periphs
+|         | device              Other hardware(LED, LCD, etc.)
 |
 | main.cpp                      Entry point
 | config.h                      System Configuration
@@ -48,7 +48,7 @@ o'' )_____//
 namespace MOS::UserGlobal
 {
     using namespace HAL::STM32F4xx;
-    using namespace Driver;
+	using namespace Driver;
     
     // Serial in and out
     auto& uart = STM32F4xx::convert(USART3);
