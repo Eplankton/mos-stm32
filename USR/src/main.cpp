@@ -1,21 +1,34 @@
 #include "main.h"
-#include "mos/kernel.hpp"
+
+// MOS Kernel & Shell
+#include "mos/kernel/kernel.hpp"
 #include "mos/shell.hpp"
+
+// STM32F4xx HAL
+#include "drivers/stm32f4xx/hal.hpp"
+
+// Devices
+#include "drivers/device/st7735s.hpp"
+#include "drivers/device/led.hpp"
+#include "drivers/device/key.hpp"
 
 // Put user global data here
 namespace MOS::UserGlobal
 {
-	// Serial input and output
-	auto& uart = Driver::convert(USART3);
+	using namespace HAL::STM32F4xx;
+	using namespace Driver;
 
-	// LED red, green, blue
-	Driver::LED_t leds[] = {
-	        {GPIOB, GPIO_Pin_14},
-	        {GPIOB,  GPIO_Pin_0},
-	        {GPIOB,  GPIO_Pin_7},
+	// Serial input and output
+	auto& uart = convert(USART3);
+
+	// LEDs
+	LED_t leds[] = {
+	        {GPIOB, GPIO_Pin_14}, // red
+	        {GPIOB,  GPIO_Pin_0}, // green
+	        {GPIOB,  GPIO_Pin_7}, // blue
 	};
 
-	Driver::ST7735S lcd {
+	ST7735S lcd {
 	        SPI1,
 	        {GPIOA,  GPIO_Pin_5}, // SCLK(SCL)  -> PA5
 	        {GPIOA,  GPIO_Pin_7}, // MOSI(SDA)  -> PA7
@@ -30,7 +43,7 @@ namespace MOS::UserGlobal
 namespace MOS::Bsp
 {
 	using namespace UserGlobal;
-	using namespace Driver;
+	using namespace HAL::STM32F4xx;
 
 	// For printf_
 	extern "C" void _putchar(char ch)
@@ -42,7 +55,7 @@ namespace MOS::Bsp
 
 	static inline void LED_Config()
 	{
-		RCC_t::AHB1::clock_cmd(RCC_AHB1Periph_GPIOB, ENABLE);
+		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOB);
 		for (auto& led: leds) {
 			led.init();
 		}
@@ -60,8 +73,8 @@ namespace MOS::Bsp
 
 	static inline void K1_IRQ_Config()
 	{
-		RCC_t::AHB1::clock_cmd(RCC_AHB1Periph_GPIOC, ENABLE);
-		RCC_t::APB2::clock_cmd(RCC_APB2Periph_SYSCFG, ENABLE);
+		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOC);
+		RCC_t::APB2::enable(RCC_APB2Periph_SYSCFG);
 		SYSCFG_t::exti_line_config(EXTI_PortSourceGPIOC, EXTI_PinSource13);
 		EXTI_t::init(EXTI_Line13, EXTI_Mode_Interrupt, EXTI_Trigger_Rising, ENABLE);
 		NVIC_t::init(EXTI15_10_IRQn, 1, 1, ENABLE);
@@ -69,8 +82,8 @@ namespace MOS::Bsp
 
 	static inline void USART_Config()
 	{
-		RCC_t::AHB1::clock_cmd(RCC_AHB1Periph_GPIOD, ENABLE);
-		RCC_t::APB1::clock_cmd(RCC_APB1Periph_USART3, ENABLE);
+		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOD);
+		RCC_t::APB1::enable(RCC_APB1Periph_USART3);
 		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
 
 		uart.init(9600, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
@@ -113,17 +126,18 @@ namespace MOS::ISR
 		using KernelGlobal::os_ticks;
 
 		// Trigger PendSV
-		MOS_DISABLE_IRQ();
-		os_ticks++;
-		MOS_TRIGGER_PENDSV_INTR();
-		MOS_ENABLE_IRQ();
+		{
+			Util::DisIntrGuard guard;
+			os_ticks++;
+			MOS_TRIGGER_PENDSV_INTR();
+		}
 	}
 
 	// K1 IRQ Handler
 	extern "C" void EXTI15_10_IRQHandler()
 	{
 		using UserGlobal::leds;
-		using Driver::EXTI_t;
+		using HAL::STM32F4xx::EXTI_t;
 
 		static auto K1_IRQ = [](void* argv) {
 			for (uint32_t i = 0; i < 10; i++) {
@@ -163,22 +177,23 @@ namespace MOS::App
 {
 	void LCD(void* argv)
 	{
-		using Color = Driver::ST7735S::Color;
+		using namespace Driver;
 		using UserGlobal::lcd;
+		using enum ST7735S::Color;
 
-		// constexpr auto logo = " A_A       _\n"
-		//                       "o'' )_____//\n"
-		//                       " `_/  MOS  )\n"
-		//                       " (_(_/--(_/\n";
+		Terminal terminal {lcd};
+
+		constexpr auto logo = " A_A       _\n"
+		                      "o'' )_____//\n"
+		                      " `_/  MOS  )\n"
+		                      " (_(_/--(_/ \n";
 
 		while (true) {
-			lcd.show_string(1, 1, "Hello, World!", Color::GREEN);
+			terminal.println("Hello, World!", GREEN);
 			Task::delay(250);
-			lcd.clear(lcd.bkgd);
 
-			lcd.test_gray16();
+			terminal.print(logo, YELLOW);
 			Task::delay(250);
-			lcd.clear(lcd.bkgd);
 		}
 	}
 
@@ -220,9 +235,12 @@ namespace MOS::App
 	}
 }
 
-void idle(void* argv)
+int main(void)
 {
 	using namespace MOS;
+
+	// Init resource
+	Bsp::config();
 
 	// Create user tasks
 	Task::create(Shell::launch, nullptr, 1, "Shell");
@@ -232,25 +250,6 @@ void idle(void* argv)
 	// Task::create(App::MutexTest, nullptr, 1, "T1");
 	// Task::create(App::MutexTest, nullptr, 2, "T2");
 	// Task::create(App::MutexTest, nullptr, 3, "T3");
-
-	// Set idle to the lowest priority
-	Task::change_priority(Task::current_task(), Macro::PRI_MIN);
-
-	while (true) {
-		// nothing but loop...
-		asm volatile("");
-	}
-}
-
-int main(void)
-{
-	using namespace MOS;
-
-	// Init resource
-	Bsp::config();
-
-	// Create idle task
-	Task::create(idle, nullptr, Macro::PRI_MAX, "idle");
 
 	// Start scheduling, never return
 	Scheduler::launch();

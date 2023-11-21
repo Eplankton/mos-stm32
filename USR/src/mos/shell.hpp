@@ -1,9 +1,7 @@
 #ifndef _MOS_SHELL_
 #define _MOS_SHELL_
 
-#include "config.h"
-#include "util.hpp"
-#include "task.hpp"
+#include "kernel/task.hpp"
 
 namespace MOS::Shell
 {
@@ -23,7 +21,7 @@ namespace MOS::Shell
 		__attribute__((always_inline)) inline void
 		run(const char* argv) const { fn(argv); }
 
-		inline const char* match(const char* str) const
+		inline Argv_t match(Text_t str) const
 		{
 			auto skip = [](const char* str) {
 				while (*str == ' ') ++str;
@@ -33,7 +31,8 @@ namespace MOS::Shell
 			auto xlen = len();
 
 			str = skip(str);
-			if (strncmp(str, text, xlen) == 0) {
+			if ((str[xlen] == ' ' || str[xlen] == '\0') &&
+			    strncmp(str, text, xlen) == 0) {
 				return skip(str + xlen);
 			}
 			else {
@@ -49,19 +48,18 @@ namespace MOS::Shell
 			auto name = (const char*) argv;
 			if (*name != '\0') {
 				if (auto tcb = Task::find(name)) {
-					MOS_DISABLE_IRQ();
-					MOS_MSG("-----------------------------------\n");
-					Task::print_task(tcb->node);
+					Util::DisIntrGuard guard;
 
 					// for (auto t = tcb; t != nullptr; t = t->get_parent()) {
 					// 	printf("%s", t->get_name());
 					// 	if (t->get_parent() != nullptr) {
-					// 		printf("->");
+					// 		printf("<-");
 					// 	}
 					// }
 
-					MOS_MSG("-----------------------------------\n");
-					MOS_ENABLE_IRQ();
+					// for (uint32_t i = 0; i < 3; i++) {
+					// 	MOS_MSG("%#x\n", tcb->page->raw[Macro::PAGE_SIZE - i - 1]);
+					// }
 				}
 				else {
 					MOS_MSG("[MOS]: Unknown task '%s'\n", name);
@@ -91,17 +89,17 @@ namespace MOS::Shell
 
 		static inline void reboot_cmd(const char* argv)
 		{
-			MOS_MSG("[MOS]: Reboot\n\n");
+			MOS_MSG("[MOS]: Reboot\n\n\n");
 			MOS_REBOOT();
 		}
 
 		static inline void uname_cmd(const char* argv)
 		{
 			MOS_MSG(" A_A       _\n"
-			        "o'' )_____//   Version  @ %s\n"
-			        " `_/  MOS  )   Platform @ %s\n"
-			        " (_(_/--(_/    Build    @ %s, %s\n",
-			        MOS_VERSION, MOS_DEVICE, __TIME__, __DATE__);
+			        "o'' )_____//  Version  @ %s\n"
+			        " `_/  MOS  )  Platform @ %s, %s\n"
+			        " (_(_/--(_/   Build    @ %s, %s\n",
+			        MOS_VERSION, MOS_DEVICE, MOS_CPU, __TIME__, __DATE__);
 		}
 	}
 
@@ -127,15 +125,13 @@ namespace MOS::Shell
 			MOS_MSG("[MOS]: Unknown command '%s'\n", str);
 		};
 
-		MOS_DISABLE_IRQ();
 		CmdCall::uname_cmd(nullptr);
 		Task::print_all_tasks();
-		MOS_ENABLE_IRQ();
 
 		while (true) {
-			if (!rx_buf.empty() && rx_buf.back() == '\n') {
+			if (rx_buf.back() == '\n') {
 				rx_buf.pop();
-				const auto rx_str = rx_buf.c_str();
+				auto rx_str = rx_buf.c_str();
 				MOS_MSG("> %s\n", rx_str);
 				parser(rx_str);
 				rx_buf.clear();

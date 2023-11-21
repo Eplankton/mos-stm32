@@ -29,7 +29,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
-#include "mos/config.h"
 
 /** @addtogroup Template_Project
   * @{
