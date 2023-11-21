@@ -138,6 +138,8 @@ The initial version (0.0.1) with basic scheduler, to do:
 5. Variable page size, memory allocator
 6. SPI driver, transplant LVGL graphics library
 7. Port to ESP32-C3, RISC-V
+```
+```
 Version 0.0.2:
 1. Sync::{Semaphore_t, Lock_t}
 2. Policy::{PreemptivePriority}, for same priority -> {RoundRobin}
