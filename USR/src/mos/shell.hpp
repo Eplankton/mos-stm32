@@ -19,11 +19,11 @@ namespace MOS::Shell
 		len() const { return strlen(text); }
 
 		__attribute__((always_inline)) inline void
-		run(const char* argv) const { fn(argv); }
+		run(Argv_t argv) const { fn(argv); }
 
 		inline Argv_t match(Text_t str) const
 		{
-			auto skip = [](const char* str) {
+			auto skip = [](Text_t str) {
 				while (*str == ' ') ++str;
 				return str;
 			};
@@ -43,9 +43,9 @@ namespace MOS::Shell
 
 	namespace CmdCall
 	{
-		static inline void ls_cmd(const char* argv)
+		static inline void ls_cmd(Command::Argv_t argv)
 		{
-			auto name = (const char*) argv;
+			auto name = argv;
 			if (*name != '\0') {
 				if (auto tcb = Task::find(name)) {
 					Util::DisIntrGuard guard;
@@ -70,9 +70,9 @@ namespace MOS::Shell
 			}
 		}
 
-		static inline void kill_cmd(const char* argv)
+		static inline void kill_cmd(Command::Argv_t argv)
 		{
-			auto name = (const char*) argv;
+			auto name = argv;
 			if (*name != '\0') {
 				if (auto tcb = Task::find(name)) {
 					Task::terminate(tcb);
@@ -87,13 +87,13 @@ namespace MOS::Shell
 			}
 		}
 
-		static inline void reboot_cmd(const char* argv)
+		static inline void reboot_cmd(Command::Argv_t argv)
 		{
 			MOS_MSG("[MOS]: Reboot\n\n\n");
 			MOS_REBOOT();
 		}
 
-		static inline void uname_cmd(const char* argv)
+		static inline void uname_cmd(Command::Argv_t argv)
 		{
 			MOS_MSG(" A_A       _\n"
 			        "o'' )_____//  Version  @ %s\n"
@@ -115,7 +115,7 @@ namespace MOS::Shell
 	{
 		using KernelGlobal::rx_buf;
 
-		static auto parser = [](const char* str) {
+		static auto parser = [](Command::Text_t str) {
 			for (auto& cmd: cmds) {
 				if (auto argv = cmd.match(str)) {
 					cmd.run(argv);

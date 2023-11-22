@@ -126,11 +126,9 @@ namespace MOS::ISR
 		using KernelGlobal::os_ticks;
 
 		// Trigger PendSV
-		{
-			Util::DisIntrGuard guard;
-			os_ticks++;
-			MOS_TRIGGER_PENDSV_INTR();
-		}
+		Util::DisIntrGuard guard;
+		os_ticks++;
+		MOS_TRIGGER_PENDSV_INTR();
 	}
 
 	// K1 IRQ Handler

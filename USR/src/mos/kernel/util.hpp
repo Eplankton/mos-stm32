@@ -52,18 +52,8 @@ namespace MOS::Util
 
 	struct DisIntrGuard
 	{
-		__attribute__((always_inline)) DisIntrGuard()
-		{
-			MOS_DISABLE_IRQ();
-		}
-
-		__attribute__((always_inline)) ~DisIntrGuard()
-		{
-			MOS_ENABLE_IRQ();
-		}
-
-		__attribute__((always_inline)) inline void
-		release() { this->~DisIntrGuard(); }
+		__attribute__((always_inline)) DisIntrGuard() { MOS_DISABLE_IRQ(); }
+		__attribute__((always_inline)) ~DisIntrGuard() { MOS_ENABLE_IRQ(); }
 	};
 }
 

@@ -12,25 +12,28 @@ o'' )_____//
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
 
+
+
 #### Structure
 
 ```
-| mos/.
-|     | arch/. 
-|     |      | cpu.hpp          Arch-related code
-|     | 
-|     | kernel/.                Arch-independent code
-|              | global.hpp     Kernel global
-|              | task.hpp       Task create, yield, terminate, block...
-|              | scheduler.hpp  Scheduler
-|              | sync.hpp       Synchronization primitive
-|
-| drivers/.                     Hardware Drivers(SPL/HAL/...)
-|         | stm32f4xx           STM32F4xx on-chip periphs
-|         | device              Other hardware(LED, LCD, etc.)
-|
-| main.cpp                      Entry point
-| config.h                      System Configuration
+src
+├── config.h                    System Configuration
+├── main.cpp                    Entry point
+│
+├── drivers                     Hardware Drivers(SPL/HAL/...)
+│   ├── device                  Other hardware(LED, LCD, etc.)
+│   └── stm32f4xx               STM32F4xx on-chip periphs
+│
+└── mos
+    ├── arch                    Arch-related code
+    │   └── cpu.hpp
+    │
+    └── kernel                  Arch-independent code
+        ├── global.hpp          Kernel global
+        ├── scheduler.hpp       Task create, yield, terminate, block...
+        ├── sync.hpp            Scheduler
+        └── task.hpp            Sync primitive
 ```
 
 #### Example 
@@ -48,7 +51,7 @@ o'' )_____//
 namespace MOS::UserGlobal
 {
     using namespace HAL::STM32F4xx;
-	using namespace Driver;
+    using namespace Driver;
     
     // Serial in and out
     auto& uart = STM32F4xx::convert(USART3);
@@ -139,6 +142,7 @@ The initial version (0.0.1) with basic scheduler, to do:
 6. SPI driver, transplant LVGL graphics library
 7. Port to ESP32-C3, RISC-V
 ```
+
 ```
 Version 0.0.2:
 1. Sync::{Semaphore_t, Lock_t}

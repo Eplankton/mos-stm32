@@ -201,6 +201,7 @@ namespace MOS::Task
 	__attribute__((always_inline)) inline TcbPtr_t
 	find(auto info)
 	{
+		DisIntrGuard guard;
 		TcbPtr_t res = nullptr;
 
 		auto fetch = [info, &res](TcbPtr_t tcb) {
@@ -221,7 +222,6 @@ namespace MOS::Task
 			}
 		};
 
-		DisIntrGuard guard;
 		for_all_tasks(fetch);
 
 		return res;
@@ -262,11 +262,11 @@ namespace MOS::Task
 		        tcb.page_usage());
 	};
 
+	// For debug only
 	inline void print_all_tasks()
 	{
 		DisIntrGuard guard;
 		MOS_MSG("-----------------------------------\n");
-		// For debug only
 		debug_tcbs.iter([](TcbPtr_t tcb) {
 			print_task(tcb->node);
 		});
