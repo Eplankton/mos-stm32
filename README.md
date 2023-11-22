@@ -37,6 +37,8 @@ src
 ```
 
 #### Example 
+![demo 00_00_00-00_00_30](https://github.com/Eplankton/mos-stm32/assets/86543401/91c06414-80a1-46c9-9af7-4e351397204c)
+
 ```C++
 // MOS Kernel & Shell
 #include "mos/kernel/kernel.hpp"
