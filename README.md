@@ -31,9 +31,9 @@ src
     │
     └── kernel                  Arch-independent code
         ├── global.hpp          Kernel global
-        ├── scheduler.hpp       Task create, yield, terminate, block...
-        ├── sync.hpp            Scheduler
-        └── task.hpp            Sync primitive
+        ├── scheduler.hpp       Scheduler
+        ├── sync.hpp            Sync primitive
+        └── task.hpp            Task create, yield, terminate, block...
 ```
 
 #### Example 
