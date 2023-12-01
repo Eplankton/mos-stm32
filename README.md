@@ -37,8 +37,8 @@ src
 ```
 
 #### Example 
-![demo1](https://github.com/Eplankton/mos-stm32/assets/86543401/01df9af2-6463-474a-a813-a43e9aa240b3)
-![demo2](https://github.com/Eplankton/mos-stm32/assets/86543401/6071427b-f3f1-463d-9417-aa9dadb8ff06)
+![demo1 00_00_00-00_00_30](https://github.com/Eplankton/mos-stm32/assets/86543401/65e36ea0-d178-4da6-8f9a-9f1551c59dfc)
+![demo2 00_00_00-00_00_30](https://github.com/Eplankton/mos-stm32/assets/86543401/bdd2c288-4528-45d5-b07c-03fe1c66bb34)
 ![board](https://github.com/Eplankton/mos-stm32/assets/86543401/93cf5645-2d72-4c52-bad3-aec935a4510f)
 
 ```C++
