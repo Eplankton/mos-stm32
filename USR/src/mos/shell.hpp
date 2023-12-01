@@ -16,7 +16,7 @@ namespace MOS::Shell
 		Fn_t fn;
 
 		__attribute__((always_inline)) inline auto
-		len() const { return strlen(text); }
+		len() const { return Util::strlen(text); }
 
 		__attribute__((always_inline)) inline void
 		run(Argv_t argv) const { fn(argv); }
@@ -32,7 +32,7 @@ namespace MOS::Shell
 
 			str = skip(str);
 			if ((str[xlen] == ' ' || str[xlen] == '\0') &&
-			    strncmp(str, text, xlen) == 0) {
+			    Util::strncmp(str, text, xlen) == 0) {
 				return skip(str + xlen);
 			}
 			else {

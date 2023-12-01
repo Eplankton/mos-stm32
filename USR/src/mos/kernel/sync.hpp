@@ -46,19 +46,15 @@ namespace MOS::Sync
 		{
 			// Assert if irq disabled
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
-
-			{
-				DisIntrGuard guard;
-				if (cnt < 0) {
-					auto& tcb = (TCB_t&) *waiting_list.begin();
-					tcb.set_status(Status_t::READY);
-					waiting_list.send_to_in_order(tcb.node, ready_list, TCB_t::priority_cmp);
-				}
-				cnt += 1;
+			DisIntrGuard guard;
+			if (cnt < 0) {
+				auto& tcb = (TCB_t&) *waiting_list.begin();
+				tcb.set_status(Status_t::READY);
+				waiting_list.send_to_in_order(tcb.node, ready_list, TCB_t::priority_cmp);
 			}
-
+			cnt += 1;
 			if (curTCB != (TcbPtr_t) ready_list.begin()) {
-				Task::yield();
+				return Task::yield();
 			}
 		}
 	};

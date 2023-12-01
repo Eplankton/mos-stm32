@@ -17,7 +17,7 @@ namespace HAL::STM32F4xx
 		SYSCFG_t(const Self_t& src) = delete;
 
 		// Functions
-		static constexpr inline SYSCFG_t&
+		static inline constexpr SYSCFG_t&
 		convert(Raw_t raw) { return (Self_t&) (*raw); }
 
 		static inline void

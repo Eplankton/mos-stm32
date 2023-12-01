@@ -21,19 +21,19 @@ namespace HAL::STM32F4xx
 		TIM_t(const Self_t& src) = delete;
 
 		// Functions
-		static constexpr inline TIM_t&
+		static inline constexpr TIM_t&
 		convert(Raw_t TIMx) { return (Self_t&) (*TIMx); }
 
-		inline constexpr Raw_t get_raw() { return this; }
+		inline Raw_t get_raw() { return this; }
 
-		inline constexpr auto&
+		inline auto&
 		base_init(BaseInit_t&& cfg)
 		{
 			TIM_TimeBaseInit(this, &cfg);
 			return *this;
 		}
 
-		inline constexpr auto&
+		inline auto&
 		base_init(Period_t period, Prescaler_t prescaler)
 		{
 			BaseInit_t base_cfg;
@@ -42,53 +42,53 @@ namespace HAL::STM32F4xx
 			return base_init((BaseInit_t&&) base_cfg);
 		}
 
-		inline constexpr auto&
+		inline auto&
 		clear_flag(Flag_t flag)
 		{
 			TIM_ClearFlag(this, flag);
 			return *this;
 		}
 
-		inline constexpr auto&
+		inline auto&
 		it_config(IT_t tim_it, State_t new_state)
 		{
 			TIM_ITConfig(this, tim_it, new_state);
 			return *this;
 		}
 
-		inline constexpr auto
+		inline auto
 		get_it_status(IT_t tim_it) const
 		{
 			return TIM_GetITStatus((Raw_t) this, tim_it);
 		}
 
-		inline constexpr auto&
+		inline auto&
 		cmd(State_t new_state)
 		{
 			TIM_Cmd(this, new_state);
 			return *this;
 		}
 
-		inline constexpr auto&
+		inline auto&
 		enable()
 		{
 			return cmd(ENABLE);
 		}
 
-		inline constexpr auto&
+		inline auto&
 		disable()
 		{
 			return cmd(DISABLE);
 		}
 
-		inline constexpr auto&
+		inline auto&
 		clear_pending_bit(IT_t tim_it)
 		{
 			TIM_ClearITPendingBit(this, tim_it);
 			return *this;
 		}
 
-		inline constexpr bool
+		inline bool
 		handle_it(IT_t tim_it, auto&& fn)
 		{
 			if (get_it_status(tim_it)) {

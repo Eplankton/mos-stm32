@@ -23,19 +23,19 @@ namespace HAL::STM32F4xx
 		SPI_t(const Self_t& src) = delete;
 
 		// Functions
-		static constexpr inline SPI_t&
+		static inline constexpr SPI_t&
 		convert(Raw_t SPIx) { return (Self_t&) (*SPIx); }
 
-		inline constexpr Raw_t get_raw() { return this; }
+		inline Raw_t get_raw() { return this; }
 
-		inline constexpr auto&
+		inline auto&
 		init(Init_t&& cfg)
 		{
 			SPI_Init(this, &cfg);
 			return *this;
 		}
 
-		inline constexpr auto&
+		inline auto&
 		attach(GPIO_t::Raw_t port, PinSrc_t src, AF_t af,
 		       Speed_t speed = GPIO_High_Speed)
 		{
@@ -49,7 +49,7 @@ namespace HAL::STM32F4xx
 			return *this;
 		}
 
-		inline constexpr auto&
+		inline auto&
 		sclk_config(GPIO_t::Raw_t sclk_port,
 		            PinSrc_t sclk_src, AF_t sclk_af,
 		            Speed_t sclk_speed = GPIO_High_Speed)
@@ -57,7 +57,7 @@ namespace HAL::STM32F4xx
 			return attach(sclk_port, sclk_src, sclk_af, sclk_speed);
 		}
 
-		inline constexpr auto&
+		inline auto&
 		mosi_config(GPIO_t::Raw_t mosi_port,
 		            PinSrc_t mosi_src, AF_t mosi_af,
 		            Speed_t mosi_speed = GPIO_High_Speed)
@@ -65,32 +65,32 @@ namespace HAL::STM32F4xx
 			return attach(mosi_port, mosi_src, mosi_af, mosi_speed);
 		}
 
-		inline constexpr auto&
+		inline auto&
 		cmd(State_t new_state)
 		{
 			SPI_Cmd(this, new_state);
 			return *this;
 		}
 
-		inline constexpr auto&
+		inline auto&
 		enable()
 		{
 			return cmd(ENABLE);
 		}
 
-		inline constexpr auto&
+		inline auto&
 		disable()
 		{
 			return cmd(DISABLE);
 		}
 
-		__attribute__((always_inline)) inline constexpr auto
+		__attribute__((always_inline)) inline auto
 		get_flag_status(Flag_t flag) const
 		{
 			return SPI_GetFlagStatus((Raw_t) this, flag);
 		}
 
-		__attribute__((noinline)) constexpr auto&
+		__attribute__((noinline)) auto&
 		send_data(Data_t data)
 		{
 			SPI_SendData(this, data);

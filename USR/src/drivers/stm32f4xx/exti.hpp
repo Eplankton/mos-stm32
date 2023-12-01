@@ -20,7 +20,7 @@ namespace HAL::STM32F4xx
 		EXTI_t(const Self_t& src) = delete;
 
 		// Functions
-		static constexpr inline EXTI_t&
+		static inline constexpr EXTI_t&
 		convert(Raw_t raw) { return (Self_t&) (*raw); }
 
 		static inline void

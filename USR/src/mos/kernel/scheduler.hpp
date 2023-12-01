@@ -21,7 +21,7 @@ namespace MOS::Scheduler
 		asm volatile(ARCH_INIT_ASM);
 	}
 
-	__attribute__((naked, used)) extern "C" inline void
+	extern "C" __attribute__((naked, used)) inline void
 	ContextSwitch(void)
 	{
 		asm volatile(ARCH_CONTEXT_SWITCH_ASM);
@@ -109,7 +109,7 @@ namespace MOS::Scheduler
 		}
 	}
 
-	__attribute__((used, always_inline)) extern "C" inline void
+	extern "C" __attribute__((used, always_inline)) inline void
 	nextTCB()// Don't change this name which used in asm("")
 	{
 		next_tcb<Policy::MOS_CONF_POLICY>();

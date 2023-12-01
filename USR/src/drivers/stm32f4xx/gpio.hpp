@@ -23,10 +23,10 @@ namespace HAL::STM32F4xx
 		GPIO_t(const Self_t& src) = delete;
 
 		// Functions
-		static constexpr inline GPIO_t&
+		static inline constexpr GPIO_t&
 		convert(Raw_t GPIOx) { return (Self_t&) (*GPIOx); }
 
-		inline constexpr Raw_t get_raw() { return this; }
+		inline Raw_t get_raw() { return this; }
 
 		inline auto&
 		init(Init_t&& cfg)
@@ -61,67 +61,67 @@ namespace HAL::STM32F4xx
 			});
 		}
 
-		inline constexpr void
+		inline void
 		set_bits(Pin_t pin)
 		{
 			GPIO_SetBits(this, pin);
 		}
 
-		inline constexpr void
+		inline void
 		reset_bits(Pin_t pin)
 		{
 			GPIO_ResetBits(this, pin);
 		}
 
-		inline constexpr void
+		inline void
 		toggle_bits(Pin_t pin)
 		{
 			GPIO_ToggleBits(this, pin);
 		}
 
-		inline constexpr void
+		inline void
 		lock_pin(Pin_t pin)
 		{
 			GPIO_PinLockConfig(this, pin);
 		}
 
-		inline constexpr void
+		inline void
 		write_bit(Pin_t pin, BitAction bit_val)
 		{
 			GPIO_WriteBit(this, pin, bit_val);
 		}
 
-		inline constexpr void
+		inline void
 		write(uint16_t port_val)
 		{
 			GPIO_Write(this, port_val);
 		}
 
-		inline constexpr uint8_t
+		inline uint8_t
 		read_input_bit(Pin_t pin) const
 		{
 			return GPIO_ReadInputDataBit((Raw_t) this, pin);
 		}
 
-		inline constexpr uint16_t
+		inline uint16_t
 		read_input_data() const
 		{
 			return GPIO_ReadInputData((Raw_t) this);
 		}
 
-		inline constexpr uint8_t
+		inline uint8_t
 		read_output_bit(Pin_t pin) const
 		{
 			return GPIO_ReadOutputDataBit((Raw_t) this, pin);
 		}
 
-		inline constexpr uint16_t
+		inline uint16_t
 		read_output_data() const
 		{
 			return GPIO_ReadOutputData((Raw_t) this);
 		}
 
-		inline constexpr void
+		inline void
 		pin_af_config(PinSrc_t pin_src, AF_t af)
 		{
 			GPIO_PinAFConfig(this, pin_src, af);

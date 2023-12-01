@@ -215,7 +215,7 @@ namespace MOS::Task
 			}
 
 			if constexpr (Same<decltype(info), Name_t>) {
-				if (strcmp(tcb->get_name(), info) == 0) {
+				if (Util::strcmp(tcb->get_name(), info) == 0) {
 					res = tcb;
 					return;
 				}

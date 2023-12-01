@@ -17,57 +17,57 @@ namespace HAL::STM32F4xx
 		DMA_Stream_t(const Self_t& src) = delete;
 
 		// Functions
-		static constexpr inline DMA_Stream_t&
+		static inline constexpr DMA_Stream_t&
 		convert(Raw_t DMAy_Streamx) { return (Self_t&) (*DMAy_Streamx); }
 
-		inline constexpr Raw_t get_raw() { return this; }
+		inline Raw_t get_raw() { return this; }
 
-		inline constexpr auto&
+		inline auto&
 		init(Init_t&& cfg)
 		{
 			DMA_Init(this, &cfg);
 			return *this;
 		}
 
-		inline constexpr auto&
+		inline auto&
 		deinit()
 		{
 			DMA_DeInit(this);
 			return *this;
 		}
 
-		inline constexpr auto
+		inline auto
 		get_cmd_status() const
 		{
 			return DMA_GetCmdStatus((Raw_t) this);
 		}
 
-		inline constexpr auto
+		inline auto
 		get_flag_status(Flag_t flag) const
 		{
 			return DMA_GetFlagStatus((Raw_t) this, flag);
 		}
 
-		inline constexpr void
+		inline void
 		clear_flag(Flag_t flag)
 		{
 			DMA_ClearFlag(this, flag);
 		}
 
-		inline constexpr auto&
+		inline auto&
 		cmd(State_t new_state)
 		{
 			DMA_Cmd(this, new_state);
 			return *this;
 		}
 
-		inline constexpr auto&
+		inline auto&
 		enable()
 		{
 			return cmd(ENABLE);
 		}
 
-		inline constexpr auto&
+		inline auto&
 		disable()
 		{
 			return cmd(DISABLE);

@@ -341,6 +341,7 @@ namespace Driver
 			//************* Start Initial Sequence **********//
 			write_cmd(0x11);  //Sleep out
 			config_delay(120);//Delay 120ms
+
 			//------------------------------------ST7735S Frame Rate-----------------------------------------//
 			write_cmd(0xB1);
 			write_8bit_data(0x05);
@@ -358,8 +359,10 @@ namespace Driver
 			write_8bit_data(0x3C);
 			write_8bit_data(0x3C);
 			//------------------------------------End ST7735S Frame Rate---------------------------------//
+
 			write_cmd(0xB4);//Dot inversion
 			write_8bit_data(0x03);
+
 			//------------------------------------ST7735S Power Sequence---------------------------------//
 			write_cmd(0xC0);
 			write_8bit_data(0x28);
@@ -377,6 +380,7 @@ namespace Driver
 			write_8bit_data(0x8D);
 			write_8bit_data(0xEE);
 			//---------------------------------End ST7735S Power Sequence-------------------------------------//
+
 			write_cmd(0xC5);//VCOM
 			write_8bit_data(0x1A);
 			write_cmd(0x36);//MX, MY, RGB mode
@@ -394,42 +398,26 @@ namespace Driver
 					write_8bit_data(0xA0);
 					break;
 			}
+
 			//------------------------------------ST7735S Gamma Sequence---------------------------------//
+			constexpr uint8_t gamma_sequence1[] =
+			        {0x04, 0x22, 0x07, 0x0A, 0x2E, 0x30, 0x25, 0x2A,
+			         0x28, 0x26, 0x2E, 0x3A, 0x00, 0x01, 0x03, 0x13};
+			constexpr uint8_t gamma_sequence2[] =
+			        {0x04, 0x16, 0x06, 0x0D, 0x2D, 0x26, 0x23, 0x27,
+			         0x27, 0x25, 0x2D, 0x3B, 0x00, 0x01, 0x04, 0x13};
+
 			write_cmd(0xE0);
-			write_8bit_data(0x04);
-			write_8bit_data(0x22);
-			write_8bit_data(0x07);
-			write_8bit_data(0x0A);
-			write_8bit_data(0x2E);
-			write_8bit_data(0x30);
-			write_8bit_data(0x25);
-			write_8bit_data(0x2A);
-			write_8bit_data(0x28);
-			write_8bit_data(0x26);
-			write_8bit_data(0x2E);
-			write_8bit_data(0x3A);
-			write_8bit_data(0x00);
-			write_8bit_data(0x01);
-			write_8bit_data(0x03);
-			write_8bit_data(0x13);
+			for (uint8_t i = 0; i < sizeof(gamma_sequence1); i++) {
+				write_8bit_data(gamma_sequence1[i]);
+			}
+
 			write_cmd(0xE1);
-			write_8bit_data(0x04);
-			write_8bit_data(0x16);
-			write_8bit_data(0x06);
-			write_8bit_data(0x0D);
-			write_8bit_data(0x2D);
-			write_8bit_data(0x26);
-			write_8bit_data(0x23);
-			write_8bit_data(0x27);
-			write_8bit_data(0x27);
-			write_8bit_data(0x25);
-			write_8bit_data(0x2D);
-			write_8bit_data(0x3B);
-			write_8bit_data(0x00);
-			write_8bit_data(0x01);
-			write_8bit_data(0x04);
-			write_8bit_data(0x13);
+			for (uint8_t i = 0; i < sizeof(gamma_sequence2); i++) {
+				write_8bit_data(gamma_sequence2[i]);
+			}
 			//------------------------------------End ST7735S Gamma Sequence-----------------------------//
+
 			write_cmd(0x3A);//65k mode
 			write_8bit_data(0x05);
 			write_cmd(0x29);//Display on

@@ -33,14 +33,14 @@ namespace Driver
 		}
 
 		// Buttom pressed
-		inline constexpr bool
+		inline bool
 		is_set() const
 		{
 			return port.read_input_bit(pin) == Bit_SET;
 		}
 
 		// Buttom not pressed
-		inline constexpr bool
+		inline bool
 		is_reset() const { return !is_set(); }
 	};
 }
