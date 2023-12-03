@@ -10,19 +10,18 @@
         }
     ],
     "global": {
-        "use-microLIB": true,
         "output-debug-info": "enable"
     },
     "c/cpp-compiler": {
         "optimization": "level-image-size",
         "language-c": "c11",
         "language-cpp": "c++14",
-        "link-time-optimization": true,
         "short-enums#wchar": true,
         "warnings": "ac5-like-warnings",
         "misc-controls": "-Wno-empty-body -Wno-deprecated-volatile",
         "CXX_FLAGS": "-std=c++2b -fno-exceptions -fno-rtti",
-        "one-elf-section-per-function": true
+        "one-elf-section-per-function": true,
+        "link-time-optimization": true
     },
     "asm-compiler": {
         "$use": "asm-auto",

@@ -15,9 +15,17 @@
 #
 ##########################################################################################
 
-version: "1.0"
-files: null
+version: '1.0'
+
+#
+# for source files with filesystem paths
+#
+files:
+#   './test/**/*.c': --c99
+
+#
+# for source files with virtual paths
+#
 virtualPathFiles:
-    <virtual_root>/USR/src/delay.hpp: -O0
-    <virtual_root>/USR/src/lcd.hpp: -O0
-    <virtual_root>/USR/src/lcd.cpp: -O0
+#   'virtual_folder/**/*.c': --c99
+

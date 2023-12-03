@@ -8,18 +8,19 @@
         "misc-control": "--specs=nosys.specs --specs=nano.specs"
     },
     "c/cpp-compiler": {
-        "language-c": "c17",
-        "language-cpp": "c++17",
+        "language-c": "c11",
+        "language-cpp": "gnu++17",
         "optimization": "level-size",
         "warnings": "all-warnings",
         "one-elf-section-per-function": true,
         "one-elf-section-per-data": true,
-        "CXX_FLAGS": "-std=c++2b -fno-exceptions -fno-rtti"
+        "CXX_FLAGS": "-std=gnu++20 -fno-exceptions -fno-rtti",
+        "C_FLAGS": "-Wno-empty-body -Wno-deprecated-volatile"
     },
     "asm-compiler": {},
     "linker": {
         "output-format": "elf",
         "remove-unused-input-sections": true,
-        "LIB_FLAGS": "-lm"
+        "LIB_FLAGS": "-lm -lsupc++"
     }
 }

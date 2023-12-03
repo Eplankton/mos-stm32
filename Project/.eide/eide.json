@@ -211,7 +211,10 @@
         "name": "INIT",
         "files": [
           {
-            "path": "../INIT/startup_stm32f429_439xx.s"
+            "path": "../INIT/gcc_startup_stm32f429xx.s"
+          },
+          {
+            "path": "../INIT/keil_startup_stm32f429xx.s"
           }
         ],
         "folders": []
@@ -224,10 +227,13 @@
             "name": "src",
             "files": [
               {
+                "path": "../USR/src/gui/Hello3D.cpp"
+              },
+              {
                 "path": "../USR/src/main.cpp"
               },
               {
-                "path": "../USR/src/mos/printf.c"
+                "path": "../USR/src/mos/kernel/printf.c"
               },
               {
                 "path": "../USR/src/stm32f4xx_it.cpp"
@@ -253,12 +259,18 @@
         "<virtual_root>/USR/printf.c",
         "<virtual_root>/USR/nuts/io.c",
         "<virtual_root>/USR/nuts/io.cpp",
-        "<virtual_root>/USR/nuts"
+        "<virtual_root>/USR/nuts",
+        "<virtual_root>/USR/src/c_scan.c",
+        "<virtual_root>/USR/src/lcd.cpp",
+        "<virtual_root>/USR/src/delay.cpp",
+        "<virtual_root>/USR/src/etst.cpp",
+        "<virtual_root>/INIT/gcc_startup_stm32f429xx.s",
+        "<virtual_root>/INIT/keil_startup_stm32f429_439xx.s"
       ],
       "toolchain": "AC6",
       "compileConfig": {
         "cpuType": "Cortex-M4",
-        "floatingPointHardware": "single",
+        "floatingPointHardware": "none",
         "useCustomScatterFile": false,
         "scatterFilePath": "<YOUR_SCATTER_FILE>.sct",
         "storageLayout": {
@@ -334,12 +346,15 @@
         "<virtual_root>/USR/nuts/io.cpp",
         "<virtual_root>/USR/main.cpp",
         "<virtual_root>/USR/io.cpp",
-        "<virtual_root>/USR/stm32f4xx_it.cpp"
+        "<virtual_root>/USR/stm32f4xx_it.cpp",
+        "<virtual_root>/USR/src/lcd.cpp",
+        "<virtual_root>/USR/src/delay.cpp",
+        "<virtual_root>/INIT/gcc_startup_stm32f429xx.s"
       ],
       "toolchain": "AC6",
       "compileConfig": {
         "cpuType": "Cortex-M4",
-        "floatingPointHardware": "single",
+        "floatingPointHardware": "none",
         "scatterFilePath": "",
         "useCustomScatterFile": false,
         "storageLayout": {
@@ -480,7 +495,71 @@
           ".cmsis/include",
           "RTE/_Target",
           ".eide/deps",
-          "../../../../../../Keil_v5/ARM/ARMCLANG/include"
+          "c:/Keil_v5/ARM/ARMCLANG/include"
+        ],
+        "libList": [],
+        "sourceDirList": [],
+        "defineList": [
+          "USE_STDPERIPH_DRIVER",
+          "STM32F429_439xx"
+        ]
+      }
+    },
+    "GCC": {
+      "excludeList": [
+        "<virtual_root>/USR/etl",
+        "<virtual_root>/USR/nuts/io.cpp",
+        "<virtual_root>/USR/main.cpp",
+        "<virtual_root>/USR/io.cpp",
+        "<virtual_root>/USR/stm32f4xx_it.cpp",
+        "<virtual_root>/USR/src/lcd.cpp",
+        "<virtual_root>/USR/src/delay.cpp",
+        "<virtual_root>/USR/src/UIcode.cpp",
+        "<virtual_root>/INIT/startup_stm32f429_439xx.s",
+        "<virtual_root>/INIT/keil_startup_stm32f429xx.s"
+      ],
+      "toolchain": "GCC",
+      "compileConfig": {
+        "cpuType": "Cortex-M4",
+        "floatingPointHardware": "none",
+        "scatterFilePath": "D:\\code\\EIDE\\mos-stm32\\INIT\\STM32F429ZITx_FLASH.ld",
+        "useCustomScatterFile": true,
+        "storageLayout": {
+          "RAM": [],
+          "ROM": []
+        },
+        "options": "null"
+      },
+      "uploader": "OpenOCD",
+      "uploadConfig": {
+        "bin": "",
+        "target": "stm32f4x",
+        "interface": "stlink",
+        "baseAddr": "0x08000000"
+      },
+      "uploadConfigMap": {
+        "JLink": {
+          "bin": "",
+          "baseAddr": "",
+          "cpuInfo": {
+            "vendor": "null",
+            "cpuName": "null"
+          },
+          "proType": 1,
+          "speed": 8000,
+          "otherCmds": ""
+        }
+      },
+      "custom_dep": {
+        "name": "default",
+        "incList": [
+          "../Driver/inc",
+          "../CMSIS/Include",
+          "../CORE",
+          "../USR",
+          ".cmsis/include",
+          "RTE/_Target",
+          ".eide/deps"
         ],
         "libList": [],
         "sourceDirList": [],

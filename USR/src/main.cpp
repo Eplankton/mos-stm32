@@ -11,6 +11,7 @@
 #include "drivers/device/st7735s.hpp"
 #include "drivers/device/led.hpp"
 #include "drivers/device/key.hpp"
+#include "src/gui/GuiLite.h"
 
 // Put user global data here
 namespace MOS::UserGlobal
@@ -173,6 +174,34 @@ namespace MOS::ISR
 
 namespace MOS::App
 {
+	namespace GuiPort
+	{
+		extern "C" void gui_delay_ms(uint32_t ms) { Util::delay(ms); }
+		extern "C" void gfx_draw_pixel(int x, int y, unsigned int rgb)
+		{
+			UserGlobal::lcd.draw_point(x, y, (Driver::ST7735S::Color) GL_RGB_32_to_16(rgb));
+		}
+
+		struct EXTERNAL_GFX_OP
+		{
+			void (*draw_pixel)(int x, int y, unsigned int rgb);
+			void (*fill_rect)(int x0, int y0, int x1, int y1, unsigned int rgb);
+		};
+
+		// GUI entry point
+		extern "C" void startHello3D(void* phy_fb, int width, int height,
+		                             int color_bytes, EXTERNAL_GFX_OP* gfx_op);
+	}
+
+	void GUI(void* argv)
+	{
+		using namespace GuiPort;
+		using UserGlobal::lcd;
+
+		EXTERNAL_GFX_OP gfx_op {gfx_draw_pixel, nullptr};
+		startHello3D(NULL, lcd.width, lcd.height, 1, &gfx_op);
+	}
+
 	void LCD(void* argv)
 	{
 		using namespace Driver;
@@ -242,8 +271,8 @@ int main(void)
 
 	// Create user tasks
 	Task::create(Shell::launch, nullptr, 1, "Shell");
-	Task::create(App::LCD, nullptr, 1, "LCD");
 	Task::create(App::Task0, nullptr, 1, "T0");
+	Task::create(App::GUI, nullptr, 1, "GUI");
 
 	// Task::create(App::MutexTest, nullptr, 1, "T1");
 	// Task::create(App::MutexTest, nullptr, 2, "T2");

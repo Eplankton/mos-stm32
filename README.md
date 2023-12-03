@@ -150,17 +150,18 @@ The initial version (0.0.1) with basic scheduler, to do:
 ```
 Version 0.0.2:
 1. Sync::{Semaphore_t, Lock_t}
-2. Policy::{PreemptivePriority}, for same priority -> {RoundRobin}
+2. Scheduler::Policy::{PreemptivePriority}, under same priority -> {RoundRobin}
 3. Task::terminate() implicitly be called when task exits
 4. Shell::{Command, CmdCall, launch}
-5. os_ticks and Task::delay(ticks)
+5. os_ticks and Task::delay() as blocking delay
 6. Driver::{SPI_t, ST7735S}
-7. Reorganize the struct of project to {kernel, arch, driver}
+7. Reorganize the struct of project into {kernel, arch, driver}
+8. Support GuiLite: https://github.com/idea4good/GuiLite
+9. Support GCC and STM32 HAL
 
 To do:
 1. Mutex_t with priority inheritance mechanism
 2. IPC: pipes, message queues, etc.
 3. Simple dynamic memory allocator
-4. GUILite/LVGL
-5. Timers
+4. Timers
 ```

@@ -9,7 +9,7 @@
 
 #ifdef MOS_CONF_PRINTF
 #include "printf.h"
-#define MOS_MSG(format, ...) printf(format, ##__VA_ARGS__)
+#define MOS_MSG(format, ...) printf_(format, ##__VA_ARGS__)
 #else
 #define MOS_MSG(format, ...) ((void) 0)
 #endif

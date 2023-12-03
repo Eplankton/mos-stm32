@@ -103,7 +103,7 @@ namespace MOS::Shell
 		}
 	}
 
-	// Add more cmds here with {"cmd", fn_ptr}
+	// Add more cmds here with {"cmd", CmdCall::callback}
 	static constexpr Command cmds[] = {
 	        {    "ls",     CmdCall::ls_cmd},
 	        {  "kill",   CmdCall::kill_cmd},
@@ -115,7 +115,7 @@ namespace MOS::Shell
 	{
 		using KernelGlobal::rx_buf;
 
-		static auto parser = [](Command::Text_t str) {
+		auto parser = [](Command::Text_t str) {
 			for (auto& cmd: cmds) {
 				if (auto argv = cmd.match(str)) {
 					cmd.run(argv);
