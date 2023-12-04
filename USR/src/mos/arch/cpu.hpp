@@ -1,7 +1,7 @@
 #ifndef _MOS_CPU_
 #define _MOS_CPU_
 
-#include "../../config.h"
+#include "../../mos_config.h"
 
 #if defined(MOS_CPU_CORTEX_M4)
 #include "cortex_m4.hpp"

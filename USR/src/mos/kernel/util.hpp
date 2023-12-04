@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "../../config.h"
+#include "../../mos_config.h"
 #include "../arch/cpu.hpp"
 
 #ifdef MOS_CONF_PRINTF

@@ -136,6 +136,9 @@ namespace MOS::Shell
 				parser(rx_str);
 				rx_buf.clear();
 			}
+			else {
+				Task::delay(5);
+			}
 		}
 	}
 }

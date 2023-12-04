@@ -183,14 +183,14 @@ void create_ui(void* phy_fb, uint16_t screen_width, uint16_t screen_height, int 
 	Cube theCube;
 	Pyramid thePyramid;
 	while (true) {
-		theCube.draw(60, 50, true);      //erase footprint
+		theCube.draw(64, 50, true);     //erase footprint
 		theCube.rotate();
-		theCube.draw(60, 50, false);     //refresh cube
+		theCube.draw(64, 50, false);    //refresh cube
 
 		thePyramid.draw(64, 120, true); //erase footprint
 		thePyramid.rotate();
 		thePyramid.draw(64, 120, false);//refresh pyramid
-		thread_sleep(10);
+		// thread_sleep(50);
 	}
 }
 

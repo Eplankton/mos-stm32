@@ -1,7 +1,6 @@
 # MOS-STM32
 
 #### Introduction
-
 ```
  A_A       _
 o'' )_____//
@@ -12,28 +11,25 @@ o'' )_____//
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
 
-
-
 #### Structure
-
 ```
 src
-├── config.h                    System Configuration
-├── main.cpp                    Entry point
+├── mos_config             System Configuration
+├── main.cpp               Entry point
 │
-├── drivers                     Hardware Drivers(SPL/HAL/...)
-│   ├── device                  Other hardware(LED, LCD, etc.)
-│   └── stm32f4xx               STM32F4xx on-chip periphs
+├── drivers                Hardware Drivers(SPL/HAL/...)
+│   ├── device             Other hardware(LED, LCD, etc.)
+│   └── stm32f4xx          STM32F4xx on-chip periphs
 │
 └── mos
-    ├── arch                    Arch-related code
-    │   └── cpu.hpp
+    ├── arch               Arch-related code
+    │   └── cpu.hpp
     │
-    └── kernel                  Arch-independent code
-        ├── global.hpp          Kernel global
-        ├── scheduler.hpp       Scheduler
-        ├── sync.hpp            Sync primitive
-        └── task.hpp            Task create, yield, terminate, block...
+    └── kernel             Arch-independent code
+        ├── global.hpp     Kernel global
+        ├── scheduler.hpp  Scheduler, Policy
+        ├── sync.hpp       Sync primitive
+        └── task.hpp       Task create, yield, terminate, block...
 ```
 
 #### Example 

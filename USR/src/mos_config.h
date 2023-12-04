@@ -1,5 +1,5 @@
-#ifndef _MOS_CONF_
-#define _MOS_CONF_
+#ifndef _MOS_CONFIG_
+#define _MOS_CONFIG_
 
 #define MOS_VERSION "0.0.2"
 
