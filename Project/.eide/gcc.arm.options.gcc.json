@@ -14,7 +14,7 @@
         "warnings": "all-warnings",
         "one-elf-section-per-function": true,
         "one-elf-section-per-data": true,
-        "CXX_FLAGS": "-std=gnu++20 -fno-exceptions -fno-rtti",
+        "CXX_FLAGS": "-std=gnu++20 -fno-exceptions -fno-rtti -flto",
         "C_FLAGS": "-Wno-empty-body -Wno-deprecated-volatile"
     },
     "asm-compiler": {},

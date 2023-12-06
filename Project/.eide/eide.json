@@ -227,9 +227,6 @@
             "name": "src",
             "files": [
               {
-                "path": "../USR/src/gui/Hello3D.cpp"
-              },
-              {
                 "path": "../USR/src/main.cpp"
               },
               {
@@ -237,6 +234,9 @@
               },
               {
                 "path": "../USR/src/stm32f4xx_it.cpp"
+              },
+              {
+                "path": "../USR/src/user/gui/Hello3D.cpp"
               }
             ],
             "folders": []

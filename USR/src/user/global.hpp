@@ -18,6 +18,9 @@ namespace MOS::UserGlobal
 	// Serial input and output
 	auto& uart = convert(USART3);
 
+	// Shell handler
+	Task::TcbPtr_t shell_handler = nullptr;
+
 	// LEDs
 	LED_t leds[] = {
 	        {GPIOB, GPIO_Pin_14}, // red

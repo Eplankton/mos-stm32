@@ -139,7 +139,7 @@ The initial version (0.0.1) with basic scheduler, to do:
 2. Inter-process communication(IPC), pipes, message queues
 3. Process synchronization Sync, semaphores, mutex lock
 4. Porting simple shells
-5. Variable page size, memory allocator
+5. Mutable page size, memory allocator
 6. SPI driver, transplant LVGL graphics library
 7. Port to ESP32-C3, RISC-V
 ```
