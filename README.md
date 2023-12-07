@@ -14,7 +14,6 @@ o'' )_____//
 #### Structure
 ```
 src
-├── mos_config             System Configuration
 ├── main.cpp               Entry point
 │
 ├── drivers                Hardware Drivers(SPL/HAL/...)
@@ -22,6 +21,7 @@ src
 │   └── stm32f4xx          STM32F4xx on-chip periphs
 │
 └── mos
+    ├── config.h           System Configuration
     ├── arch               Arch-related code
     │   └── cpu.hpp
     │
@@ -160,5 +160,11 @@ To do:
 1. Mutex_t with priority inheritance mechanism
 2. IPC: pipes, message queues, etc.
 3. Simple dynamic memory allocator
-4. Timers
+4. Timer
+5. BitMap on pages for faster allocation
 ```
+
+#### References
+1. Udemy course: Build Your Own RealTime OS (RTOS) From Ground Up on ARM by Israel Gbati
+2. https://github.com/Dungyichao/PeriodicScheduler_Semaphore
+3. https://github.com/Dungyichao/STM32F4-LCD_ST7735s

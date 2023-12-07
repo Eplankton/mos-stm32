@@ -140,7 +140,7 @@ namespace MOS::Shell
 				parser(rx_str);
 				rx_buf.clear();
 
-				// After parser a command, return to sleep
+				// After parsing a command, return to sleep
 				Task::block();
 			}
 		}

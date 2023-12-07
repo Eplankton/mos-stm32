@@ -3696,6 +3696,13 @@ c_fifo::c_fifo()
 	sem_init((sem_t*)m_read_sem, 0, 0);
 	pthread_mutex_init((pthread_mutex_t*)m_write_mutex, 0);
 }
+c_fifo::~c_fifo()
+{
+	sem_destroy((sem_t*)m_read_sem);
+	free(m_read_sem);
+	pthread_mutex_destroy((pthread_mutex_t*)m_write_mutex);
+	free(m_write_mutex);
+}
 int c_fifo::read(void* buf, int len)
 {
 	unsigned char* pbuf = (unsigned char*)buf;

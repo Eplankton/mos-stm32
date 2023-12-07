@@ -2,7 +2,7 @@
 #define _MOS_MACRO_
 
 #include <stdint.h>
-#include "../../mos_config.h"
+#include "src/mos/config.h"
 
 namespace MOS::Macro
 {

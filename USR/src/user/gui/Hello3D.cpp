@@ -18,10 +18,11 @@ inline void multiply(int m, int n, int p, float* a, float* b, float* c)// a[m][n
 {
 	for (int i = 0; i < m; i++) {
 		for (int j = 0; j < p; j++) {
-			c[i * p + j] = 0;
+			float temp = 0;
 			for (int k = 0; k < n; k++) {
-				c[i * p + j] += a[i * n + k] * b[k * p + j];
+				temp += a[i * n + k] * b[k * p + j];
 			}
+			c[i * p + j] = temp;
 		}
 	}
 }
@@ -190,6 +191,7 @@ void create_ui(void* phy_fb, uint16_t screen_width, uint16_t screen_height, int 
 		thePyramid.draw(64, 120, true); //erase footprint
 		thePyramid.rotate();
 		thePyramid.draw(64, 120, false);//refresh pyramid
+
 		// thread_sleep(50);
 	}
 }

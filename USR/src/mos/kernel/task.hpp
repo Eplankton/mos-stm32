@@ -1,10 +1,10 @@
 #ifndef _MOS_TASK_
 #define _MOS_TASK_
 
-#include "concepts.hpp"
-#include "util.hpp"
-#include "global.hpp"
-#include "alloc.hpp"
+#include "src/mos/kernel/concepts.hpp"
+#include "src/mos/kernel/util.hpp"
+#include "src/mos/kernel/global.hpp"
+#include "src/mos/kernel/alloc.hpp"
 
 namespace MOS::Task
 {

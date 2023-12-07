@@ -1,7 +1,7 @@
 #ifndef _MOS_SYNC_
 #define _MOS_SYNC_
 
-#include "task.hpp"
+#include "src/mos/kernel/task.hpp"
 
 namespace MOS::Sync
 {

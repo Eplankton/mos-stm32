@@ -1,8 +1,8 @@
 #ifndef _MOS_SCHEDULER_
 #define _MOS_SCHEDULER_
 
-#include "../arch/cpu.hpp"
-#include "task.hpp"
+#include "src/mos/arch/cpu.hpp"
+#include "src/mos/kernel/task.hpp"
 
 namespace MOS::Scheduler
 {

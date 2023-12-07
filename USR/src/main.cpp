@@ -20,7 +20,7 @@ namespace MOS::ISR
 
 		// Trigger PendSV
 		Util::DisIntrGuard guard;
-		os_ticks++;
+		os_ticks += 1;
 		MOS_TRIGGER_PENDSV_INTR();
 	}
 
@@ -78,11 +78,14 @@ int main(void)
 	Bsp::config();
 
 	// Create shell as monitor
-	shell_handler = Task::create(Shell::launch, nullptr, 0, "Shell");
+	shell_handler = Task::create(Shell::launch,
+	                             nullptr,
+	                             Macro::PRI_MAX,
+	                             "Shell");
 
 	// Create user tasks
-	Task::create(App::GUI, nullptr, 1, "GUI");
 	Task::create(App::Task0, nullptr, 1, "T0");
+	Task::create(App::GUI, nullptr, 1, "GUI");
 
 	// Task::create(App::MutexTest, nullptr, 1, "T1");
 	// Task::create(App::MutexTest, nullptr, 2, "T2");

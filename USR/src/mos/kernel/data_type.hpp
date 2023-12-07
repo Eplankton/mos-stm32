@@ -1,9 +1,9 @@
 #ifndef _MOS_DATA_TYPE_
 #define _MOS_DATA_TYPE_
 
-#include "concepts.hpp"
-#include "util.hpp"
-#include "macro.hpp"
+#include "src/mos/kernel/concepts.hpp"
+#include "src/mos/kernel/util.hpp"
+#include "src/mos/kernel/macro.hpp"
 
 namespace MOS::DataType
 {
@@ -11,7 +11,7 @@ namespace MOS::DataType
 	struct RxBuffer
 	{
 		char raw[N];
-		volatile int index = 0;
+		volatile int32_t index = 0;
 
 		__attribute__((always_inline)) inline auto
 		c_str() const { return raw; }
