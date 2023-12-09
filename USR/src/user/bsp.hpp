@@ -49,7 +49,7 @@ namespace MOS::Bsp
 	{
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOD);
 		RCC_t::APB1::enable(RCC_APB1Periph_USART3);
-		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
+		NVIC_t::init(USART3_IRQn, 0, 1, ENABLE);
 
 		uart.init(9600, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
 		        .rx_config(GPIOD, GPIO_t::get_pin_src(9), GPIO_AF_USART3)

@@ -1,27 +1,27 @@
 // Kernel & Shell
-#include "mos/kernel/kernel.hpp"
+#include "mos/kernel.hpp"
 #include "mos/shell.hpp"
 
-// User space
+// User space modules
 #include "user/global.hpp"
 #include "user/bsp.hpp"
 #include "user/app.hpp"
 
 namespace MOS::ISR
 {
-	extern "C" void PendSV_Handler()
+	extern "C" __attribute__((naked)) void
+	PendSV_Handler()
 	{
 		asm volatile("B     ContextSwitch");
 	}
 
 	extern "C" void SysTick_Handler()
 	{
-		using KernelGlobal::os_ticks;
+		Util::DisIntrGuard guard;
+		Task::inc_ticks();
 
 		// Trigger PendSV
-		Util::DisIntrGuard guard;
-		os_ticks += 1;
-		MOS_TRIGGER_PENDSV_INTR();
+		Task::yield();
 	}
 
 	// K1 IRQ Handler

@@ -1,10 +1,10 @@
 #ifndef _MOS_TASK_
 #define _MOS_TASK_
 
-#include "src/mos/kernel/concepts.hpp"
-#include "src/mos/kernel/util.hpp"
-#include "src/mos/kernel/global.hpp"
-#include "src/mos/kernel/alloc.hpp"
+#include "concepts.hpp"
+#include "util.hpp"
+#include "global.hpp"
+#include "alloc.hpp"
 
 namespace MOS::Task
 {
@@ -26,7 +26,10 @@ namespace MOS::Task
 	current_task() { return curTCB; }
 
 	__attribute__((always_inline)) inline void
-	yield() { MOS_TRIGGER_SYSTICK_INTR(); }
+	yield() { MOS_TRIGGER_PENDSV_INTR(); }
+
+	__attribute__((always_inline)) inline void
+	inc_ticks() { os_ticks += 1; }
 
 	__attribute__((always_inline)) inline uint32_t
 	num() { return debug_tcbs.size(); }
@@ -205,24 +208,24 @@ namespace MOS::Task
 		TcbPtr_t res = nullptr;
 
 		auto fetch = [info, &res](TcbPtr_t tcb) {
-			if (tcb == nullptr)
-				return;
 			if constexpr (Same<decltype(info), Tid_t>) {
 				if (tcb->get_tid() == info) {
 					res = tcb;
-					return;
+					return true;
 				}
 			}
 
 			if constexpr (Same<decltype(info), Name_t>) {
 				if (Util::strcmp(tcb->get_name(), info) == 0) {
 					res = tcb;
-					return;
+					return true;
 				}
 			}
+
+			return false;
 		};
 
-		for_all_tasks(fetch);
+		debug_tcbs.iter_until(fetch);
 
 		return res;
 	}
@@ -259,7 +262,7 @@ namespace MOS::Task
 		        tcb.get_name(),
 		        tcb.get_priority(),
 		        status_name(tcb.get_status()),
-		        tcb.page_usage());
+		        tcb.stack_usage());
 	};
 
 	// For debug only

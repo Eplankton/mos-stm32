@@ -8,10 +8,12 @@ namespace MOS::App
 {
 	namespace GuiPort
 	{
+		using Color = enum Driver::ST7735S::Color;
+
 		extern "C" void gui_delay_ms(uint32_t ms) { Util::delay(ms); }
 		extern "C" void gfx_draw_pixel(int x, int y, unsigned int rgb)
 		{
-			UserGlobal::lcd.draw_point(x, y, (Driver::ST7735S::Color) GL_RGB_32_to_16(rgb));
+			UserGlobal::lcd.draw_point(x, y, (Color) GL_RGB_32_to_16(rgb));
 		}
 
 		struct EXTERNAL_GFX_OP

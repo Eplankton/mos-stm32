@@ -1,8 +1,8 @@
 #ifndef _MOS_SCHEDULER_
 #define _MOS_SCHEDULER_
 
-#include "src/mos/arch/cpu.hpp"
-#include "src/mos/kernel/task.hpp"
+#include "../arch/cpu.hpp"
+#include "task.hpp"
 
 namespace MOS::Scheduler
 {
@@ -47,12 +47,14 @@ namespace MOS::Scheduler
 	{
 		TcbPtr_t to_wake = nullptr;
 
-		blocked_list.iter([&to_wake](const Node_t& node) {
+		blocked_list.iter_until([&to_wake](const Node_t& node) {
 			auto& tcb = (TCB_t&) node;
 			if (tcb.delay_ticks == os_ticks) {
 				tcb.delay_ticks = 0;
 				to_wake         = &tcb;
+				return true;
 			}
+			return false;
 		});
 
 		if (to_wake != nullptr) {

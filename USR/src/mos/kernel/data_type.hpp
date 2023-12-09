@@ -1,9 +1,9 @@
 #ifndef _MOS_DATA_TYPE_
 #define _MOS_DATA_TYPE_
 
-#include "src/mos/kernel/concepts.hpp"
-#include "src/mos/kernel/util.hpp"
-#include "src/mos/kernel/macro.hpp"
+#include "concepts.hpp"
+#include "util.hpp"
+#include "macro.hpp"
 
 namespace MOS::DataType
 {
@@ -112,6 +112,15 @@ namespace MOS::DataType
 		{
 			for (auto it = begin(); it != end(); it = it->next) {
 				fn(*it);
+			}
+		}
+
+		__attribute__((always_inline)) inline void
+		iter_until(auto&& fn) const
+		    requires Invocable<decltype(fn), const Node_t&>
+		{
+			for (auto it = begin(); it != end(); it = it->next) {
+				if (fn(*it)) return;
 			}
 		}
 
@@ -373,6 +382,14 @@ namespace MOS::DataType
 			return atu * 25 / Macro::PAGE_SIZE;
 		}
 
+		__attribute__((always_inline)) inline uint32_t
+		stack_usage() volatile const
+		{
+			const uint32_t stk_top = (uint32_t) &page->raw[Macro::PAGE_SIZE];
+			const uint32_t atu     = (stk_top - (uint32_t) sp);
+			return atu * 25 / (Macro::PAGE_SIZE - sizeof(TCB_t) / 4);
+		}
+
 		__attribute__((always_inline)) static inline bool
 		priority_cmp(const Node_t& lhs, const Node_t& rhs)
 		{
@@ -435,6 +452,16 @@ namespace MOS::DataType
 			for (auto& pt: raw) {
 				if (pt != nullptr) {
 					fn(pt);
+				}
+			}
+		}
+
+		__attribute__((always_inline)) inline void
+		iter_until(auto&& fn) volatile
+		{
+			for (auto& pt: raw) {
+				if (pt != nullptr) {
+					if (fn(pt)) return;
 				}
 			}
 		}

@@ -2,7 +2,7 @@
 #define _MOS_ALLOC_
 
 // #include <stdlib.h>
-#include "src/mos/kernel/global.hpp"
+#include "global.hpp"
 
 namespace MOS::Alloc
 {
