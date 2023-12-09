@@ -137,7 +137,7 @@ Tid  Name   Priority   Status    PageUsage
 The initial version (0.0.1) with basic scheduler, to do:
 1. Timers, RoundRobin
 2. Inter-process communication(IPC), pipes, message queues
-3. Process synchronization Sync, semaphores, mutex lock
+3. Sync, semaphores, mutex lock
 4. Porting simple shells
 5. Mutable page size, memory allocator
 6. SPI driver, transplant LVGL graphics library

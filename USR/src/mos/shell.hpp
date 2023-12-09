@@ -127,7 +127,6 @@ namespace MOS::Shell
 
 		CmdCall::uname_cmd(nullptr);
 		Task::print_all_tasks();
-		Task::block();
 
 		while (true) {
 			// Valid input should end with '\n'
@@ -139,9 +138,9 @@ namespace MOS::Shell
 				MOS_MSG("> %s\n", rx_str);
 				parser(rx_str);
 				rx_buf.clear();
-
-				// After parsing a command, return to sleep
-				Task::block();
+			}
+			else {
+				Task::yield();
 			}
 		}
 	}

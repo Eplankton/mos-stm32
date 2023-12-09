@@ -8,10 +8,16 @@
 
 namespace MOS::Task
 {
-	using namespace KernelGlobal;
 	using namespace Util;
-	using DataType::TCB_t;
 
+	using KernelGlobal::curTCB;
+	using KernelGlobal::ready_list;
+	using KernelGlobal::blocked_list;
+	using KernelGlobal::os_ticks;
+	using KernelGlobal::tids;
+	using KernelGlobal::debug_tcbs;
+
+	using TCB_t     = DataType::TCB_t;
 	using Fn_t      = TCB_t::Fn_t;
 	using Argv_t    = TCB_t::Argv_t;
 	using Prior_t   = TCB_t::Prior_t;
@@ -30,6 +36,13 @@ namespace MOS::Task
 
 	__attribute__((always_inline)) inline void
 	inc_ticks() { os_ticks += 1; }
+
+	__attribute__((always_inline)) inline auto
+	inc_tids()
+	{
+		tids += 1;
+		return tids;
+	}
 
 	__attribute__((always_inline)) inline uint32_t
 	num() { return debug_tcbs.size(); }
@@ -94,7 +107,7 @@ namespace MOS::Task
 			tcb = TCB_t::build(page, fn, argv, pr, name);
 
 			// Give TID
-			tcb->set_tid(tids++);
+			tcb->set_tid(inc_tids());
 
 			// Setup the stack to hold task context.
 			// Remember it is a descending stack and a context consists of 16 registers.
@@ -174,6 +187,24 @@ namespace MOS::Task
 			// if curTCB isn't the highest priority
 			yield();
 		}
+	}
+
+	// Unsafe version for ISR, not recommended
+	inline void resume_fromISR(TcbPtr_t tcb)
+	{
+		if (tcb == nullptr || !tcb->is_status(Status_t::BLOCKED))
+			return;
+
+		// Assert if irq disabled
+		MOS_ASSERT(test_irq(), "Disabled Interrupt");
+
+		{
+			DisIntrGuard guard;
+			tcb->set_status(Status_t::READY);
+			blocked_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
+		}
+
+		// No yield() here to avoid ContextSwitch in ISR
 	}
 
 	__attribute__((always_inline)) inline void
@@ -279,7 +310,7 @@ namespace MOS::Task
 	__attribute__((always_inline)) inline void
 	delay(const uint32_t ticks)
 	{
-		curTCB->delay_ticks = os_ticks + ticks;
+		curTCB->set_delay_ticks(os_ticks + ticks);
 		block();
 	}
 }

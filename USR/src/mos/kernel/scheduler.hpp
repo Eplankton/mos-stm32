@@ -131,4 +131,23 @@ namespace MOS::Scheduler
 	}
 }
 
+namespace MOS::ISR
+{
+	extern "C" __attribute__((naked)) void
+	PendSV_Handler()
+	{
+		// Just jump to ContextSwitch
+		asm volatile("B     ContextSwitch");
+	}
+
+	extern "C" void SysTick_Handler()
+	{
+		Util::DisIntrGuard guard;
+		Task::inc_ticks();
+
+		// Trigger PendSV
+		Task::yield();
+	}
+}
+
 #endif

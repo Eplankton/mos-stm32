@@ -49,7 +49,7 @@ namespace MOS::Bsp
 	{
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOD);
 		RCC_t::APB1::enable(RCC_APB1Periph_USART3);
-		NVIC_t::init(USART3_IRQn, 0, 1, ENABLE);
+		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
 
 		uart.init(9600, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
 		        .rx_config(GPIOD, GPIO_t::get_pin_src(9), GPIO_AF_USART3)
@@ -76,6 +76,50 @@ namespace MOS::Bsp
 		K1_IRQ_Config();
 		LCD_Config();
 		SysTick_Config();
+	}
+}
+
+namespace MOS::ISR
+{
+	// K1 IRQ Handler
+	extern "C" void EXTI15_10_IRQHandler()
+	{
+		using UserGlobal::leds;
+		using HAL::STM32F4xx::EXTI_t;
+
+		static auto K1_IRQ = [](void* argv) {
+			for (uint32_t i = 0; i < 10; i++) {
+				leds[2].toggle();
+				Task::print_name();
+				Task::delay(100);
+			}
+		};
+
+		EXTI_t::handle_line(EXTI_Line13, [] {
+			MOS_MSG("[MOS]: K1 IRQ!\n");
+
+			// Unsafe, just for debug
+			auto cur = Task::current_task();
+			Task::create(K1_IRQ, nullptr, cur->get_priority(), "K1");
+		});
+	}
+
+	// UART3 IRQ Handler
+	extern "C" void USART3_IRQHandler()
+	{
+		using KernelGlobal::rx_buf;
+		using UserGlobal::uart;
+
+		if (uart.get_it_status(USART_IT_RXNE) != RESET) {
+			char data = uart.receive_data();
+			if (!rx_buf.full()) {
+				rx_buf.add(data);
+			}
+			else {
+				rx_buf.clear();
+				MOS_MSG("[MOS]: Command too long\n\n");
+			}
+		}
 	}
 }
 

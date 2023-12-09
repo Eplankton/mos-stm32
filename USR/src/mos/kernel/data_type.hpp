@@ -361,6 +361,12 @@ namespace MOS::DataType
 		}
 
 		__attribute__((always_inline)) inline void
+		set_delay_ticks(Tick_t ticks) volatile
+		{
+			delay_ticks = ticks;
+		}
+
+		__attribute__((always_inline)) inline void
 		attach_page(PagePtr_t page_ptr) volatile
 		{
 			page       = page_ptr;
