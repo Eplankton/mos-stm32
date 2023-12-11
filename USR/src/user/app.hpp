@@ -78,22 +78,6 @@ namespace MOS::App
 			Task::delay(200);
 		}
 	}
-
-	void MutexTest(void* argv)
-	{
-		using UserGlobal::mutex;
-
-		auto cur = Task::current_task();
-		while (true) {
-			mutex.lock();
-			for (uint8_t i = 0; i < 5; i++) {
-				MOS_MSG("%s is working...\n", cur->get_name());
-				Task::delay(100);
-			}
-			mutex.unlock();
-			Task::delay(100);
-		}
-	}
 }
 
 #endif

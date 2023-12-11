@@ -82,6 +82,15 @@ namespace MOS::Util
 		return 0;
 	}
 
+	inline void*
+	memcpy(void* dest, const void* src, size_t n)
+	{
+		for (size_t i = 0; i < n; i++) {
+			((char*) dest)[i] = ((const char*) src)[i];
+		}
+		return dest;
+	}
+
 	struct DisIntrGuard
 	{
 		__attribute__((always_inline)) DisIntrGuard() { MOS_DISABLE_IRQ(); }

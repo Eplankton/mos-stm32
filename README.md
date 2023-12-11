@@ -3,36 +3,62 @@
 #### Introduction
 ```
  A_A       _
-o'' )_____//
- `_/  MOS  )    Mini RTOS on STM32F4, Cortex-M
- (_(_/--(_/     MOS <=> Mini-RTOS
+o'' )_____//    [MOS-STM32]
+ `_/  MOS  )    Mini RTOS on STM32F4, Cortex-M上
+ (_(_/--(_/	 	MOS <=> Mini-RTOS
 
 - Board: Nucleo-144 F429ZI
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
 
+#### Repository
+[Gitee](https://gitee.com/Eplankton/mos-stm32/) | [Github](https://github.com/Eplankton/mos-stm32)
+
 #### Structure
-```
+[Here's USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
+```    
 src
-├── main.cpp               Entry point
+├── drivers                  Hardware Drivers(SPL/HAL/...)
+│   ├── stm32f4xx            STM32F4xx on-chip periphs
+│   └── device               Other hardware(LED, LCD, etc.)
 │
-├── drivers                Hardware Drivers(SPL/HAL/...)
-│   ├── device             Other hardware(LED, LCD, etc.)
-│   └── stm32f4xx          STM32F4xx on-chip periphs
+├── mos
+│   ├── config.h             System Configuration
+│   ├── arch                 Arch-related code
+│   │   └── cpu.hpp          ASM of ContextSwitch
+│   │
+│   ├── kernel               Kernel(arch-independent)
+│   │   ├── macro.hpp        Configured Macros
+│   │   ├── type.hpp         Basic Types
+│   │   ├── concepts.hpp     C++20 Concepts
+│   │   ├── data_type.hpp    Kernel Data Structures
+│   │   ├── alloc.hpp        Static/Dynamic Allocator
+│   │   ├── global.hpp       Kernel Globals
+│   │   ├── printf.c         printf implementation
+│   │   ├── task.hpp         Task create, yield, terminate, block...
+│   │   ├── sync.hpp         Sync primitives
+│   │   ├── scheduler.hpp    Scheduler and Policy
+│   │   └── util.hpp         Utils
+│   │
+│   ├── kernel.hpp           Import Kernel
+│   └── shell.hpp            Simple Shell
 │
-└── mos
-    ├── config.h           System Configuration
-    ├── arch               Arch-related code
-    │   └── cpu.hpp
-    │
-    └── kernel             Arch-independent code
-        ├── global.hpp     Kernel global
-        ├── scheduler.hpp  Scheduler, Policy
-        ├── sync.hpp       Sync primitive
-        └── task.hpp       Task create, yield, terminate, block...
+├── user
+│   ├── gui                  GUI-related
+│   │   ├── GuiLite.h        GuiLite Framework
+│   │   └── UICode.cpp       Animation
+│   │
+│   ├── global.hpp           User Globals
+│   ├── bsp.hpp              Board Support Package
+│   ├── app.hpp              Applications
+│   └── test.hpp             Test
+│
+├── main.cpp                 Entry main()
+└── stm32f4xx_it.cpp         Interrput SubRoutine(partly)
+
 ```
 
-#### Example 
+#### Example
 ![demo1 00_00_00-00_00_30](https://github.com/Eplankton/mos-stm32/assets/86543401/65e36ea0-d178-4da6-8f9a-9f1551c59dfc)
 ![demo2 00_00_00-00_00_30](https://github.com/Eplankton/mos-stm32/assets/86543401/bdd2c288-4528-45d5-b07c-03fe1c66bb34)
 ![board](https://github.com/Eplankton/mos-stm32/assets/86543401/93cf5645-2d72-4c52-bad3-aec935a4510f)
@@ -40,21 +66,17 @@ src
 
 ```C++
 // MOS Kernel & Shell
-#include "mos/kernel/kernel.hpp"
+#include "mos/kernel.hpp"
 #include "mos/shell.hpp"
-
-// STM32F4xx HAL
-#include "drivers/stm32f4xx/hal.hpp"
-
-// Devices
-#include "drivers/device/led.hpp"
+#include "drivers/stm32f4xx/hal.hpp" // STM32F4xx HAL
+#include "drivers/device/led.hpp" // Devices
 
 namespace MOS::UserGlobal
 {
     using namespace HAL::STM32F4xx;
     using namespace Driver;
     
-    // Serial in and out
+    // Serial TX/RX
     auto& uart = STM32F4xx::convert(USART3);
 
     // LED red, green, blue
@@ -68,7 +90,6 @@ namespace MOS::Bsp
 
     void LED_Config()
     {
-        ...
         for (auto& led: leds) {
             led.init();
         }
@@ -76,16 +97,14 @@ namespace MOS::Bsp
 
     void USART_Config()
     {
-        ...
         uart.init(9600-8-1-N);
     }
 
     void config()
     {
-        ...
         LED_Config();
         USART_Config();
-        ...
+        SysTick_Config();
     }
 }
 
@@ -111,7 +130,7 @@ int main(void)
     Scheduler::launch(); // Begin Scheduling, never return
 
     while (true) {
-        // ...
+        // Never comes here...
     }
 }
 ```
@@ -124,11 +143,11 @@ o'' )_____//  Version  @ x.x.x
  `_/  MOS  )  Platform @ xxx, xxx
  (_(_/--(_/   Build    @ xx:xx:xx
 
-Tid  Name   Priority   Status    PageUsage
--------------------------------------------
-#0   idle     15       READY          10%
-#1   T0       0        RUNNING         9%
--------------------------------------------
+Tid  Name   Priority   Status   StackUsage
+------------------------------------------
+#0   idle     15       READY       10%
+#1   T0       0        RUNNING      9%
+------------------------------------------
 ```
 
 #### Version
@@ -140,7 +159,7 @@ The initial version (0.0.1) with basic scheduler, to do:
 3. Sync, semaphores, mutex lock
 4. Porting simple shells
 5. Mutable page size, memory allocator
-6. SPI driver, transplant LVGL graphics library
+6. SPI driver, LVGL library
 7. Port to ESP32-C3, RISC-V
 ```
 
@@ -160,11 +179,13 @@ To do:
 1. Mutex_t with priority inheritance mechanism
 2. IPC: pipes, message queues, etc.
 3. Simple dynamic memory allocator
-4. Timer
+4. Timers
 5. BitMap on pages for faster allocation
 ```
 
 #### References
-1. Udemy course: Build Your Own RealTime OS (RTOS) From Ground Up on ARM by Israel Gbati
-2. https://github.com/Dungyichao/PeriodicScheduler_Semaphore
-3. https://github.com/Dungyichao/STM32F4-LCD_ST7735s
+1. [How to build a Real-Time Operating System(RTOS)](https://medium.com/@dheeptuck/building-a-real-time-operating-system-rtos-ground-up-a70640c64e93)
+2. [PeriodicScheduler_Semaphore](https://github.com/Dungyichao/PeriodicScheduler_Semaphore)
+3. [STM32F4-LCD_ST7735s](https://github.com/Dungyichao/STM32F4-LCD_ST7735s)
+4. [A printf/sprintf Implementation for Embedded Systems](https://github.com/mpaland/printf)
+5. [GuiLite](https://gitee.com/idea4good/GuiLite)

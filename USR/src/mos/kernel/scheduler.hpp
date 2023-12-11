@@ -43,13 +43,13 @@ namespace MOS::Scheduler
 		init();
 	}
 
-	static inline void wake_up()
+	static inline void try_wake_up()
 	{
 		TcbPtr_t to_wake = nullptr;
 
-		blocked_list.iter_until([&to_wake](const Node_t& node) {
+		sleep_list.iter_until([&to_wake](const Node_t& node) {
 			auto& tcb = (TCB_t&) node;
-			if (tcb.delay_ticks == os_ticks) {
+			if (tcb.delay_ticks <= os_ticks) {
 				tcb.delay_ticks = 0;
 				to_wake         = &tcb;
 				return true;
@@ -59,7 +59,7 @@ namespace MOS::Scheduler
 
 		if (to_wake != nullptr) {
 			to_wake->set_status(Status_t::READY);
-			blocked_list.send_to_in_order(to_wake->node, ready_list, TCB_t::priority_cmp);
+			sleep_list.send_to_in_order(to_wake->node, ready_list, TCB_t::priority_cmp);
 		}
 	}
 
@@ -67,7 +67,8 @@ namespace MOS::Scheduler
 	template <Policy policy>
 	static inline void next_tcb()
 	{
-		wake_up();
+		if (!sleep_list.empty())
+			try_wake_up();
 
 		static auto switch_to = [](TcbPtr_t tcb) {
 			tcb->set_status(Status_t::RUNNING);
@@ -116,36 +117,22 @@ namespace MOS::Scheduler
 	{
 		next_tcb<Policy::MOS_CONF_POLICY>();
 	}
-
-	__attribute__((always_inline)) inline constexpr auto
-	policy_name()
-	{
-		switch (Policy::MOS_CONF_POLICY) {
-			case Policy::RoundRobin:
-				return "RoundRobin";
-			case Policy::PreemptivePriority:
-				return "PreemptivePriority";
-			default:
-				return "INVALID";
-		}
-	}
 }
 
 namespace MOS::ISR
 {
+	using Util::DisIntrGuard;
+
 	extern "C" __attribute__((naked)) void
 	PendSV_Handler()
 	{
-		// Just jump to ContextSwitch
-		asm volatile("B     ContextSwitch");
+		asm volatile("B    ContextSwitch");
 	}
 
 	extern "C" void SysTick_Handler()
 	{
-		Util::DisIntrGuard guard;
+		DisIntrGuard guard;
 		Task::inc_ticks();
-
-		// Trigger PendSV
 		Task::yield();
 	}
 }

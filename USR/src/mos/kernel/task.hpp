@@ -13,6 +13,7 @@ namespace MOS::Task
 	using KernelGlobal::curTCB;
 	using KernelGlobal::ready_list;
 	using KernelGlobal::blocked_list;
+	using KernelGlobal::sleep_list;
 	using KernelGlobal::os_ticks;
 	using KernelGlobal::tids;
 	using KernelGlobal::debug_tcbs;
@@ -150,7 +151,7 @@ namespace MOS::Task
 		return tcb;
 	}
 
-	inline void block(TcbPtr_t tcb = current_task())
+	inline void block_to(TcbPtr_t tcb, DataType::List_t& dest)
 	{
 		if (tcb == nullptr || tcb->is_status(Status_t::BLOCKED))
 			return;
@@ -161,12 +162,18 @@ namespace MOS::Task
 		{
 			DisIntrGuard guard;
 			tcb->set_status(Status_t::BLOCKED);
-			ready_list.send_to(tcb->node, blocked_list);
+			ready_list.send_to(tcb->node, dest);
 		}
 
 		if (tcb == current_task()) {
 			yield();
 		}
+	}
+
+	__attribute__((always_inline)) inline void
+	block(TcbPtr_t tcb = current_task())
+	{
+		block_to(tcb, blocked_list);
 	}
 
 	inline void resume(TcbPtr_t tcb)
@@ -311,7 +318,7 @@ namespace MOS::Task
 	delay(const uint32_t ticks)
 	{
 		curTCB->set_delay_ticks(os_ticks + ticks);
-		block();
+		block_to(current_task(), sleep_list);
 	}
 }
 

@@ -131,9 +131,7 @@ namespace MOS::Shell
 		while (true) {
 			// Valid input should end with '\n'
 			if (rx_buf.back() == '\n') {
-				// Remove '\n'
 				rx_buf.pop();
-
 				auto rx_str = rx_buf.c_str();
 				MOS_MSG("> %s\n", rx_str);
 				parser(rx_str);

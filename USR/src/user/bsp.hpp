@@ -97,10 +97,8 @@ namespace MOS::ISR
 
 		EXTI_t::handle_line(EXTI_Line13, [] {
 			MOS_MSG("[MOS]: K1 IRQ!\n");
-
 			// Unsafe, just for debug
-			auto cur = Task::current_task();
-			Task::create(K1_IRQ, nullptr, cur->get_priority(), "K1");
+			Task::create(K1_IRQ, nullptr, 1, "K1");
 		});
 	}
 
