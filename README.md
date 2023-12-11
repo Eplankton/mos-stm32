@@ -5,7 +5,7 @@
  A_A       _
 o'' )_____//    [MOS-STM32]
  `_/  MOS  )    Mini RTOS on STM32F4, Cortex-M
- (_(_/--(_/  	 	MOS <=> Mini-RTOS
+ (_(_/--(_/     MOS <=> Mini-RTOS
 
 - Board: Nucleo-144 F429ZI
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
@@ -61,8 +61,8 @@ src
 #### Example
 ![demo1 00_00_00-00_00_30](https://github.com/Eplankton/mos-stm32/assets/86543401/65e36ea0-d178-4da6-8f9a-9f1551c59dfc)
 ![demo2 00_00_00-00_00_30](https://github.com/Eplankton/mos-stm32/assets/86543401/bdd2c288-4528-45d5-b07c-03fe1c66bb34)
-<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/93cf5645-2d72-4c52-bad3-aec935a4510f" width="60%">
-<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/45069534-88db-448b-8452-b930ad82395e" width="60%">
+<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/93cf5645-2d72-4c52-bad3-aec935a4510f" width="45%">
+<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/45069534-88db-448b-8452-b930ad82395e" width="45%">
 
 ```C++
 // MOS Kernel & Shell
