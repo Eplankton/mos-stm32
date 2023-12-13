@@ -1,6 +1,6 @@
-# MOS-STM32
+# MOS-STM32 🐱‍🚀
 
-#### Introduction
+### Introduction 🚀
 ```
  A_A       _
 o'' )_____//    [MOS-STM32]
@@ -11,10 +11,10 @@ o'' )_____//    [MOS-STM32]
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
 
-#### Repository
-[Gitee](https://gitee.com/Eplankton/mos-stm32/) | [Github](https://github.com/Eplankton/mos-stm32)
+### Repository 🌏
+[GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
 
-#### Structure
+### Structure 👾
 [Here's USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
 ```    
 src
@@ -40,7 +40,7 @@ src
 │   │   ├── scheduler.hpp    Scheduler and Policy
 │   │   └── util.hpp         Utils
 │   │
-│   ├── kernel.hpp           Import Kernel
+│   ├── kernel.hpp           Import Kernel Modules
 │   └── shell.hpp            Simple Shell
 │
 ├── user
@@ -55,14 +55,12 @@ src
 │
 ├── main.cpp                 Entry main()
 └── stm32f4xx_it.cpp         Interrput SubRoutine(partly)
-
 ```
 
-#### Example
+### Example 🍎
 ![demo1 00_00_00-00_00_30](https://github.com/Eplankton/mos-stm32/assets/86543401/65e36ea0-d178-4da6-8f9a-9f1551c59dfc)
 ![demo2 00_00_00-00_00_30](https://github.com/Eplankton/mos-stm32/assets/86543401/bdd2c288-4528-45d5-b07c-03fe1c66bb34)
-<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/93cf5645-2d72-4c52-bad3-aec935a4510f" width="45%">
-<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/45069534-88db-448b-8452-b930ad82395e" width="45%">
+<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/93cf5645-2d72-4c52-bad3-aec935a4510f" width="45%"> <img src="https://github.com/Eplankton/mos-stm32/assets/86543401/45069534-88db-448b-8452-b930ad82395e" width="45%">
 
 ```C++
 // MOS Kernel & Shell
@@ -135,8 +133,7 @@ int main(void)
 }
 ```
 
-#### Boot up
-
+### Boot up ⚡
 ```
  A_A       _
 o'' )_____//  Version  @ x.x.x
@@ -150,13 +147,13 @@ Tid  Name   Priority   Status   StackUsage
 ------------------------------------------
 ```
 
-#### Version
-
+### Version 📝
 ```
-The initial version (0.0.1) with basic scheduler, to do:
+📦The initial version (0.0.1) with basic scheduler
+📌To do:
 1. Timers, RoundRobin
 2. Inter-process communication(IPC), pipes, message queues
-3. Sync, semaphores, mutex lock
+3. Sync, semaphore, mutex, lock
 4. Porting simple shells
 5. Mutable page size, memory allocator
 6. SPI driver, LVGL library
@@ -164,7 +161,7 @@ The initial version (0.0.1) with basic scheduler, to do:
 ```
 
 ```
-Version 0.0.2:
+📦Version 0.0.2:
 1. Sync::{Semaphore_t, Lock_t}
 2. Scheduler::Policy::{PreemptivePriority}, under same priority -> {RoundRobin}
 3. Task::terminate() implicitly be called when task exits
@@ -175,17 +172,18 @@ Version 0.0.2:
 8. Support GuiLite: https://github.com/idea4good/GuiLite
 9. Support GCC and STM32 HAL
 
-To do:
+📌To do:
 1. Mutex_t with priority inheritance mechanism
 2. IPC: pipes, message queues, etc.
 3. Simple dynamic memory allocator
-4. Timers
+4. Hardware Timers
 5. BitMap on pages for faster allocation
+6. Basic formal verification on Scheduler
 ```
 
-#### References
+### References 🛸
 1. [How to build a Real-Time Operating System(RTOS)](https://medium.com/@dheeptuck/building-a-real-time-operating-system-rtos-ground-up-a70640c64e93)
 2. [PeriodicScheduler_Semaphore](https://github.com/Dungyichao/PeriodicScheduler_Semaphore)
 3. [STM32F4-LCD_ST7735s](https://github.com/Dungyichao/STM32F4-LCD_ST7735s)
 4. [A printf/sprintf Implementation for Embedded Systems](https://github.com/mpaland/printf)
-5. [GuiLite](https://gitee.com/idea4good/GuiLite)
+5. [GuiLite](https://github.com/idea4good/GuiLite)

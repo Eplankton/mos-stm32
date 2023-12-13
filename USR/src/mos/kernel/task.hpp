@@ -19,6 +19,7 @@ namespace MOS::Task
 	using KernelGlobal::debug_tcbs;
 
 	using TCB_t     = DataType::TCB_t;
+	using List_t    = DataType::List_t;
 	using Fn_t      = TCB_t::Fn_t;
 	using Argv_t    = TCB_t::Argv_t;
 	using Prior_t   = TCB_t::Prior_t;
@@ -151,7 +152,7 @@ namespace MOS::Task
 		return tcb;
 	}
 
-	inline void block_to(TcbPtr_t tcb, DataType::List_t& dest)
+	inline void block_to(TcbPtr_t tcb, List_t& dest)
 	{
 		if (tcb == nullptr || tcb->is_status(Status_t::BLOCKED))
 			return;
@@ -264,7 +265,6 @@ namespace MOS::Task
 		};
 
 		debug_tcbs.iter_until(fetch);
-
 		return res;
 	}
 
@@ -291,7 +291,7 @@ namespace MOS::Task
 		}
 	};
 
-	inline void print_task(const Node_t& node,
+	inline void print_task_info(const Node_t& node,
 	                       const char* format = "#%-2d %-10s %-5d %-9s %2d%%\n")
 	{
 		auto& tcb = (TCB_t&) node;
@@ -309,7 +309,7 @@ namespace MOS::Task
 		DisIntrGuard guard;
 		MOS_MSG("-----------------------------------\n");
 		debug_tcbs.iter([](TcbPtr_t tcb) {
-			print_task(tcb->node);
+			print_task_info(tcb->node);
 		});
 		MOS_MSG("-----------------------------------\n");
 	}
