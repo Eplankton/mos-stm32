@@ -13,7 +13,7 @@ o'' )_____//    [MOS-STM32]
 
 ### Repository 🌏
 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
-
+<br>
 ### Structure 👾
 [Here's USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
 ```    
@@ -58,9 +58,9 @@ src
 ```
 
 ### Example 🍎
-![demo1 00_00_00-00_00_30](https://github.com/Eplankton/mos-stm32/assets/86543401/65e36ea0-d178-4da6-8f9a-9f1551c59dfc)
-![demo2 00_00_00-00_00_30](https://github.com/Eplankton/mos-stm32/assets/86543401/bdd2c288-4528-45d5-b07c-03fe1c66bb34)
-<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/93cf5645-2d72-4c52-bad3-aec935a4510f" width="45%"> <img src="https://github.com/Eplankton/mos-stm32/assets/86543401/45069534-88db-448b-8452-b930ad82395e" width="45%">
+![demo1](https://github.com/Eplankton/mos-stm32/assets/86543401/65e36ea0-d178-4da6-8f9a-9f1551c59dfc)
+![demo2](https://github.com/Eplankton/mos-stm32/assets/86543401/bdd2c288-4528-45d5-b07c-03fe1c66bb34)
+<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/93cf5645-2d72-4c52-bad3-aec935a4510f" width="51%"> <img src="https://github.com/Eplankton/mos-stm32/assets/86543401/45069534-88db-448b-8452-b930ad82395e" width="45%">
 
 ```C++
 // MOS Kernel & Shell
@@ -108,10 +108,9 @@ namespace MOS::Bsp
 
 namespace MOS::App // User tasks
 {
-    using UserGlobal::leds;
-
     void Task0(void* argv)
     {
+        using UserGlobal::leds;
         while (true) {
             leds[0].toggle();
             Task::delay(500);
@@ -124,6 +123,7 @@ int main(void)
     using namespace MOS;
 
     Bsp::config(); // Init Hardware
+    Task::create(Shell::launch, nullptr, 1, "Shell"); // Create shell task
     Task::create(App::Task0, nullptr, 1, "T0"); // Create user task
     Scheduler::launch(); // Begin Scheduling, never return
 
@@ -149,8 +149,11 @@ Tid  Name   Priority   Status   StackUsage
 
 ### Version 📝
 ```
-📦The initial version (0.0.1) with basic scheduler
-📌To do:
+📦 The initial version 0.0.1
+1. Basic Scheduler
+2. Basic Task control
+
+📌 To do
 1. Timers, RoundRobin
 2. Inter-process communication(IPC), pipes, message queues
 3. Sync, semaphore, mutex, lock
@@ -161,7 +164,7 @@ Tid  Name   Priority   Status   StackUsage
 ```
 
 ```
-📦Version 0.0.2:
+📦 Version 0.0.2
 1. Sync::{Semaphore_t, Lock_t}
 2. Scheduler::Policy::{PreemptivePriority}, under same priority -> {RoundRobin}
 3. Task::terminate() implicitly be called when task exits
@@ -172,12 +175,12 @@ Tid  Name   Priority   Status   StackUsage
 8. Support GuiLite: https://github.com/idea4good/GuiLite
 9. Support GCC and STM32 HAL
 
-📌To do:
+📌 To do
 1. Mutex_t with priority inheritance mechanism
 2. IPC: pipes, message queues, etc.
 3. Simple dynamic memory allocator
 4. Hardware Timers
-5. BitMap on pages for faster allocation
+5. BitMap for faster allocation
 6. Basic formal verification on Scheduler
 ```
 

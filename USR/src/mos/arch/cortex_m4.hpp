@@ -22,17 +22,16 @@
 	"MOV     R9, R5\n"                                                                                 \
 	"MOV     R10, R6\n"                                                                                \
 	"MOV     R11, R7\n"                                                                                \
-	"POP     {R4-R7}\n"  /* Pop registers R4-R7(user saved context) */                                 \
-	"POP     {R0-R3}\n"  /* Start poping the stacked exception frame. */                               \
+	"POP     {R4-R7}\n" /* Pop registers R4-R7(user saved context) */                                  \
+	"POP     {R0-R3}\n" /* Start poping the stacked exception frame. */                                \
 	"POP     {R4}\n"                                                                                   \
 	"MOV     R12, R4\n"  /* Move R4 to R12 */                                                          \
+	"LDR     LR, [SP]\n" /* Make the LR = saved LR */                                                  \
 	"ADD     SP,SP,#4\n" /* Skip the saved LR */                                                       \
 	"POP     {R4}\n"     /* POP the saved PC into LR via R4, We do this to jump into the first task */ \
-	""                   /*  when we execute the branch instruction to exit this routine. */           \
-	"MOV     LR, R4\n"                                                                                 \
 	"ADD     SP,SP,#4\n"                                                                               \
-	"CPSIE   I\n" /* Enable irq to leave critical section */                                           \
-	"BX      LR"  /* Branch instruction to exit this routine. */
+	"CPSIE   I\n"  /* Enable irq to leave critical section */                                          \
+	"BX      R4\n" /* Branch instruction to exit this routine. */
 
 #define ARCH_CONTEXT_SWITCH_ASM                                                                                        \
 	"CPSID   I\n"       /* Disable interrupts */                                                                       \
