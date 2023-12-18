@@ -66,8 +66,10 @@ src
 // MOS Kernel & Shell
 #include "mos/kernel.hpp"
 #include "mos/shell.hpp"
-#include "drivers/stm32f4xx/hal.hpp" // STM32F4xx HAL
-#include "drivers/device/led.hpp" // Devices
+
+// HAL and device 
+#include "drivers/stm32f4xx/hal.hpp"
+#include "drivers/device/led.hpp"
 
 namespace MOS::UserGlobal
 {
@@ -171,8 +173,8 @@ Tid  Name   Priority   Status   StackUsage
 4. Shell::{Command, CmdCall, launch}
 5. os_ticks and Task::delay() as blocking delay
 6. Driver::{SPI_t, ST7735S}
-7. Reorganize the struct of project into {kernel, arch, driver}
-8. Support GuiLite: https://github.com/idea4good/GuiLite
+7. Refactor the project into {kernel, arch, drivers}
+8. Support GuiLite library
 9. Support GCC and STM32 HAL
 
 📌 To do

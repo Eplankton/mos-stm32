@@ -33,8 +33,6 @@ namespace MOS::UserGlobal
 	        {GPIOB,  GPIO_Pin_8}, // RESET(RES) -> PB8
 	        {GPIOB,  GPIO_Pin_9}, // DC(RS)     -> PB9
 	};
-
-	Sync::MutexImpl_t mutex;
 }
 
 #endif

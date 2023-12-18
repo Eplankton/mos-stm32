@@ -179,7 +179,7 @@ namespace Driver
 		inline void cs_set() { cs.set(); }
 
 		static inline void
-		config_delay(volatile uint32_t n)
+		spi_delay(volatile uint32_t n)
 		{
 			n *= 1000;
 			while (n--) {
@@ -237,6 +237,21 @@ namespace Driver
 		{
 			address_set(x, y, x, y);//设置光标位置
 			write_16bit_data(color);
+		}
+
+		inline void draw_img(Pixel_t x, Pixel_t y, Pixel_t w, Pixel_t h, const uint16_t* img)
+		{
+			// 设置绘图区域
+			address_set(x, y, x + w - 1, y + h - 1);
+
+			// 遍历图片数据并绘制
+			for (uint16_t i = 0; i < h; i++) {
+				for (uint16_t j = 0; j < w; j++) {
+					// 从图片数据中获取颜色并绘制
+					uint16_t color = img[i * w + j];
+					write_16bit_data(color);
+				}
+			}
 		}
 
 		void show_char(Pixel_t x, Pixel_t y, uint8_t num, uint8_t mode, Color color)
@@ -334,13 +349,13 @@ namespace Driver
 			dc_set();
 
 			rst_clear();
-			config_delay(20);
+			spi_delay(20);
 			rst_set();
-			config_delay(100);
+			spi_delay(100);
 
 			//************* Start Initial Sequence **********//
-			write_cmd(0x11);  //Sleep out
-			config_delay(120);//Delay 120ms
+			write_cmd(0x11);//Sleep out
+			spi_delay(120); //Delay 120ms
 
 			//------------------------------------ST7735S Frame Rate-----------------------------------------//
 			write_cmd(0xB1);

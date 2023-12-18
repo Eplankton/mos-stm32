@@ -11,26 +11,25 @@
 #define MOS_DISABLE_IRQ()          asm volatile("CPSID I");
 #define MOS_ENABLE_IRQ()           asm volatile("CPSIE I");
 
-#define ARCH_INIT_ASM                                                                                  \
-	"CPSID   I\n"           /* Disable irq to enter critical section */                                \
-	"LDR     R0, =curTCB\n" /* R0 contains the address of curTCB */                                    \
-	"LDR     R2, [R0]\n"    /* R2 contains the address in curTCB */                                    \
-	"LDR     R4, [R2,#8]\n" /* Load the SP reg with the stacked SP value */                            \
-	"MOV     SP, R4\n"      /* Move SP to R4 */                                                        \
-	"POP     {R4-R7}\n"     /* Pop registers R8-R11(user saved context) */                             \
-	"MOV     R8, R4\n"      /* Move R4-R7 to R8-R11 */                                                 \
-	"MOV     R9, R5\n"                                                                                 \
-	"MOV     R10, R6\n"                                                                                \
-	"MOV     R11, R7\n"                                                                                \
-	"POP     {R4-R7}\n" /* Pop registers R4-R7(user saved context) */                                  \
-	"POP     {R0-R3}\n" /* Start poping the stacked exception frame. */                                \
-	"POP     {R4}\n"                                                                                   \
-	"MOV     R12, R4\n"  /* Move R4 to R12 */                                                          \
-	"LDR     LR, [SP]\n" /* Make the LR = saved LR */                                                  \
-	"ADD     SP,SP,#4\n" /* Skip the saved LR */                                                       \
-	"POP     {R4}\n"     /* POP the saved PC into LR via R4, We do this to jump into the first task */ \
-	"ADD     SP,SP,#4\n"                                                                               \
-	"CPSIE   I\n"  /* Enable irq to leave critical section */                                          \
+#define ARCH_INIT_ASM                                                                                 \
+	"CPSID   I\n"           /* Disable irq to enter critical section */                               \
+	"LDR     R0, =curTCB\n" /* R0 contains the address of curTCB */                                   \
+	"LDR     R2, [R0]\n"    /* R2 contains the address in curTCB */                                   \
+	"LDR     R4, [R2,#8]\n" /* Load the SP reg with the stacked SP value */                           \
+	"MOV     SP, R4\n"      /* Move SP to R4 */                                                       \
+	"POP     {R4-R7}\n"     /* Pop registers R8-R11(user saved context) */                            \
+	"MOV     R8, R4\n"      /* Move R4-R7 to R8-R11 */                                                \
+	"MOV     R9, R5\n"                                                                                \
+	"MOV     R10, R6\n"                                                                               \
+	"MOV     R11, R7\n"                                                                               \
+	"POP     {R4-R7}\n" /* Pop registers R4-R7(user saved context) */                                 \
+	"POP     {R0-R3}\n" /* Start poping the stacked exception frame. */                               \
+	"POP     {R4}\n"                                                                                  \
+	"MOV     R12, R4\n" /* Move R4 to R12 */                                                          \
+	"POP     {LR}\n"    /* Popthe saved LR */                                                         \
+	"POP     {R4}\n"    /* Pop the saved PC into LR via R4, We do this to jump into the first task */ \
+	"ADD     SP,SP,#4\n"                                                                              \
+	"CPSIE   I\n"  /* Enable irq to leave critical section */                                         \
 	"BX      R4\n" /* Branch instruction to exit this routine. */
 
 #define ARCH_CONTEXT_SWITCH_ASM                                                                                        \

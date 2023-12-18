@@ -1,14 +1,14 @@
 #ifndef _MOS_USER_TEST_
 #define _MOS_USER_TEST_
 
-#include "src/user/global.hpp"
+#include "src/mos/kernel/sync.hpp"
 
 namespace MOS::Test
 {
+	static Sync::MutexImpl_t mutex;
+
 	void MutexTest(void* argv)
 	{
-		using UserGlobal::mutex;
-
 		auto cur = Task::current_task();
 		while (true) {
 			mutex.lock();

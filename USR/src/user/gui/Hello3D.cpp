@@ -126,15 +126,23 @@ public:
 	Pyramid() { memset(points2d, 0, sizeof(points2d)); }
 	virtual void draw(uint16_t x, uint16_t y, bool isErase)
 	{
-		s_surface->draw_line(points2d[0][0] + x, points2d[0][1] + y, points2d[1][0] + x, points2d[1][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
-		s_surface->draw_line(points2d[0][0] + x, points2d[0][1] + y, points2d[2][0] + x, points2d[2][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
-		s_surface->draw_line(points2d[0][0] + x, points2d[0][1] + y, points2d[3][0] + x, points2d[3][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
-		s_surface->draw_line(points2d[0][0] + x, points2d[0][1] + y, points2d[4][0] + x, points2d[4][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
+		s_surface->draw_line(points2d[0][0] + x, points2d[0][1] + y, points2d[1][0] + x,
+		                     points2d[1][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
+		s_surface->draw_line(points2d[0][0] + x, points2d[0][1] + y, points2d[2][0] + x,
+		                     points2d[2][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
+		s_surface->draw_line(points2d[0][0] + x, points2d[0][1] + y, points2d[3][0] + x,
+		                     points2d[3][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
+		s_surface->draw_line(points2d[0][0] + x, points2d[0][1] + y, points2d[4][0] + x,
+		                     points2d[4][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
 
-		s_surface->draw_line(points2d[1][0] + x, points2d[1][1] + y, points2d[2][0] + x, points2d[2][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
-		s_surface->draw_line(points2d[2][0] + x, points2d[2][1] + y, points2d[3][0] + x, points2d[3][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
-		s_surface->draw_line(points2d[3][0] + x, points2d[3][1] + y, points2d[4][0] + x, points2d[4][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
-		s_surface->draw_line(points2d[4][0] + x, points2d[4][1] + y, points2d[1][0] + x, points2d[1][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
+		s_surface->draw_line(points2d[1][0] + x, points2d[1][1] + y, points2d[2][0] + x,
+		                     points2d[2][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
+		s_surface->draw_line(points2d[2][0] + x, points2d[2][1] + y, points2d[3][0] + x,
+		                     points2d[3][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
+		s_surface->draw_line(points2d[3][0] + x, points2d[3][1] + y, points2d[4][0] + x,
+		                     points2d[4][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
+		s_surface->draw_line(points2d[4][0] + x, points2d[4][1] + y, points2d[1][0] + x,
+		                     points2d[1][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
 	}
 
 	virtual void rotate()
@@ -183,12 +191,13 @@ void create_ui(void* phy_fb, uint16_t screen_width, uint16_t screen_height, int 
 
 	Cube theCube;
 	Pyramid thePyramid;
-	while (true) {
-		theCube.draw(64, 50, true);     //erase footprint
-		theCube.rotate();
-		theCube.draw(64, 50, false);    //refresh cube
 
-		thePyramid.draw(64, 120, true); //erase footprint
+	while (true) {
+		theCube.draw(64, 50, true);//erase footprint
+		theCube.rotate();
+		theCube.draw(64, 50, false);//refresh cube
+
+		thePyramid.draw(64, 120, true);//erase footprint
 		thePyramid.rotate();
 		thePyramid.draw(64, 120, false);//refresh pyramid
 

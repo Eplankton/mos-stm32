@@ -7,12 +7,12 @@
 
 namespace MOS::Bsp
 {
-	using namespace UserGlobal;
 	using namespace HAL::STM32F4xx;
 
 	// For printf_
 	extern "C" void _putchar(char ch)
 	{
+		using UserGlobal::uart;
 		uart.send_data(ch);
 		while (uart.get_flag_status(USART_FLAG_TXE) == RESET)
 			;
@@ -20,6 +20,7 @@ namespace MOS::Bsp
 
 	static inline void LED_Config()
 	{
+		using UserGlobal::leds;
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOB);
 		for (auto& led: leds) {
 			led.init();
@@ -47,6 +48,8 @@ namespace MOS::Bsp
 
 	static inline void USART_Config()
 	{
+		using UserGlobal::uart;
+
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOD);
 		RCC_t::APB1::enable(RCC_APB1Periph_USART3);
 		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
@@ -60,6 +63,8 @@ namespace MOS::Bsp
 
 	static inline void LCD_Config()
 	{
+		using UserGlobal::lcd;
+
 		RCC_t::APB2::enable(RCC_APB2Periph_SPI1);
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOD);
 

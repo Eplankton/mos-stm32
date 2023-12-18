@@ -3,6 +3,7 @@
 
 #include "src/user/global.hpp"
 #include "src/user/gui/GuiLite.h"
+#include "src/user/img/cat_gif.h"
 
 namespace MOS::App
 {
@@ -50,11 +51,15 @@ namespace MOS::App
 		                      " (_(_/--(_/ \n";
 
 		while (true) {
-			terminal.println("Hello, World!", GREEN);
-			Task::delay(250);
+			// terminal.println("Hello, World!", GREEN);
+			// Task::delay(250);
 
-			terminal.print(logo, YELLOW);
-			Task::delay(250);
+			// terminal.print(logo, YELLOW);
+			// Task::delay(250);
+
+			for (auto frame: cat_gif_frames) {
+				lcd.draw_img(0, 0, 128, 128, frame);
+			}
 		}
 	}
 

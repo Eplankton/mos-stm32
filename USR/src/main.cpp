@@ -21,6 +21,7 @@ int main(void)
 	// Create user tasks
 	Task::create(App::Task0, nullptr, 1, "T0");
 	Task::create(App::GUI, nullptr, 1, "GUI");
+	// Task::create(App::LCD, nullptr, 1, "LCD");
 
 	// Test example
 	// Task::create(Test::MutexTest, nullptr, 1, "T1");
