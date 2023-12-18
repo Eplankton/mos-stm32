@@ -192,3 +192,6 @@ Tid  Name   Priority   Status   StackUsage
 3. [STM32F4-LCD_ST7735s](https://github.com/Dungyichao/STM32F4-LCD_ST7735s)
 4. [A printf/sprintf Implementation for Embedded Systems](https://github.com/mpaland/printf)
 5. [GuiLite](https://github.com/idea4good/GuiLite)
+
+### Just for Fun 🕹
+![CAT](https://github.com/Eplankton/mos-stm32/assets/86543401/14e10223-dc83-40f2-b033-1b5dc863e208)
