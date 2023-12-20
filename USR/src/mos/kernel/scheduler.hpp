@@ -32,7 +32,7 @@ namespace MOS::Scheduler
 	{
 		auto idle = [](void* argv) {
 			while (true) {
-				// nothing but loop...
+				// nothing but loop...this can be replaced by hook
 				asm volatile("");
 			}
 		};
@@ -45,19 +45,12 @@ namespace MOS::Scheduler
 
 	static inline void try_wake_up()
 	{
-		TcbPtr_t to_wake = nullptr;
+		auto fetch = [](const Node_t& node) {
+			return ((TCB_t&) node).delay_ticks <= os_ticks;
+		};
 
-		sleep_list.iter_until([&to_wake](const Node_t& node) {
-			auto& tcb = (TCB_t&) node;
-			if (tcb.delay_ticks <= os_ticks) {
-				tcb.delay_ticks = 0;
-				to_wake         = &tcb;
-				return true;
-			}
-			return false;
-		});
-
-		if (to_wake != nullptr) {
+		if (auto to_wake = (TcbPtr_t) sleep_list.iter_until(fetch)) {
+			to_wake->delay_ticks = 0;
 			to_wake->set_status(Status_t::READY);
 			sleep_list.send_to_in_order(to_wake->node, ready_list, TCB_t::priority_cmp);
 		}

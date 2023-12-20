@@ -235,13 +235,14 @@ namespace MOS::DataType
 			}
 		}
 
-		__attribute__((always_inline)) inline void
+		__attribute__((always_inline)) inline NodePtr_t
 		iter_until(auto&& fn) const
 		    requires Invocable<decltype(fn), const Node_t&>
 		{
 			for (auto it = begin(); it != end(); it = it->next) {
-				if (fn(*it)) return;
+				if (fn(*it)) return it;
 			}
+			return nullptr;
 		}
 
 		void insert(Node_t& node, NodePtr_t pos)
@@ -305,14 +306,9 @@ namespace MOS::DataType
 		__attribute__((always_inline)) inline bool
 		contains(const Node_t& node)
 		{
-			bool flag = false;
-			iter([&node, &flag](const Node_t& x) {
-				if (&node == &x) {
-					flag = true;
-					return;
-				}
-			});
-			return flag;
+			return iter_until([&node](const Node_t& x) {
+				       return &node == &x;
+			       }) != nullptr;
 		}
 	};
 
@@ -582,14 +578,15 @@ namespace MOS::DataType
 			}
 		}
 
-		__attribute__((always_inline)) inline void
+		__attribute__((always_inline)) inline TcbPtr_t
 		iter_until(auto&& fn) volatile
 		{
 			for (auto& pt: raw) {
 				if (pt != nullptr) {
-					if (fn(pt)) return;
+					if (fn(pt)) return pt;
 				}
 			}
+			return nullptr;
 		}
 	};
 }

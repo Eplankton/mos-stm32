@@ -9,14 +9,7 @@
 namespace MOS::Task
 {
 	using namespace Util;
-
-	using KernelGlobal::curTCB;
-	using KernelGlobal::ready_list;
-	using KernelGlobal::blocked_list;
-	using KernelGlobal::sleep_list;
-	using KernelGlobal::os_ticks;
-	using KernelGlobal::tids;
-	using KernelGlobal::debug_tcbs;
+	using namespace KernelGlobal;
 
 	using TCB_t     = DataType::TCB_t;
 	using List_t    = DataType::List_t;
@@ -96,7 +89,7 @@ namespace MOS::Task
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		MOS_ASSERT(fn != nullptr, "fn ptr can't be null");
 
-		TcbPtr_t tcb = nullptr;
+		TcbPtr_t tcb = nullptr, cur = current_task();
 
 		// Disable interrupt to enter critical section
 		{
@@ -134,7 +127,7 @@ namespace MOS::Task
 			tcb->set_status(Status_t::READY);
 
 			// Add parent
-			tcb->set_parent(curTCB);
+			tcb->set_parent(cur);
 
 			// Add to TCBs list
 			ready_list.insert_in_order(tcb->node, TCB_t::priority_cmp);
@@ -145,7 +138,7 @@ namespace MOS::Task
 		// Enable interrupt, leave critical section
 
 		// If the new task's priority is higher, switch at once
-		if (TCB_t::priority_cmp(tcb->node, curTCB->node)) {
+		if (TCB_t::priority_cmp(tcb->node, cur->node)) {
 			yield();
 		}
 
@@ -191,7 +184,7 @@ namespace MOS::Task
 			blocked_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
 		}
 
-		if (curTCB != (TcbPtr_t) ready_list.begin()) {
+		if (current_task() != (TcbPtr_t) ready_list.begin()) {
 			// if curTCB isn't the highest priority
 			yield();
 		}
@@ -226,7 +219,7 @@ namespace MOS::Task
 			ready_list.re_insert(tcb->node, TCB_t::priority_cmp);
 		}
 
-		if (curTCB != (TcbPtr_t) ready_list.begin()) {
+		if (current_task() != (TcbPtr_t) ready_list.begin()) {
 			// if curTCB isn't the highest priority
 			yield();
 		}
@@ -244,34 +237,24 @@ namespace MOS::Task
 	find(auto info)
 	{
 		DisIntrGuard guard;
-		TcbPtr_t res = nullptr;
 
-		auto fetch = [info, &res](TcbPtr_t tcb) {
+		auto fetch = [info](TcbPtr_t tcb) {
 			if constexpr (Same<decltype(info), Tid_t>) {
-				if (tcb->get_tid() == info) {
-					res = tcb;
-					return true;
-				}
+				return tcb->get_tid() == info;
 			}
 
 			if constexpr (Same<decltype(info), Name_t>) {
-				if (Util::strcmp(tcb->get_name(), info) == 0) {
-					res = tcb;
-					return true;
-				}
+				return strcmp(tcb->get_name(), info) == 0;
 			}
-
-			return false;
 		};
 
-		debug_tcbs.iter_until(fetch);
-		return res;
+		return debug_tcbs.iter_until(fetch);
 	}
 
 	inline void print_name()
 	{
 		DisIntrGuard guard;
-		MOS_MSG("%s\n", curTCB->get_name());
+		MOS_MSG("%s\n", current_task()->get_name());
 	}
 
 	__attribute__((always_inline)) inline constexpr auto
@@ -291,8 +274,9 @@ namespace MOS::Task
 		}
 	};
 
-	inline void print_task_info(const Node_t& node,
-	                       const char* format = "#%-2d %-10s %-5d %-9s %2d%%\n")
+	inline void
+	print_task_info(const Node_t& node,
+	                const char* format = "#%-2d %-10s %-5d %-9s %3d%%\n")
 	{
 		auto& tcb = (TCB_t&) node;
 		MOS_MSG(format,
@@ -307,18 +291,19 @@ namespace MOS::Task
 	inline void print_all_tasks()
 	{
 		DisIntrGuard guard;
-		MOS_MSG("-----------------------------------\n");
+		MOS_MSG("------------------------------------\n");
 		debug_tcbs.iter([](TcbPtr_t tcb) {
 			print_task_info(tcb->node);
 		});
-		MOS_MSG("-----------------------------------\n");
+		MOS_MSG("------------------------------------\n");
 	}
 
 	__attribute__((always_inline)) inline void
 	delay(const uint32_t ticks)
 	{
-		curTCB->set_delay_ticks(os_ticks + ticks);
-		block_to(current_task(), sleep_list);
+		auto cur = current_task();
+		cur->set_delay_ticks(os_ticks + ticks);
+		block_to(cur, sleep_list);
 	}
 }
 

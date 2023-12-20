@@ -1,9 +1,6 @@
 # MOS-STM32 🐱‍🚀
 
-### Just for Fun 🕹
-![cat](https://github.com/Eplankton/mos-stm32/assets/86543401/36903bf6-c33e-47d5-a960-ad52d951295f)
-
-### Introduction 🚀
+### Introduction 🚀 [English](https://github.com/Eplankton/mos-stm32/blob/master/README.md) | [中文](https://gitee.com/Eplankton/mos-stm32/blob/master/README.md)
 ```
  A_A       _
 o'' )_____//    [MOS-STM32]
@@ -14,11 +11,9 @@ o'' )_____//    [MOS-STM32]
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
 
-### Repository 🌏
-[GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
-<br>
-### Structure 👾
-[Here's USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
+### Repository 🌏 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
+
+### Structure 👾 [USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
 ```    
 src
 ├── drivers                  Hardware Drivers(SPL/HAL/...)
@@ -61,9 +56,16 @@ src
 ```
 
 ### Example 🍎
+`Shell`
 ![demo1](https://github.com/Eplankton/mos-stm32/assets/86543401/65e36ea0-d178-4da6-8f9a-9f1551c59dfc)
+
+`MutexTest`
 ![demo2](https://github.com/Eplankton/mos-stm32/assets/86543401/bdd2c288-4528-45d5-b07c-03fe1c66bb34)
+
+`LCD Driver & GUI Graphic`
+<center>
 <img src="https://github.com/Eplankton/mos-stm32/assets/86543401/93cf5645-2d72-4c52-bad3-aec935a4510f" width="51%"> <img src="https://github.com/Eplankton/mos-stm32/assets/86543401/45069534-88db-448b-8452-b930ad82395e" width="45%">
+</center>
 
 ```C++
 // MOS Kernel & Shell
@@ -127,10 +129,10 @@ int main(void)
 {
     using namespace MOS;
 
-    Bsp::config(); // Init Hardware
+    Bsp::config(); // Init hardware and clocks
     Task::create(Shell::launch, nullptr, 1, "Shell"); // Create shell task
     Task::create(App::Task0, nullptr, 1, "T0"); // Create user task
-    Scheduler::launch(); // Begin Scheduling, never return
+    Scheduler::launch(); // Start Scheduling, never return
 
     while (true) {
         // Never comes here...
@@ -145,14 +147,15 @@ o'' )_____//  Version  @ x.x.x
  `_/  MOS  )  Platform @ xxx, xxx
  (_(_/--(_/   Build    @ xx:xx:xx
 
-Tid  Name   Priority   Status   StackUsage
-------------------------------------------
-#0   idle     15       READY       10%
-#1   T0       0        RUNNING      9%
-------------------------------------------
+Tid   Name   Priority   Status   Stack%
+----------------------------------------
+#0    idle     15       READY       10%
+#1    Shell    1        READY       21%
+#2    T0       1        RUNNING      9%
+----------------------------------------
 ```
 
-### Version 📝
+### Version 🧾
 ```
 📦 The initial version 0.0.1
 1. Basic Scheduler
@@ -167,7 +170,6 @@ Tid  Name   Priority   Status   StackUsage
 6. SPI driver, LVGL library
 7. Port to ESP32-C3, RISC-V
 ```
-
 ```
 📦 Version 0.0.2
 1. Sync::{Semaphore_t, Lock_t}
@@ -195,3 +197,6 @@ Tid  Name   Priority   Status   StackUsage
 3. [STM32F4-LCD_ST7735s](https://github.com/Dungyichao/STM32F4-LCD_ST7735s)
 4. [A printf/sprintf Implementation for Embedded Systems](https://github.com/mpaland/printf)
 5. [GuiLite](https://github.com/idea4good/GuiLite)
+
+### Just for Fun 🕹
+![cat](https://github.com/Eplankton/mos-stm32/assets/86543401/36903bf6-c33e-47d5-a960-ad52d951295f)

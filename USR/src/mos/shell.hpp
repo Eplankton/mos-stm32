@@ -1,6 +1,7 @@
 #ifndef _MOS_SHELL_
 #define _MOS_SHELL_
 
+#include "kernel/util.hpp"
 #include "kernel/task.hpp"
 
 namespace MOS::Shell
@@ -107,8 +108,7 @@ namespace MOS::Shell
 		auto parser = [](Command::Text_t str) {
 			for (auto& cmd: cmds) {
 				if (auto argv = cmd.match(str)) {
-					cmd.run(argv);
-					return;
+					return cmd.run(argv);
 				}
 			}
 			MOS_MSG("[MOS]: Unknown command '%s'\n", str);

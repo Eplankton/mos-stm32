@@ -1,4 +1,4 @@
-// Kernel & Shell
+// MOS Kernel & Shell
 #include "mos/kernel.hpp"
 #include "mos/shell.hpp"
 
@@ -12,7 +12,7 @@ int main(void)
 {
 	using namespace MOS;
 
-	// Init resource
+	// Init hardware and clocks
 	Bsp::config();
 
 	// Create shell as monitor
