@@ -7,7 +7,6 @@
 // Devices
 #include "src/drivers/device/st7735s.hpp"
 #include "src/drivers/device/led.hpp"
-#include "src/mos/kernel/sync.hpp"
 
 // Put user global data here
 namespace MOS::UserGlobal

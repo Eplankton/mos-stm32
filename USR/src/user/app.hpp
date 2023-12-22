@@ -2,6 +2,7 @@
 #define _MOS_USER_APP_
 
 #include "src/user/global.hpp"
+#include "src/mos/kernel/task.hpp"
 #include "src/user/gui/GuiLite.h"
 #include "src/user/img/cat_gif.h"
 
@@ -40,8 +41,8 @@ namespace MOS::App
 	void LCD(void* argv)
 	{
 		using namespace Driver;
-		using UserGlobal::lcd;
 		using enum ST7735S::Color;
+		using UserGlobal::lcd;
 
 		Terminal terminal {lcd};
 

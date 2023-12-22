@@ -14,26 +14,32 @@ namespace MOS::Shell
 		using Fn_t   = Ret_t (*)(Argv_t);
 
 		Text_t text;
-		Fn_t fn;
+		Fn_t callback;
 
 		__attribute__((always_inline)) inline auto
 		len() const { return Util::strlen(text); }
 
 		__attribute__((always_inline)) inline void
-		run(Argv_t argv) const { fn(argv); }
+		run(Argv_t argv) const { callback(argv); }
 
 		inline Argv_t match(Text_t str) const
 		{
+			uint32_t xlen = len();
+
 			auto skip = [](Text_t str) {
 				while (*str == ' ') ++str;
 				return str;
 			};
 
-			auto xlen = len();
+			auto check = [&](Text_t str) {
+				return (str[xlen] == ' ' || str[xlen] == '\0') &&
+				       Util::strncmp(str, text, xlen) == 0;
+			};
 
 			str = skip(str);
-			if ((str[xlen] == ' ' || str[xlen] == '\0') &&
-			    Util::strncmp(str, text, xlen) == 0) {
+
+			if (check(str)) {
+				// Return first argument
 				return skip(str + xlen);
 			}
 			else {
@@ -44,7 +50,9 @@ namespace MOS::Shell
 
 	namespace CmdCall
 	{
-		static inline void ls_cmd(Command::Argv_t argv)
+		using Argv_t = Command::Argv_t;
+
+		static inline void ls_cmd(Argv_t argv)
 		{
 			auto name = argv;
 			if (*name != '\0') {
@@ -60,7 +68,7 @@ namespace MOS::Shell
 			}
 		}
 
-		static inline void kill_cmd(Command::Argv_t argv)
+		static inline void kill_cmd(Argv_t argv)
 		{
 			auto name = argv;
 			if (*name != '\0') {
@@ -77,13 +85,13 @@ namespace MOS::Shell
 			}
 		}
 
-		static inline void reboot_cmd(Command::Argv_t argv)
+		static inline void reboot_cmd(Argv_t argv)
 		{
 			MOS_MSG("[MOS]: Reboot\n\n\n");
 			MOS_REBOOT();
 		}
 
-		static inline void uname_cmd(Command::Argv_t argv)
+		static inline void uname_cmd(Argv_t argv)
 		{
 			MOS_MSG(" A_A       _\n"
 			        "o'' )_____//  Version  @ %s\n"
@@ -93,7 +101,7 @@ namespace MOS::Shell
 		}
 	}
 
-	// Add more cmds here with {"cmd", CmdCall::callback}
+	// Add more cmds here with {"text", CmdCall::callback}
 	static constexpr Command cmds[] = {
 	        {    "ls",     CmdCall::ls_cmd},
 	        {  "kill",   CmdCall::kill_cmd},

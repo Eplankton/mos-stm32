@@ -1,6 +1,7 @@
-# MOS-STM32 🐱‍🚀
+# MOS-STM32 🦉
 
-### Introduction 🚀 [English](https://github.com/Eplankton/mos-stm32/blob/master/README.md) | [中文](https://gitee.com/Eplankton/mos-stm32/blob/master/README.md)
+### Introduction 🚀
+[English](https://github.com/Eplankton/mos-stm32/blob/master/README.md) | [中文](https://gitee.com/Eplankton/mos-stm32/blob/master/README.md)
 ```
  A_A       _
 o'' )_____//    [MOS-STM32]
@@ -11,9 +12,11 @@ o'' )_____//    [MOS-STM32]
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
 
-### Repository 🌏 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
+### Repository 🌏
+[GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
 
-### Structure 👾 [USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
+### Structure 👾
+[USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
 ```    
 src
 ├── drivers                  Hardware Drivers(SPL/HAL/...)
@@ -180,7 +183,7 @@ Tid   Name   Priority   Status   Stack%
 6. Driver::{SPI_t, ST7735S}
 7. Refactor the project into {kernel, arch, drivers}
 8. Support GuiLite library
-9. Support GCC and STM32 HAL
+9. Support GCC and STM32Cube HAL
 
 📌 To do
 1. Mutex_t with priority inheritance mechanism

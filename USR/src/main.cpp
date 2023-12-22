@@ -2,11 +2,11 @@
 #include "mos/kernel.hpp"
 #include "mos/shell.hpp"
 
-// User space modules
+// User modules
 #include "user/global.hpp"
 #include "user/bsp.hpp"
-#include "user/test.hpp"
 #include "user/app.hpp"
+#include "user/test.hpp"
 
 int main(void)
 {

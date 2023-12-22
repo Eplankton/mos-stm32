@@ -79,7 +79,7 @@ namespace MOS::Task
 	__attribute__((always_inline)) static inline void
 	ending() { terminate(current_task()); }
 
-	inline TcbPtr_t create(Fn_t&& fn, Argv_t argv = nullptr, Prior_t pr = 15, Name_t name = "")
+	inline TcbPtr_t create(Fn_t fn, Argv_t argv = nullptr, Prior_t pr = 15, Name_t name = "")
 	{
 		if (num() >= Macro::MAX_TASK_NUM) {
 			return nullptr;

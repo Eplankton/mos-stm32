@@ -87,6 +87,7 @@ namespace MOS::Scheduler
 		}
 
 		if constexpr (policy == Policy::PreemptivePriority) {
+			// If there's a higher task
 			if (TCB_t::priority_cmp(st->node, curTCB->node)) {
 				curTCB->set_status(Status_t::READY);
 				return switch_to(st);
@@ -95,6 +96,7 @@ namespace MOS::Scheduler
 			if (--curTCB->time_slice <= 0) {
 				curTCB->set_status(Status_t::READY);
 				curTCB->time_slice = Macro::TIME_SLICE;
+				// Same priority in a group
 				if (nx != ed && TCB_t::priority_equal(nx->node, curTCB->node)) {
 					return switch_to(nx);
 				}
