@@ -79,7 +79,7 @@ namespace MOS::Scheduler
 		}
 
 		if constexpr (policy == Policy::RoundRobin) {
-			if (--curTCB->time_slice <= 0) {
+			if (curTCB->time_slice <= 0) {
 				curTCB->set_status(Status_t::READY);
 				curTCB->time_slice = Macro::TIME_SLICE;
 				return switch_to((nx == ed) ? st : nx);
@@ -93,7 +93,7 @@ namespace MOS::Scheduler
 				return switch_to(st);
 			}
 
-			if (--curTCB->time_slice <= 0) {
+			if (curTCB->time_slice <= 0) {
 				curTCB->set_status(Status_t::READY);
 				curTCB->time_slice = Macro::TIME_SLICE;
 				// Same priority in a group
@@ -121,14 +121,16 @@ namespace MOS::ISR
 	extern "C" __attribute__((naked)) void
 	PendSV_Handler()
 	{
-		asm volatile("B    ContextSwitch");
+		asm volatile(ARCH_JUMP_TO_CONTEXT_SWITCH);
 	}
 
 	extern "C" void SysTick_Handler()
 	{
 		DisIntrGuard guard;
 		Task::inc_ticks();
-		Task::yield();
+		if (Task::current_task() != nullptr) {
+			Task::nop_and_yield();
+		}
 	}
 }
 

@@ -11,12 +11,13 @@
 int main(void)
 {
 	using namespace MOS;
+	using UserGlobal::rx_buf;
 
 	// Init hardware and clocks
 	Bsp::config();
 
 	// Create shell as monitor
-	Task::create(Shell::launch, nullptr, 1, "Shell");
+	Task::create(Shell::launch, &rx_buf, 1, "Shell");
 
 	// Create user tasks
 	Task::create(App::Task0, nullptr, 1, "T0");

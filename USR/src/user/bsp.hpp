@@ -111,8 +111,8 @@ namespace MOS::ISR
 	// UART3 IRQ Handler
 	extern "C" void USART3_IRQHandler()
 	{
-		using KernelGlobal::rx_buf;
 		using UserGlobal::uart;
+		using UserGlobal::rx_buf;
 
 		if (uart.get_it_status(USART_IT_RXNE) != RESET) {
 			char data = uart.receive_data();

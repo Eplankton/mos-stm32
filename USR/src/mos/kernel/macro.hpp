@@ -12,6 +12,7 @@ namespace MOS::Macro
 	constexpr int8_t PRI_MAX        = MOS_CONF_PRI_MAX;
 	constexpr int8_t PRI_MIN        = MOS_CONF_PRI_MIN;
 	constexpr uint16_t TIME_SLICE   = MOS_CONF_TIME_SLICE;
+	constexpr uint32_t RX_BUF_SIZE  = MOS_CONF_RX_BUF_SIZE;
 }
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef _DEVICE_ST7735S_
 #define _DEVICE_ST7735S_
 
+#include <string.h>
 #include "../stm32f4xx/spi.hpp"
 
 namespace Driver
@@ -233,7 +234,7 @@ namespace Driver
 			}
 		}
 
-		inline void draw_point(Pixel_t x, Pixel_t y, Color color)
+		inline void draw_point(Pixel_t x, Pixel_t y, Color color = WHITE)
 		{
 			address_set(x, y, x, y);//设置光标位置
 			write_16bit_data(color);
@@ -254,7 +255,7 @@ namespace Driver
 			}
 		}
 
-		void show_char(Pixel_t x, Pixel_t y, uint8_t num, uint8_t mode, Color color)
+		void show_char(Pixel_t x, Pixel_t y, uint8_t num, uint8_t mode, Color color = WHITE)
 		{
 			uint8_t temp;
 			uint16_t x0 = x;
@@ -284,7 +285,7 @@ namespace Driver
 			}
 		}
 
-		void show_string(Pixel_t x, Pixel_t y, const char* str, Color color)
+		void show_string(Pixel_t x, Pixel_t y, const char* str, Color color = WHITE)
 		{
 			while (*str != '\0') {
 				if (*str == '\n') {

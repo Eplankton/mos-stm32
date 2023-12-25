@@ -1,6 +1,7 @@
 #ifndef _MOS_USER_APP_
 #define _MOS_USER_APP_
 
+#include "src/mos/kernel/sync.hpp"
 #include "src/user/global.hpp"
 #include "src/mos/kernel/task.hpp"
 #include "src/user/gui/GuiLite.h"
@@ -8,6 +9,8 @@
 
 namespace MOS::App
 {
+	Sync::MutexImpl_t mm(1);
+
 	namespace GuiPort
 	{
 		using Color = enum Driver::ST7735S::Color;
@@ -44,24 +47,26 @@ namespace MOS::App
 		using enum ST7735S::Color;
 		using UserGlobal::lcd;
 
-		Terminal terminal {lcd};
-
-		constexpr auto logo = " A_A       _\n"
-		                      "o'' )_____//\n"
-		                      " `_/  MOS  )\n"
-		                      " (_(_/--(_/ \n";
-
-		while (true) {
-			// terminal.println("Hello, World!", GREEN);
-			// Task::delay(250);
-
-			// terminal.print(logo, YELLOW);
-			// Task::delay(250);
-
-			for (auto frame: cat_gif_frames) {
-				lcd.draw_img(0, 0, 128, 128, frame);
+		auto Slogan = [](void* argv) {
+			while (true) {
+				mm.lock();
+				lcd.show_string(0, 130, "Hello, World!");
+				mm.unlock();
 			}
-		}
+		};
+
+		auto GIF = [](void* argv) {
+			while (true) {
+				for (auto frame: cat_gif_frames) {
+					mm.lock();
+					lcd.draw_img(0, 0, 128, 128, frame);
+					mm.unlock();
+				}
+			}
+		};
+
+		Task::create(Slogan, nullptr, 1, "Slogan");
+		Task::create(GIF, nullptr, 1, "GIF");
 	}
 
 	void Task1(void* argv)

@@ -30,6 +30,13 @@ namespace MOS::Task
 	yield() { MOS_TRIGGER_PENDSV_INTR(); }
 
 	__attribute__((always_inline)) inline void
+	nop_and_yield()
+	{
+		curTCB->time_slice -= 1;
+		Task::yield();
+	}
+
+	__attribute__((always_inline)) inline void
 	inc_ticks() { os_ticks += 1; }
 
 	__attribute__((always_inline)) inline auto
@@ -55,10 +62,15 @@ namespace MOS::Task
 			DisIntrGuard guard;
 
 			// Remove the task from list
-			if (tcb->is_status(Status_t::RUNNING) || tcb->is_status(Status_t::READY))
+			if (tcb->is_status(Status_t::RUNNING) || tcb->is_status(Status_t::READY)) {
 				ready_list.remove(tcb->node);
-			else
+			}
+			else if (tcb->delay_ticks == 0) {
 				blocked_list.remove(tcb->node);
+			}
+			else {
+				sleep_list.remove(tcb->node);
+			}
 
 			// Mark the page as unused and deinit the page
 			tcb->release_page();
@@ -77,7 +89,32 @@ namespace MOS::Task
 	}
 
 	__attribute__((always_inline)) static inline void
-	ending() { terminate(current_task()); }
+	exit() { terminate(current_task()); }
+
+	__attribute__((always_inline)) static inline TcbPtr_t
+	load_context(TcbPtr_t tcb)
+	{
+		// Setup the stack to hold task context.
+		// Remember it is a descending stack and a context consists of 16 registers.
+		// high -> low, descending stack
+		// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
+		tcb->set_SP(&tcb->page->raw[Macro::PAGE_SIZE - 16]);
+
+		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the Thumb state.
+		// V6-m and V7-m cores can only support Thumb state so it should always be set to '1'.
+		tcb->set_xPSR((uint32_t) 0x01000000);
+
+		// Set the stacked PC to point to the task
+		tcb->set_PC((uint32_t) tcb->fn);
+
+		// Call terminate(current_task()) automatically
+		tcb->set_LR((uint32_t) exit);
+
+		// Set arguments
+		tcb->set_param((uint32_t) tcb->argv);
+
+		return tcb;
+	}
 
 	inline TcbPtr_t create(Fn_t fn, Argv_t argv = nullptr, Prior_t pr = 15, Name_t name = "")
 	{
@@ -101,33 +138,17 @@ namespace MOS::Task
 			// Construct a TCB at the head of a page block
 			tcb = TCB_t::build(page, fn, argv, pr, name);
 
+			// Load empty context
+			load_context(tcb);
+
 			// Give TID
 			tcb->set_tid(inc_tids());
 
-			// Setup the stack to hold task context.
-			// Remember it is a descending stack and a context consists of 16 registers.
-			// high -> low, descending stack
-			// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
-			tcb->set_SP(&tcb->page->raw[Macro::PAGE_SIZE - 16]);
-
-			// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the Thumb state.
-			// V6-m and V7-m cores can only support Thumb state so it should always be set to '1'.
-			tcb->set_xPSR((uint32_t) 0x01000000);
-
-			// Set the stacked PC to point to the task
-			tcb->set_PC((uint32_t) fn);
-
-			// Call terminate() automatically
-			tcb->set_LR((uint32_t) ending);
-
-			// Set arguments
-			tcb->set_param((uint32_t) argv);
+			// Add parent
+			tcb->set_parent(cur);
 
 			// Set TCB to be READY
 			tcb->set_status(Status_t::READY);
-
-			// Add parent
-			tcb->set_parent(cur);
 
 			// Add to TCBs list
 			ready_list.insert_in_order(tcb->node, TCB_t::priority_cmp);
@@ -143,6 +164,13 @@ namespace MOS::Task
 		}
 
 		return tcb;
+	}
+
+	// Experimental
+	__attribute__((always_inline)) inline TcbPtr_t
+	create(Fn_t fn, auto& argv = nullptr, Prior_t pr = 15, Name_t name = "")
+	{
+		return create(fn, (Argv_t) &argv, pr, name);
 	}
 
 	inline void block_to(TcbPtr_t tcb, List_t& dest)
@@ -188,24 +216,6 @@ namespace MOS::Task
 			// if curTCB isn't the highest priority
 			yield();
 		}
-	}
-
-	// Unsafe version for ISR, not recommended
-	inline void resume_fromISR(TcbPtr_t tcb)
-	{
-		if (tcb == nullptr || !tcb->is_status(Status_t::BLOCKED))
-			return;
-
-		// Assert if irq disabled
-		MOS_ASSERT(test_irq(), "Disabled Interrupt");
-
-		{
-			DisIntrGuard guard;
-			tcb->set_status(Status_t::READY);
-			blocked_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
-		}
-
-		// No yield() here to avoid ContextSwitch in ISR
 	}
 
 	__attribute__((always_inline)) inline void
@@ -275,8 +285,8 @@ namespace MOS::Task
 	};
 
 	inline void
-	print_task_info(const Node_t& node,
-	                const char* format = "#%-2d %-10s %-5d %-9s %3d%%\n")
+	print_info(const Node_t& node,
+	           const char* format = "#%-2d %-10s %-5d %-9s %3d%%\n")
 	{
 		auto& tcb = (TCB_t&) node;
 		MOS_MSG(format,
@@ -288,12 +298,12 @@ namespace MOS::Task
 	};
 
 	// For debug only
-	inline void print_all_tasks()
+	inline void print_all()
 	{
 		DisIntrGuard guard;
 		MOS_MSG("------------------------------------\n");
 		debug_tcbs.iter([](TcbPtr_t tcb) {
-			print_task_info(tcb->node);
+			print_info(tcb->node);
 		});
 		MOS_MSG("------------------------------------\n");
 	}

@@ -18,5 +18,6 @@
 #define MOS_CONF_PRI_MIN      15                 // Min priority
 #define MOS_CONF_TIME_SLICE   50                 // Time slice
 #define MOS_CONF_POLICY       PreemptivePriority // Scheduler Policy: RoundRobin, PreemptivePriority
+#define MOS_CONF_RX_BUF_SIZE  32                 // UART Rx buffer size
 
 #endif

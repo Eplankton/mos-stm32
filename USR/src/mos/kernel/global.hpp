@@ -17,8 +17,7 @@ namespace MOS::KernelGlobal
 
 	Page_t page_pool[MAX_TASK_NUM];
 	List_t ready_list, blocked_list, sleep_list;
-	TCB_t::Tid_t tids = 0;
-	RxBuffer<32> rx_buf;
+	TCB_t::Tid_t tids = -1;
 
 	// Put it in extern "C" because the name is referred in asm("") and don't change it.
 	// At anytime, the curTCB points to task running currently.

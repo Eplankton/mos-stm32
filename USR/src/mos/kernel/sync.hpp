@@ -166,15 +166,17 @@ namespace MOS::Sync
 				}
 			}
 			else {
+				// Restore the original priority of the owner
+				if (recursive_cnt == 0 && old_pr != -1) {
+					owner->set_priority(old_pr);
+					old_pr = -1;
+				}
+
 				// No owner if no tasks are waiting
 				owner = nullptr;
 				sema.cnt += 1;
-			}
 
-			// Restore the original priority of the owner
-			if (recursive_cnt == 0 && old_pr != -1) {
-				owner->set_priority(old_pr);
-				old_pr = -1;
+				return;
 			}
 		}
 	};

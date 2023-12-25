@@ -131,11 +131,12 @@ namespace MOS::App // User tasks
 int main(void)
 {
     using namespace MOS;
+    using UserGlobal::rx_buf;
 
     Bsp::config(); // Init hardware and clocks
-    Task::create(Shell::launch, nullptr, 1, "Shell"); // Create shell task
-    Task::create(App::Task0, nullptr, 1, "T0"); // Create user task
-    Scheduler::launch(); // Start Scheduling, never return
+    Task::create(Shell::launch, &rx_buf, 1, "Shell"); // Create Shell with rx_buf
+    Task::create(App::Task0, nullptr, 1, "T0"); // Create LED task
+    Scheduler::launch(); // Start scheduling, never return
 
     while (true) {
         // Never comes here...

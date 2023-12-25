@@ -4,12 +4,11 @@
 #include "stm32f4xx.h"
 #include "core_cm4.h"
 
-#define MOS_REBOOT()               NVIC_SystemReset()
-#define MOS_TRIGGER_SYSTICK_INTR() SCB->ICSR |= SCB_ICSR_PENDSTSET_Msk
-#define MOS_TRIGGER_PENDSV_INTR()  SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk
-#define MOS_TEST_IRQ()             __get_PRIMASK() == 0
-#define MOS_DISABLE_IRQ()          asm volatile("CPSID I");
-#define MOS_ENABLE_IRQ()           asm volatile("CPSIE I");
+#define MOS_REBOOT()              NVIC_SystemReset()
+#define MOS_TRIGGER_PENDSV_INTR() SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk
+#define MOS_TEST_IRQ()            __get_PRIMASK() == 0
+#define MOS_DISABLE_IRQ()         asm volatile("CPSID    I");
+#define MOS_ENABLE_IRQ()          asm volatile("CPSIE    I");
 
 #define ARCH_INIT_ASM                                                                                 \
 	"CPSID   I\n"           /* Disable irq to enter critical section */                               \
@@ -60,5 +59,7 @@
 	"POP     {R4-R7}\n" /* Pop registers R4-R7 */                                                                      \
 	"CPSIE   I\n"       /* Enable interrupts */                                                                        \
 	"BX      LR"        /* Return from interrupt */
+
+#define ARCH_JUMP_TO_CONTEXT_SWITCH "B    ContextSwitch"
 
 #endif

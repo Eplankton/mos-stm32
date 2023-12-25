@@ -64,7 +64,7 @@ namespace MOS::Shell
 				}
 			}
 			else {// No arguments provided
-				Task::print_all_tasks();
+				Task::print_all();
 			}
 		}
 
@@ -111,10 +111,10 @@ namespace MOS::Shell
 
 	inline void launch(void* argv)
 	{
-		using KernelGlobal::rx_buf;
+		using DataType::RxBuffer;
 
 		auto parser = [](Command::Text_t str) {
-			for (auto& cmd: cmds) {
+			for (const auto& cmd: cmds) {
 				if (auto argv = cmd.match(str)) {
 					return cmd.run(argv);
 				}
@@ -123,8 +123,9 @@ namespace MOS::Shell
 		};
 
 		CmdCall::uname_cmd(nullptr);
-		Task::print_all_tasks();
+		Task::print_all();
 
+		auto& rx_buf = *(RxBuffer<Macro::RX_BUF_SIZE>*) argv;
 		while (true) {
 			// Valid input should end with '\n'
 			if (rx_buf.back() == '\n') {
@@ -135,7 +136,7 @@ namespace MOS::Shell
 				rx_buf.clear();
 			}
 			else {
-				Task::yield();
+				Task::nop_and_yield();
 			}
 		}
 	}
