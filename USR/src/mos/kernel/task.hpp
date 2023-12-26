@@ -94,8 +94,7 @@ namespace MOS::Task
 	__attribute__((always_inline)) static inline TcbPtr_t
 	load_context(TcbPtr_t tcb)
 	{
-		// Setup the stack to hold task context.
-		// Remember it is a descending stack and a context consists of 16 registers.
+		// A descending stack consists of 16 registers as context.
 		// high -> low, descending stack
 		// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
 		tcb->set_SP(&tcb->page->raw[Macro::PAGE_SIZE - 16]);
@@ -133,7 +132,7 @@ namespace MOS::Task
 			DisIntrGuard guard;
 
 			// Page Alloc
-			PagePtr_t page = Alloc::palloc();
+			auto page = Alloc::palloc();
 
 			// Construct a TCB at the head of a page block
 			tcb = TCB_t::build(page, fn, argv, pr, name);
@@ -181,14 +180,12 @@ namespace MOS::Task
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
-		{
-			DisIntrGuard guard;
-			tcb->set_status(Status_t::BLOCKED);
-			ready_list.send_to(tcb->node, dest);
-		}
+		DisIntrGuard guard;
+		tcb->set_status(Status_t::BLOCKED);
+		ready_list.send_to(tcb->node, dest);
 
 		if (tcb == current_task()) {
-			yield();
+			return yield();
 		}
 	}
 
@@ -206,15 +203,13 @@ namespace MOS::Task
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
-		{
-			DisIntrGuard guard;
-			tcb->set_status(Status_t::READY);
-			blocked_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
-		}
+		DisIntrGuard guard;
+		tcb->set_status(Status_t::READY);
+		blocked_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
 
 		if (current_task() != (TcbPtr_t) ready_list.begin()) {
 			// if curTCB isn't the highest priority
-			yield();
+			return yield();
 		}
 	}
 
@@ -223,15 +218,13 @@ namespace MOS::Task
 	{
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
-		{
-			DisIntrGuard guard;
-			tcb->set_priority(pr);
-			ready_list.re_insert(tcb->node, TCB_t::priority_cmp);
-		}
+		DisIntrGuard guard;
+		tcb->set_priority(pr);
+		ready_list.re_insert(tcb->node, TCB_t::priority_cmp);
 
 		if (current_task() != (TcbPtr_t) ready_list.begin()) {
 			// if curTCB isn't the highest priority
-			yield();
+			return yield();
 		}
 	}
 
@@ -268,7 +261,7 @@ namespace MOS::Task
 	}
 
 	__attribute__((always_inline)) inline constexpr auto
-	status_name(const Status_t status)// Status to String
+	status_name(const Status_t status)
 	{
 		switch (status) {
 			case Status_t::READY:

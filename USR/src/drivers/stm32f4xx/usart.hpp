@@ -142,6 +142,13 @@ namespace HAL::STM32F4xx
 		}
 
 		inline void
+		wait_flag(Flag_t flag) const
+		{
+			while (get_flag_status(flag) == RESET)
+				;
+		}
+
+		inline void
 		send_data(Data_t data)
 		{
 			USART_SendData(this, data);
@@ -151,8 +158,7 @@ namespace HAL::STM32F4xx
 		send_byte(uint8_t ch)
 		{
 			send_data(ch);
-			while (get_flag_status(USART_FLAG_TXE) == RESET)
-				;
+			wait_flag(USART_FLAG_TXE);
 		}
 
 		inline void
@@ -163,8 +169,7 @@ namespace HAL::STM32F4xx
 				send_byte(*((uint8_t*) buf + k++));
 			} while (k != len);
 
-			while (get_flag_status(USART_FLAG_TC) == RESET)
-				;
+			wait_flag(USART_FLAG_TC);
 		}
 
 		inline void send_string(const char* str)
@@ -174,8 +179,7 @@ namespace HAL::STM32F4xx
 				send_byte(*(str + k++));
 			}
 
-			while (get_flag_status(USART_FLAG_TC) == RESET)
-				;
+			wait_flag(USART_FLAG_TC);
 		}
 
 		inline void println(const char* str)

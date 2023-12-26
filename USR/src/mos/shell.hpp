@@ -24,7 +24,7 @@ namespace MOS::Shell
 
 		inline Argv_t match(Text_t str) const
 		{
-			uint32_t xlen = len();
+			const uint32_t xlen = len();
 
 			auto skip = [](Text_t str) {
 				while (*str == ' ') ++str;
@@ -87,7 +87,7 @@ namespace MOS::Shell
 
 		static inline void reboot_cmd(Argv_t argv)
 		{
-			MOS_MSG("[MOS]: Reboot\n\n\n");
+			MOS_MSG("[MOS]: Reboot!\n\n\n");
 			MOS_REBOOT();
 		}
 
@@ -101,7 +101,7 @@ namespace MOS::Shell
 		}
 	}
 
-	// Add more cmds here with {"text", CmdCall::callback}
+	// Add more commands with {"text", CmdCall::callback}
 	static constexpr Command cmds[] = {
 	        {    "ls",     CmdCall::ls_cmd},
 	        {  "kill",   CmdCall::kill_cmd},
@@ -112,8 +112,9 @@ namespace MOS::Shell
 	inline void launch(void* argv)
 	{
 		using DataType::RxBuffer;
+		using Text_t = Command::Text_t;
 
-		auto parser = [](Command::Text_t str) {
+		auto parser = [](Text_t str) {
 			for (const auto& cmd: cmds) {
 				if (auto argv = cmd.match(str)) {
 					return cmd.run(argv);
@@ -136,7 +137,7 @@ namespace MOS::Shell
 				rx_buf.clear();
 			}
 			else {
-				Task::nop_and_yield();
+				Task::delay(1);
 			}
 		}
 	}

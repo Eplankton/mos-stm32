@@ -4,7 +4,7 @@
 #define MOS_VERSION "0.0.2"
 
 // Platform
-#define MOS_CPU_CORTEX_M4 "Cortex-M4"
+#define MOS_CPU_CORTEX_M4 "Cortex-M4F"
 #define MOS_DEVICE        "STM32F429"
 #define MOS_CPU           MOS_CPU_CORTEX_M4
 

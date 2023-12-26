@@ -166,7 +166,7 @@ Tid   Name   Priority   Status   Stack%
 ----------------------------------------
 #0    idle     15       READY       10%
 #1    Shell    1        READY       21%
-#2    T0       1        RUNNING      9%
+#2    T0       2        RUNNING      9%
 ----------------------------------------
 ```
 

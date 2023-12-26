@@ -15,8 +15,7 @@ namespace MOS::Bsp
 	{
 		using UserGlobal::uart;
 		uart.send_data(ch);
-		while (uart.get_flag_status(USART_FLAG_TXE) == RESET)
-			;
+		uart.wait_flag(USART_FLAG_TXE);
 	}
 
 	static inline void LED_Config()

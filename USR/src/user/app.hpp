@@ -13,7 +13,7 @@ namespace MOS::App
 	{
 		using Color = enum Driver::ST7735S::Color;
 
-		extern "C" void gui_delay_ms(uint32_t ms) { Util::delay(ms); }
+		extern "C" void gui_delay_ms(uint32_t ms) { Task::delay(ms); }
 		extern "C" void gfx_draw_pixel(int x, int y, unsigned int rgb)
 		{
 			UserGlobal::lcd.draw_point(x, y, (Color) GL_RGB_32_to_16(rgb));
@@ -39,7 +39,7 @@ namespace MOS::App
 		startHello3D(NULL, lcd.width, lcd.height, 1, &gfx_op);
 	}
 
-	static inline Sync::MutexImpl_t lcd_mutex {1};
+	static Sync::MutexImpl_t lcd_mutex {1};
 
 	void LCD(void* argv)
 	{
@@ -50,14 +50,14 @@ namespace MOS::App
 		auto Slogan = [](void* argv) {
 			while (true) {
 				lcd_mutex.lock();
-				lcd.show_string(0, 130, "Hello, World!");
+				lcd.show_string(0, 130, "Hello, World!", GREEN);
 				lcd_mutex.unlock();
 			}
 		};
 
 		auto GIF = [](void* argv) {
 			while (true) {
-				for (auto frame: cat_gif_frames) {
+				for (auto frame: cat_gif) {
 					lcd_mutex.lock();
 					lcd.draw_img(0, 0, 128, 128, frame);
 					lcd_mutex.unlock();

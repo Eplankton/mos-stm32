@@ -20,8 +20,8 @@ int main(void)
 	Task::create(Shell::launch, &rx_buf, 1, "Shell");
 
 	// Create user tasks
-	Task::create(App::Task0, nullptr, 1, "T0");
-	Task::create(App::GUI, nullptr, 1, "GUI");
+	Task::create(App::Task0, nullptr, 2, "T0");
+	Task::create(App::GUI, nullptr, 3, "GUI");
 	// Task::create(App::LCD, nullptr, 1, "LCD");
 
 	// Test example
