@@ -33,7 +33,7 @@ namespace MOS::Task
 	nop_and_yield()
 	{
 		curTCB->time_slice -= 1;
-		Task::yield();
+		yield();
 	}
 
 	__attribute__((always_inline)) inline void
@@ -133,7 +133,7 @@ namespace MOS::Task
 			DisIntrGuard guard;
 
 			// Page Alloc
-			auto page = Alloc::palloc();
+			PagePtr_t page = Alloc::palloc();
 
 			// Construct a TCB at the head of a page block
 			tcb = TCB_t::build(page, fn, argv, pr, name);
@@ -144,7 +144,7 @@ namespace MOS::Task
 			// Give TID
 			tcb->set_tid(inc_tids());
 
-			// Add parent
+			// Set parent
 			tcb->set_parent(cur);
 
 			// Set TCB to be READY

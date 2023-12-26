@@ -9,8 +9,6 @@
 
 namespace MOS::App
 {
-	Sync::MutexImpl_t mm(1);
-
 	namespace GuiPort
 	{
 		using Color = enum Driver::ST7735S::Color;
@@ -41,6 +39,8 @@ namespace MOS::App
 		startHello3D(NULL, lcd.width, lcd.height, 1, &gfx_op);
 	}
 
+	static inline Sync::MutexImpl_t lcd_mutex {1};
+
 	void LCD(void* argv)
 	{
 		using namespace Driver;
@@ -49,18 +49,18 @@ namespace MOS::App
 
 		auto Slogan = [](void* argv) {
 			while (true) {
-				mm.lock();
+				lcd_mutex.lock();
 				lcd.show_string(0, 130, "Hello, World!");
-				mm.unlock();
+				lcd_mutex.unlock();
 			}
 		};
 
 		auto GIF = [](void* argv) {
 			while (true) {
 				for (auto frame: cat_gif_frames) {
-					mm.lock();
+					lcd_mutex.lock();
 					lcd.draw_img(0, 0, 128, 128, frame);
-					mm.unlock();
+					lcd_mutex.unlock();
 				}
 			}
 		};

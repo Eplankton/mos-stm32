@@ -6,9 +6,11 @@
 
 namespace MOS::Scheduler
 {
-	using namespace Task;
 	using namespace KernelGlobal;
+
 	using Status_t = TCB_t::Status_t;
+	using TcbPtr_t = TCB_t::TcbPtr_t;
+	using Node_t   = TCB_t::Node_t;
 
 	enum class Policy
 	{

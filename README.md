@@ -11,6 +11,7 @@ o'' )_____//    [MOS-STM32]
 - Board: Nucleo-144 F429ZI
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
+<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/36903bf6-c33e-47d5-a960-ad52d951295f" width="50%">
 
 ### Repository 🌏
 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
@@ -31,11 +32,11 @@ src
 │   ├── kernel               Kernel(arch-independent)
 │   │   ├── macro.hpp        Configured Macros
 │   │   ├── type.hpp         Basic Types
-│   │   ├── concepts.hpp     C++20 Concepts
-│   │   ├── data_type.hpp    Kernel Data Structures
+│   │   ├── concepts.hpp     C++20 Concepts(Optional)
+│   │   ├── data_type.hpp    Basic Data Structures
 │   │   ├── alloc.hpp        Static/Dynamic Allocator
 │   │   ├── global.hpp       Kernel Globals
-│   │   ├── printf.c         printf implementation
+│   │   ├── printf.c         Thread-safe printf
 │   │   ├── task.hpp         Task create, yield, terminate, block...
 │   │   ├── sync.hpp         Sync primitives
 │   │   ├── scheduler.hpp    Scheduler and Policy
@@ -87,6 +88,9 @@ namespace MOS::UserGlobal
     // Serial TX/RX
     auto& uart = STM32F4xx::convert(USART3);
 
+    // RX Buffer
+    RxBuffer<Macro::RX_BUF_SIZE> rx_buf;
+
     // LED red, green, blue
     Driver::LED_t leds[] = {...};
 }
@@ -133,13 +137,20 @@ int main(void)
     using namespace MOS;
     using UserGlobal::rx_buf;
 
-    Bsp::config(); // Init hardware and clocks
-    Task::create(Shell::launch, &rx_buf, 1, "Shell"); // Create Shell with rx_buf
-    Task::create(App::Task0, nullptr, 1, "T0"); // Create LED task
-    Scheduler::launch(); // Start scheduling, never return
+    // Init hardware and clocks
+    Bsp::config();
+
+    // Create Shell with rx_buf
+    Task::create(Shell::launch, &rx_buf, 1, "Shell");
+    
+    // Create LED task
+    Task::create(App::Task0, nullptr, 1, "T0");
+    
+    // Start scheduling, never return
+    Scheduler::launch();
 
     while (true) {
-        // Never comes here...
+        // Never runs to here
     }
 }
 ```
@@ -162,8 +173,7 @@ Tid   Name   Priority   Status   Stack%
 ### Version 🧾
 ```
 📦 The initial version 0.0.1
-1. Basic Scheduler
-2. Basic Task control
+1. Basic Scheduler and Task control
 
 📌 To do
 1. Timers, RoundRobin
@@ -171,7 +181,7 @@ Tid   Name   Priority   Status   Stack%
 3. Sync, semaphore, mutex, lock
 4. Porting simple shells
 5. Mutable page size, memory allocator
-6. SPI driver, LVGL library
+6. SPI driver and LVGL library
 7. Port to ESP32-C3, RISC-V
 ```
 ```
@@ -201,6 +211,3 @@ Tid   Name   Priority   Status   Stack%
 3. [STM32F4-LCD_ST7735s](https://github.com/Dungyichao/STM32F4-LCD_ST7735s)
 4. [A printf/sprintf Implementation for Embedded Systems](https://github.com/mpaland/printf)
 5. [GuiLite](https://github.com/idea4good/GuiLite)
-
-### Just for Fun 🕹
-![cat](https://github.com/Eplankton/mos-stm32/assets/86543401/36903bf6-c33e-47d5-a960-ad52d951295f)
