@@ -11,6 +11,7 @@ namespace MOS::Scheduler
 	using Status_t = TCB_t::Status_t;
 	using TcbPtr_t = TCB_t::TcbPtr_t;
 	using Node_t   = TCB_t::Node_t;
+	using Fn_t     = TCB_t::Fn_t;
 
 	enum class Policy
 	{
@@ -30,16 +31,17 @@ namespace MOS::Scheduler
 	}
 
 	// Called only once
-	static inline void launch()
+	static inline void launch(Fn_t hook = nullptr)
 	{
+		// Default idle can be replaced by hook
 		auto idle = [](void* argv) {
 			while (true) {
-				// nothing but loop...this can be replaced by hook
 				asm volatile("");
 			}
 		};
 
-		Task::create(idle, nullptr, Macro::PRI_MIN, "idle");
+		// Create idle task with hook
+		Task::create(hook == nullptr ? idle : hook, nullptr, Macro::PRI_MIN, "idle");
 		curTCB = (TcbPtr_t) ready_list.begin();
 		curTCB->set_status(Status_t::RUNNING);
 		init();
@@ -89,7 +91,7 @@ namespace MOS::Scheduler
 		}
 
 		if constexpr (policy == Policy::PreemptivePriority) {
-			// If there's a higher task
+			// If there's a task with higher priority
 			if (TCB_t::priority_cmp(st->node, curTCB->node)) {
 				curTCB->set_status(Status_t::READY);
 				return switch_to(st);
@@ -98,7 +100,7 @@ namespace MOS::Scheduler
 			if (curTCB->time_slice <= 0) {
 				curTCB->set_status(Status_t::READY);
 				curTCB->time_slice = Macro::TIME_SLICE;
-				// RoundRobin in group of the same priority
+				// RoundRobin in same group
 				if (nx != ed && TCB_t::priority_equal(nx->node, curTCB->node)) {
 					return switch_to(nx);
 				}

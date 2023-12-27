@@ -105,7 +105,7 @@ namespace MOS::ISR
 
 		EXTI_t::handle_line(EXTI_Line13, [&] {
 			DisIntrGuard guard;
-			MOS_MSG("K1 Cnt: %d\n", cnt++);
+			MOS_MSG("K1 Cnt = %d\n", cnt++);
 			// Task::create_fromISR(K1_IRQ,
 			//                      nullptr,
 			//                      Task::current_task()->get_priority(),

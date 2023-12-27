@@ -94,9 +94,9 @@ namespace MOS::Shell
 		static inline void uname_cmd(Argv_t argv)
 		{
 			kprintf(" A_A       _\n"
-			        "o'' )_____//  Version  @ %s\n"
-			        " `_/  MOS  )  Build    @ %s, %s\n"
-			        " (_(_/--(_/   Chip     @ %s, %s\n",
+			        "o'' )_____//  Version @ %s\n"
+			        " `_/  MOS  )  Build   @ %s, %s\n"
+			        " (_(_/--(_/   Chip    @ %s, %s\n",
 			        MOS_VERSION,
 			        __TIME__, __DATE__,
 			        MOS_DEVICE, MOS_ARCH);

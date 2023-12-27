@@ -16,7 +16,7 @@ int main(void)
 	// Init hardware and clocks
 	Bsp::config();
 
-	// Create shell as monitor
+	// Create Shell with rx_buf
 	Task::create(Shell::launch, &rx_buf, 1, "Shell");
 
 	// Create user tasks

@@ -158,9 +158,9 @@ int main(void)
 ### Boot up ⚡
 ```
  A_A       _
-o'' )_____//   Version  @ x.x.x
- `_/  MOS  )   Build    @ xx:xx:xx
- (_(_/--(_/    Chip     @ xxx, xxx
+o'' )_____//  Version @ x.x.x
+ `_/  MOS  )  Build   @ xx:xx:xx
+ (_(_/--(_/   Chip    @ xxx, xxx
 
 Tid   Name   Priority   Status   Stack%
 ----------------------------------------
