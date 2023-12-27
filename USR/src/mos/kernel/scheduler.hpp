@@ -50,7 +50,7 @@ namespace MOS::Scheduler
 	static inline void try_wake_up()
 	{
 		auto fetch = [](const Node_t& node) {
-			return ((TCB_t&) node).delay_ticks <= os_ticks;
+			return ((const TCB_t&) node).delay_ticks <= os_ticks;
 		};
 
 		if (auto to_wake = (TcbPtr_t) sleep_list.iter_until(fetch)) {

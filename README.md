@@ -21,15 +21,15 @@ o'' )_____//    [MOS-STM32]
 ```    
 src
 ├── drivers                  Hardware Drivers(SPL/HAL/...)
-│   ├── stm32f4xx            STM32F4xx on-chip periphs
-│   └── device               Other hardware(LED, LCD, etc.)
+│   ├── stm32f4xx            STM32F4xx on-chip periphs(USART, I2C, SPI...)
+│   └── device               Other hardware components(LED, LCD, etc.)
 │
 ├── mos
 │   ├── config.h             System Configuration
-│   ├── arch                 Arch-related code
+│   ├── arch                 Arch-related
 │   │   └── cpu.hpp          ASM of ContextSwitch
 │   │
-│   ├── kernel               Kernel(arch-independent)
+│   ├── kernel               Kernel(Arch-independent)
 │   │   ├── macro.hpp        Configured Macros
 │   │   ├── type.hpp         Basic Types
 │   │   ├── concepts.hpp     C++20 Concepts(Optional)
@@ -56,15 +56,15 @@ src
 │   └── test.hpp             Test
 │
 ├── main.cpp                 Entry main()
-└── stm32f4xx_it.cpp         Interrput SubRoutine(partly)
+└── stm32f4xx_it.cpp         Interrput SubRoutine(Partly)
 ```
 
 ### Example 🍎
 `Shell`
-![demo1](https://github.com/Eplankton/mos-stm32/assets/86543401/65e36ea0-d178-4da6-8f9a-9f1551c59dfc)
+![shell_demo](https://github.com/Eplankton/mos-stm32/assets/86543401/98c8ab84-a115-4754-a52a-f80c823618ad)
 
 `MutexTest`
-![demo2](https://github.com/Eplankton/mos-stm32/assets/86543401/bdd2c288-4528-45d5-b07c-03fe1c66bb34)
+![mutex_test ](https://github.com/Eplankton/mos-stm32/assets/86543401/b7bc54d5-709b-4eee-94d6-9f049ac3bdeb)
 
 `LCD Driver & GUI Graphic`
 <center>
@@ -158,9 +158,9 @@ int main(void)
 ### Boot up ⚡
 ```
  A_A       _
-o'' )_____//  Version @ x.x.x
- `_/  MOS  )  Build   @ xx:xx:xx
- (_(_/--(_/   Chip    @ xxx, xxx
+o'' )_____//   Version @ x.x.x
+ `_/  MOS  )   Build   @ xx:xx:xx
+ (_(_/--(_/    Chip    @ xxx, xxx
 
  Tid   Name   Priority   Status   Stack%
 -----------------------------------------

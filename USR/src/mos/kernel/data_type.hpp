@@ -521,13 +521,13 @@ namespace MOS::DataType
 		__attribute__((always_inline)) static inline bool
 		priority_cmp(const Node_t& lhs, const Node_t& rhs)
 		{
-			return ((TCB_t&) lhs).get_priority() < ((TCB_t&) rhs).get_priority();
+			return ((const TCB_t&) lhs).get_priority() < ((const TCB_t&) rhs).get_priority();
 		}
 
 		__attribute__((always_inline)) static inline bool
 		priority_equal(const Node_t& lhs, const Node_t& rhs)
 		{
-			return ((TCB_t&) lhs).get_priority() == ((TCB_t&) rhs).get_priority();
+			return ((const TCB_t&) lhs).get_priority() == ((const TCB_t&) rhs).get_priority();
 		}
 
 		__attribute__((always_inline)) static inline TcbPtr_t

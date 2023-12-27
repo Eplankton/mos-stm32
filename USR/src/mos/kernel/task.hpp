@@ -338,7 +338,7 @@ namespace MOS::Task
 	inline void
 	print_info(const Node_t& node, const char* format = " #%-2d %-9s %-5d %-9s %3d%%\n")
 	{
-		auto& tcb = (TCB_t&) node;
+		const auto& tcb = (const TCB_t&) node;
 		kprintf(format,
 		        tcb.get_tid(),
 		        tcb.get_name(),

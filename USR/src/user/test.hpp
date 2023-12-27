@@ -11,7 +11,7 @@ namespace MOS::Test
 	{
 		auto cur = Task::current_task();
 		while (true) {
-			// MutexGuard Lifetime
+			// MutexGuard Scope
 			{
 				auto guard = mutex.lock();
 				for (uint8_t i = 0; i < 5; i++) {

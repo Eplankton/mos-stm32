@@ -82,7 +82,7 @@ namespace MOS::App
 			Task::delay(100);
 		}
 
-		kprintf("K1 exits...\n");
+		kprintf("T1 exits...\n");
 	}
 
 	void Task0(void* argv)
