@@ -428,6 +428,12 @@ namespace MOS::DataType
 			return get_status() == expected;
 		}
 
+		__attribute__((always_inline)) inline bool
+		is_sleeping() volatile const
+		{
+			return is_status(BLOCKED) && (delay_ticks != 0);
+		}
+
 		__attribute__((always_inline)) inline Name_t
 		get_name() volatile const
 		{
@@ -471,9 +477,9 @@ namespace MOS::DataType
 		}
 
 		__attribute__((always_inline)) inline void
-		set_param(uint32_t param) volatile
+		set_argv(uint32_t argv_val) volatile
 		{
-			page->raw[Macro::PAGE_SIZE - 8U] = param;
+			page->raw[Macro::PAGE_SIZE - 8U] = argv_val;
 		}
 
 		__attribute__((always_inline)) inline void
@@ -528,6 +534,7 @@ namespace MOS::DataType
 		build(PagePtr_t page_ptr, Fn_t fn, Argv_t argv = nullptr,
 		      Prior_t pr = 15, Name_t name = "")
 		{
+			// In-placement new
 			auto tcb = new (page_ptr->raw) TCB_t {fn, argv, pr, name};
 			tcb->attach_page(page_ptr);
 			return tcb;

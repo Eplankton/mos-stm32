@@ -52,7 +52,7 @@ namespace MOS::Scheduler
 		};
 
 		if (auto to_wake = (TcbPtr_t) sleep_list.iter_until(fetch)) {
-			to_wake->delay_ticks = 0;
+			to_wake->set_delay_ticks(0);
 			to_wake->set_status(Status_t::READY);
 			sleep_list.send_to_in_order(to_wake->node, ready_list, TCB_t::priority_cmp);
 		}
@@ -98,7 +98,7 @@ namespace MOS::Scheduler
 			if (curTCB->time_slice <= 0) {
 				curTCB->set_status(Status_t::READY);
 				curTCB->time_slice = Macro::TIME_SLICE;
-				// Same priority in a group
+				// RoundRobin in group of the same priority
 				if (nx != ed && TCB_t::priority_equal(nx->node, curTCB->node)) {
 					return switch_to(nx);
 				}

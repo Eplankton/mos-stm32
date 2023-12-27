@@ -3,11 +3,11 @@
 
 #include "../config.h"
 
-#if defined(MOS_CPU_CORTEX_M4)
+#if defined(MOS_ARCH_CORTEX_M4)
 #include "cortex_m4.hpp"
 #endif
 
-#if defined(MOS_CPU_XXX)
+#if defined(MOS_ARCH_XXX)
 #include "xxx.hpp"
 #endif
 

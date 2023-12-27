@@ -89,38 +89,46 @@ namespace MOS::ISR
 	// K1 IRQ Handler
 	extern "C" void EXTI15_10_IRQHandler()
 	{
-		using UserGlobal::leds;
+		using Util::DisIntrGuard;
 		using HAL::STM32F4xx::EXTI_t;
+		using UserGlobal::leds;
 
-		static auto K1_IRQ = [](void* argv) {
-			for (uint32_t i = 0; i < 10; i++) {
+		auto K1_IRQ = [](void* argv) {
+			for (uint8_t i = 0; i < 10; i++) {
 				leds[2].toggle();
 				Task::print_name();
 				Task::delay(100);
 			}
 		};
 
-		EXTI_t::handle_line(EXTI_Line13, [] {
-			MOS_MSG("[MOS]: K1 IRQ!\n");
-			// Unsafe, just for debug
-			Task::create(K1_IRQ, nullptr, 1, "K1");
+		static uint32_t cnt = 0;
+
+		EXTI_t::handle_line(EXTI_Line13, [&] {
+			DisIntrGuard guard;
+			MOS_MSG("K1 Cnt: %d\n", cnt++);
+			// Task::create_fromISR(K1_IRQ,
+			//                      nullptr,
+			//                      Task::current_task()->get_priority(),
+			//                      "K1");
 		});
 	}
 
 	// UART3 IRQ Handler
 	extern "C" void USART3_IRQHandler()
 	{
+		using Util::DisIntrGuard;
 		using UserGlobal::uart;
 		using UserGlobal::rx_buf;
 
 		if (uart.get_it_status(USART_IT_RXNE) != RESET) {
+			DisIntrGuard guard;
 			char data = uart.receive_data();
 			if (!rx_buf.full()) {
 				rx_buf.add(data);
 			}
 			else {
 				rx_buf.clear();
-				MOS_MSG("[MOS]: Command too long\n\n");
+				kprintf("[MOS]: Command too long\n\n");
 			}
 		}
 	}

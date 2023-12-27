@@ -22,7 +22,7 @@ namespace MOS::Task
 	using Tid_t     = TCB_t::Tid_t;
 	using TcbPtr_t  = TCB_t::TcbPtr_t;
 	using PagePtr_t = TCB_t::PagePtr_t;
-
+	
 	__attribute__((always_inline)) inline auto
 	current_task() { return curTCB; }
 
@@ -36,8 +36,12 @@ namespace MOS::Task
 		yield();
 	}
 
-	__attribute__((always_inline)) inline void
-	inc_ticks() { os_ticks += 1; }
+	__attribute__((always_inline)) inline auto
+	inc_ticks()
+	{
+		os_ticks += 1;
+		return os_ticks;
+	}
 
 	__attribute__((always_inline)) inline auto
 	inc_tids()
@@ -62,14 +66,15 @@ namespace MOS::Task
 			DisIntrGuard guard;
 
 			// Remove the task from list
-			if (tcb->is_status(Status_t::RUNNING) || tcb->is_status(Status_t::READY)) {
+			if (tcb->is_status(Status_t::RUNNING) ||
+			    tcb->is_status(Status_t::READY)) {
 				ready_list.remove(tcb->node);
 			}
-			else if (tcb->delay_ticks == 0) {
-				blocked_list.remove(tcb->node);
+			else if (tcb->is_sleeping()) {
+				sleep_list.remove(tcb->node);
 			}
 			else {
-				sleep_list.remove(tcb->node);
+				blocked_list.remove(tcb->node);
 			}
 
 			// Mark the page as unused and deinit the page
@@ -110,7 +115,7 @@ namespace MOS::Task
 		tcb->set_LR((uint32_t) exit);
 
 		// Set arguments
-		tcb->set_param((uint32_t) tcb->argv);
+		tcb->set_argv((uint32_t) tcb->argv);
 
 		return tcb;
 	}
@@ -172,6 +177,48 @@ namespace MOS::Task
 		return create(fn, (Argv_t) &argv, pr, name);
 	}
 
+	// Not recommended
+	inline TcbPtr_t create_fromISR(Fn_t fn, Argv_t argv = nullptr, Prior_t pr = 15, Name_t name = "")
+	{
+		if (num() >= Macro::MAX_TASK_NUM) {
+			return nullptr;
+		}
+
+		MOS_ASSERT(fn != nullptr, "fn can't be null");
+
+		TcbPtr_t tcb = nullptr, cur = current_task();
+
+		{
+			DisIntrGuard guard;
+
+			// Page Alloc
+			auto page = Alloc::palloc();
+
+			// Construct a TCB at the head of a page block
+			tcb = TCB_t::build(page, fn, argv, pr, name);
+
+			// Load empty context
+			load_context(tcb);
+
+			// Give TID
+			tcb->set_tid(inc_tids());
+
+			// Set parent
+			tcb->set_parent(cur);
+
+			// Set TCB to be READY
+			tcb->set_status(Status_t::READY);
+
+			// Add to TCBs list
+			ready_list.insert_in_order(tcb->node, TCB_t::priority_cmp);
+
+			// For debug only
+			debug_tcbs.add(tcb);
+		}
+
+		return tcb;
+	}
+
 	inline void block_to(TcbPtr_t tcb, List_t& dest)
 	{
 		if (tcb == nullptr || tcb->is_status(Status_t::BLOCKED))
@@ -211,6 +258,17 @@ namespace MOS::Task
 			// if curTCB isn't the highest priority
 			return yield();
 		}
+	}
+
+	// Not recommended
+	inline void resume_fromISR(TcbPtr_t tcb)
+	{
+		if (tcb == nullptr || !tcb->is_status(Status_t::BLOCKED))
+			return;
+
+		DisIntrGuard guard;
+		tcb->set_status(Status_t::READY);
+		blocked_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
 	}
 
 	__attribute__((always_inline)) inline void
@@ -257,7 +315,7 @@ namespace MOS::Task
 	inline void print_name()
 	{
 		DisIntrGuard guard;
-		MOS_MSG("%s\n", current_task()->get_name());
+		kprintf("%s\n", current_task()->get_name());
 	}
 
 	__attribute__((always_inline)) inline constexpr auto
@@ -278,11 +336,10 @@ namespace MOS::Task
 	};
 
 	inline void
-	print_info(const Node_t& node,
-	           const char* format = "#%-2d %-10s %-5d %-9s %3d%%\n")
+	print_info(const Node_t& node, const char* format = "#%-2d %-10s %-5d %-9s %3d%%\n")
 	{
 		auto& tcb = (TCB_t&) node;
-		MOS_MSG(format,
+		kprintf(format,
 		        tcb.get_tid(),
 		        tcb.get_name(),
 		        tcb.get_priority(),
@@ -294,11 +351,9 @@ namespace MOS::Task
 	inline void print_all()
 	{
 		DisIntrGuard guard;
-		MOS_MSG("------------------------------------\n");
-		debug_tcbs.iter([](TcbPtr_t tcb) {
-			print_info(tcb->node);
-		});
-		MOS_MSG("------------------------------------\n");
+		kprintf("------------------------------------\n");
+		debug_tcbs.iter([](TcbPtr_t tcb) { print_info(tcb->node); });
+		kprintf("------------------------------------\n");
 	}
 
 	__attribute__((always_inline)) inline void

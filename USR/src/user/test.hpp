@@ -13,7 +13,7 @@ namespace MOS::Test
 		while (true) {
 			mutex.lock();
 			for (uint8_t i = 0; i < 5; i++) {
-				MOS_MSG("%s is working...\n", cur->get_name());
+				kprintf("%s is working...\n", cur->get_name());
 				Task::delay(100);
 			}
 			mutex.unlock();

@@ -16,7 +16,7 @@ namespace MOS::Shell
 		Text_t text;
 		Fn_t callback;
 
-		__attribute__((always_inline)) inline auto
+		__attribute__((always_inline)) inline uint32_t
 		len() const { return Util::strlen(text); }
 
 		__attribute__((always_inline)) inline void
@@ -60,7 +60,7 @@ namespace MOS::Shell
 					// todo()
 				}
 				else {
-					MOS_MSG("[MOS]: Unknown task '%s'\n", name);
+					MOS_MSG("Unknown task '%s'\n", name);
 				}
 			}
 			else {// No arguments provided
@@ -74,30 +74,32 @@ namespace MOS::Shell
 			if (*name != '\0') {
 				if (auto tcb = Task::find(name)) {
 					Task::terminate(tcb);
-					MOS_MSG("[MOS]: Task '%s' terminated\n", name);
+					MOS_MSG("Task '%s' terminated\n", name);
 				}
 				else {
-					MOS_MSG("[MOS]: Unknown task '%s'\n", name);
+					MOS_MSG("Unknown task '%s'\n", name);
 				}
 			}
 			else {
-				MOS_MSG("[MOS]: Invalid Arguments\n");
+				MOS_MSG("Invalid Arguments\n");
 			}
 		}
 
 		static inline void reboot_cmd(Argv_t argv)
 		{
-			MOS_MSG("[MOS]: Reboot!\n\n\n");
+			MOS_MSG("Reboot...\n\n\n");
 			MOS_REBOOT();
 		}
 
 		static inline void uname_cmd(Argv_t argv)
 		{
-			MOS_MSG(" A_A       _\n"
+			kprintf(" A_A       _\n"
 			        "o'' )_____//  Version  @ %s\n"
-			        " `_/  MOS  )  Platform @ %s, %s\n"
-			        " (_(_/--(_/   Build    @ %s, %s\n",
-			        MOS_VERSION, MOS_DEVICE, MOS_CPU, __TIME__, __DATE__);
+			        " `_/  MOS  )  Build    @ %s, %s\n"
+			        " (_(_/--(_/   Chip     @ %s, %s\n",
+			        MOS_VERSION,
+			        __TIME__, __DATE__,
+			        MOS_DEVICE, MOS_ARCH);
 		}
 	}
 
@@ -120,7 +122,7 @@ namespace MOS::Shell
 					return cmd.run(argv);
 				}
 			}
-			MOS_MSG("[MOS]: Unknown command '%s'\n", str);
+			MOS_MSG("Unknown command '%s'\n", str);
 		};
 
 		CmdCall::uname_cmd(nullptr);
@@ -132,7 +134,7 @@ namespace MOS::Shell
 			if (rx_buf.back() == '\n') {
 				rx_buf.pop();
 				auto rx_str = rx_buf.c_str();
-				MOS_MSG("> %s\n", rx_str);
+				kprintf("> %s\n", rx_str);
 				parser(rx_str);
 				rx_buf.clear();
 			}

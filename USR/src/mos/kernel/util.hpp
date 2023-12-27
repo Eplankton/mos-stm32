@@ -9,8 +9,10 @@
 
 #ifdef MOS_CONF_PRINTF
 #include "printf.h"
-#define MOS_MSG(format, ...) printf_(format, ##__VA_ARGS__)
+#define kprintf(format, ...) printf_(format, ##__VA_ARGS__)
+#define MOS_MSG(format, ...) kprintf("[MOS]: " format, ##__VA_ARGS__)
 #else
+#define kprintf(format, ...) ((void) 0)
 #define MOS_MSG(format, ...) ((void) 0)
 #endif
 
@@ -20,7 +22,7 @@
 
 inline void mos_assert_failed(uint8_t* file, uint32_t line, const char* message)
 {
-	MOS_MSG("%s, %d: %s\n", file, line, message);
+	kprintf("%s, %d: %s\n", file, line, message);
 	while (true) {
 		asm volatile("");
 	}
@@ -91,6 +93,7 @@ namespace MOS::Util
 		return dest;
 	}
 
+	// Create critical section
 	struct DisIntrGuard
 	{
 		__attribute__((always_inline)) DisIntrGuard() { MOS_DISABLE_IRQ(); }

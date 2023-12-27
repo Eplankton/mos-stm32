@@ -158,9 +158,9 @@ int main(void)
 ### Boot up ⚡
 ```
  A_A       _
-o'' )_____//  Version  @ x.x.x
- `_/  MOS  )  Platform @ xxx, xxx
- (_(_/--(_/   Build    @ xx:xx:xx
+o'' )_____//   Version  @ x.x.x
+ `_/  MOS  )   Build    @ xx:xx:xx
+ (_(_/--(_/    Chip     @ xxx, xxx
 
 Tid   Name   Priority   Status   Stack%
 ----------------------------------------
@@ -190,7 +190,7 @@ Tid   Name   Priority   Status   Stack%
 2. Scheduler::Policy::{PreemptivePriority}, under same priority -> {RoundRobin}
 3. Task::terminate() implicitly be called when task exits
 4. Shell::{Command, CmdCall, launch}
-5. os_ticks and Task::delay() as blocking delay
+5. KernelGlobal::os_ticks and Task::delay() as block delay
 6. Driver::{SPI_t, ST7735S}
 7. Refactor the project into {kernel, arch, drivers}
 8. Support GuiLite library
@@ -198,7 +198,7 @@ Tid   Name   Priority   Status   Stack%
 
 📌 To do
 1. Mutex_t with priority inheritance mechanism
-2. IPC: pipes, message queues, etc.
+2. IPC::{pipes, message queues}, etc.
 3. Simple dynamic memory allocator
 4. Hardware Timers
 5. BitMap for faster allocation
