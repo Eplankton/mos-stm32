@@ -5,18 +5,20 @@
 
 namespace MOS::Test
 {
-	static Sync::MutexImpl_t mutex;
+	static Sync::Mutex_t mutex;
 
 	void MutexTest(void* argv)
 	{
 		auto cur = Task::current_task();
 		while (true) {
-			mutex.lock();
-			for (uint8_t i = 0; i < 5; i++) {
-				kprintf("%s is working...\n", cur->get_name());
-				Task::delay(100);
+			// MutexGuard Lifetime
+			{
+				auto guard = mutex.lock();
+				for (uint8_t i = 0; i < 5; i++) {
+					kprintf("%s is working...\n", cur->get_name());
+					Task::delay(100);
+				}
 			}
-			mutex.unlock();
 			Task::delay(100);
 		}
 	}

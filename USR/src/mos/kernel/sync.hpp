@@ -181,30 +181,48 @@ namespace MOS::Sync
 		}
 	};
 
-	// template <typename T = void>
-	// struct Mutex_t : public MutexImpl_t
-	// {
-	// 	T raw;
+	template <typename T = void>
+	struct Mutex_t : private MutexImpl_t
+	{
+		T raw;
 
-	// 	T& get()
-	// 	{
-	// 		lock();
-	// 		unlock();
-	// 		return raw;
-	// 	}
+		struct MutexGuard
+		{
+			Mutex_t<T>& mutex;
 
-	// 	const T& get() const
-	// 	{
-	// 		lock();
-	// 		unlock();
-	// 		return raw;
-	// 	}
-	// };
+			__attribute__((always_inline)) ~MutexGuard() { mutex.unlock(); }
+			__attribute__((always_inline)) T& get() { return mutex.raw; }
+			__attribute__((always_inline)) T& operator*() { return get(); }
+		};
 
-	// template <>
-	// struct Mutex_t<void> : public MutexImpl_t
-	// {
-	// };
+		using MutexImpl_t::MutexImpl_t;
+
+		__attribute__((always_inline)) MutexGuard
+		lock()
+		{
+			MutexImpl_t::lock();
+			return MutexGuard {*this};
+		}
+	};
+
+	template <>
+	struct Mutex_t<> : private MutexImpl_t
+	{
+		struct MutexGuard
+		{
+			Mutex_t& mutex;
+			__attribute__((always_inline)) ~MutexGuard() { mutex.unlock(); }
+		};
+
+		using MutexImpl_t::MutexImpl_t;
+
+		__attribute__((always_inline)) MutexGuard
+		lock()
+		{
+			MutexImpl_t::lock();
+			return MutexGuard {*this};
+		}
+	};
 }
 
 #endif

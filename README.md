@@ -162,12 +162,12 @@ o'' )_____//  Version @ x.x.x
  `_/  MOS  )  Build   @ xx:xx:xx
  (_(_/--(_/   Chip    @ xxx, xxx
 
-Tid   Name   Priority   Status   Stack%
-----------------------------------------
-#0    idle     15       READY       10%
-#1    Shell    1        READY       21%
-#2    T0       2        RUNNING      9%
-----------------------------------------
+ Tid   Name   Priority   Status   Stack%
+-----------------------------------------
+ #0    idle      15      READY       10%
+ #1    Shell     1       READY       21%
+ #2    T0        2       RUNNING      9%
+-----------------------------------------
 ```
 
 ### Version 🧾

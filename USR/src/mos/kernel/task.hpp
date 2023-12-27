@@ -22,7 +22,7 @@ namespace MOS::Task
 	using Tid_t     = TCB_t::Tid_t;
 	using TcbPtr_t  = TCB_t::TcbPtr_t;
 	using PagePtr_t = TCB_t::PagePtr_t;
-	
+
 	__attribute__((always_inline)) inline auto
 	current_task() { return curTCB; }
 
@@ -336,7 +336,7 @@ namespace MOS::Task
 	};
 
 	inline void
-	print_info(const Node_t& node, const char* format = "#%-2d %-10s %-5d %-9s %3d%%\n")
+	print_info(const Node_t& node, const char* format = " #%-2d %-9s %-5d %-9s %3d%%\n")
 	{
 		auto& tcb = (TCB_t&) node;
 		kprintf(format,
