@@ -61,10 +61,10 @@ src
 
 ### Example 🍎
 `Shell`
-![shell_demo](https://github.com/Eplankton/mos-stm32/assets/86543401/98c8ab84-a115-4754-a52a-f80c823618ad)
+![shell_demo](https://github.com/Eplankton/mos-stm32/assets/86543401/c362e744-c132-40c4-8db0-02e15e1b8508)
 
 `MutexTest`
-![mutex_test ](https://github.com/Eplankton/mos-stm32/assets/86543401/b7bc54d5-709b-4eee-94d6-9f049ac3bdeb)
+![mutex_test](https://github.com/Eplankton/mos-stm32/assets/86543401/3c6c2275-ad2a-4bd2-8eca-573e207927c5)
 
 `LCD Driver & GUI Graphic`
 <center>
