@@ -13,23 +13,24 @@
 // Put user global data here
 namespace MOS::UserGlobal
 {
-	using namespace HAL::STM32F4xx;
+	using namespace HAL;
 	using namespace Driver;
 	using namespace DataType;
 
-	// Serial input and output
-	auto& uart = convert(USART3);
+	// Serial Input/Output
+	auto& uart3 = STM32F4xx::convert(USART3);
 
 	// UART RX Buffer
 	RxBuffer<Macro::RX_BUF_SIZE> rx_buf;
 
-	// LEDs
+	// RGB LEDs
 	LED_t leds[] = {
 	        {GPIOB, GPIO_Pin_14}, // red
 	        {GPIOB,  GPIO_Pin_0}, // green
 	        {GPIOB,  GPIO_Pin_7}, // blue
 	};
 
+	// LCD with ST7735S SPI Driver
 	ST7735S lcd {
 	        SPI1,
 	        {GPIOA,  GPIO_Pin_5}, // SCLK(SCL)  -> PA5

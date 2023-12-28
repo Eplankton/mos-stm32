@@ -7,6 +7,8 @@
 #include "../config.h"
 #include "../arch/cpu.hpp"
 
+#define MOS_INLINE __attribute__((always_inline))
+
 #ifdef MOS_CONF_PRINTF
 #include "printf.h"
 #define kprintf(format, ...) printf_(format, ##__VA_ARGS__)
@@ -18,7 +20,7 @@
 
 #ifdef MOS_CONF_ASSERT
 #define MOS_ASSERT(expr, format, ...) \
-	((expr) ? (void) 0 : mos_assert_failed((uint8_t*) __FILE__, __LINE__, format))
+	((expr) ? ((void) 0) : mos_assert_failed((uint8_t*) __FILE__, __LINE__, format))
 
 inline void mos_assert_failed(uint8_t* file, uint32_t line, const char* message)
 {
@@ -34,7 +36,7 @@ inline void mos_assert_failed(uint8_t* file, uint32_t line, const char* message)
 
 namespace MOS::Util
 {
-	inline void
+	MOS_INLINE inline void
 	portable_delay(volatile uint32_t n)
 	{
 		while (n--) {
@@ -42,16 +44,16 @@ namespace MOS::Util
 		}
 	}
 
-	__attribute__((always_inline)) inline void
+	MOS_INLINE inline void
 	delay(const uint32_t n, const uint32_t unit = 2000)
 	{
 		portable_delay(n * unit);
 	}
 
-	__attribute__((always_inline)) inline bool
+	MOS_INLINE inline bool
 	test_irq() { return MOS_TEST_IRQ(); }
 
-	inline size_t
+	MOS_INLINE inline size_t
 	strlen(const char* str) noexcept
 	{
 		const char* s = str;
@@ -96,13 +98,13 @@ namespace MOS::Util
 	// Create critical section
 	struct DisIntrGuard
 	{
-		__attribute__((always_inline)) DisIntrGuard() { MOS_DISABLE_IRQ(); }
-		__attribute__((always_inline)) ~DisIntrGuard() { MOS_ENABLE_IRQ(); }
+		MOS_INLINE DisIntrGuard() { MOS_DISABLE_IRQ(); }
+		MOS_INLINE ~DisIntrGuard() { MOS_ENABLE_IRQ(); }
 	};
 }
 
 // placement new
-__attribute__((always_inline)) inline void*
+MOS_INLINE inline void*
 operator new(size_t, void* addr) noexcept { return addr; }
 
 #endif

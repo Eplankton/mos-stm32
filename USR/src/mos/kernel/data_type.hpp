@@ -10,26 +10,28 @@ namespace MOS::DataType
 	template <size_t N>
 	struct RxBuffer
 	{
-		char raw[N];
-		volatile int32_t index = 0;
+		using AtomicCnt_t = volatile int32_t;
 
-		__attribute__((always_inline)) inline auto
+		char raw[N];
+		AtomicCnt_t index = 0;
+
+		MOS_INLINE inline auto
 		c_str() const { return raw; }
 
-		__attribute__((always_inline)) inline bool
+		MOS_INLINE inline bool
 		full() const volatile { return index >= N; }
 
-		__attribute__((always_inline)) inline bool
+		MOS_INLINE inline bool
 		empty() const volatile { return index == 0; }
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		add(char ch) volatile { raw[index++] = ch; }
 
 		// If now empty
-		__attribute__((always_inline)) inline char
+		MOS_INLINE inline char
 		back() const volatile { return empty() ? '\0' : raw[index - 1]; }
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		pop() volatile
 		{
 			if (!empty()) {
@@ -37,8 +39,8 @@ namespace MOS::DataType
 			}
 		}
 
-		__attribute__((always_inline)) inline void
-		clear()
+		MOS_INLINE inline void
+		clear() volatile
 		{
 			while (--index >= 0) {
 				raw[index] = '\0';
@@ -47,24 +49,25 @@ namespace MOS::DataType
 		}
 	};
 
-	class QueueBase
+	class QueueImpl_t
 	{
 	protected:
 		uint32_t m_len = 0, m_head = 0, m_tail = 0;
 
-		inline void* front(void* src, const uint32_t size) volatile
+		MOS_INLINE inline void*
+		front(void* src, const uint32_t size) volatile
 		{
 			return (void*) ((uint32_t) (src) + m_head * size);
 		}
 
-		inline void* back(void* src, const uint32_t size) volatile
+		MOS_INLINE inline void*
+		back(void* src, const uint32_t size) volatile
 		{
 			return (void*) ((uint32_t) (src) + (m_len - 1) * size);
 		}
 
 		inline void
-		push(void* dest, const void* src,
-		     const u32 size, const u32 N) volatile
+		push(void* dest, const void* src, const u32 size, const u32 N) volatile
 		{
 			if (!full()) {
 				Util::memcpy(dest, src, size);
@@ -73,7 +76,8 @@ namespace MOS::DataType
 			}
 		}
 
-		inline void pop(uint32_t N) volatile
+		MOS_INLINE inline void
+		pop(uint32_t N) volatile
 		{
 			if (!empty()) {
 				m_head = (m_head + 1) % N;
@@ -82,14 +86,14 @@ namespace MOS::DataType
 		}
 
 	public:
-		inline uint32_t size() const volatile { return m_len; }
-		inline bool full() const volatile { return m_len != 0 && m_head == m_tail; }
-		inline bool empty() const volatile { return m_len == 0; }
-		inline void clear() volatile { m_head = m_tail = m_len = 0; }
+		MOS_INLINE inline uint32_t size() const volatile { return m_len; }
+		MOS_INLINE inline bool full() const volatile { return m_len != 0 && m_head == m_tail; }
+		MOS_INLINE inline bool empty() const volatile { return m_len == 0; }
+		MOS_INLINE inline void clear() volatile { m_head = m_tail = m_len = 0; }
 	};
 
-	template <typename T, uint32_t N, typename Base = QueueBase>
-	class Queue : public Base
+	template <typename T, uint32_t N, typename Base = QueueImpl_t>
+	class Queue_t : public Base
 	{
 	protected:
 		using Base::front;
@@ -111,26 +115,30 @@ namespace MOS::DataType
 		using Base::empty;
 		using Base::clear;
 
-		Queue()  = default;
-		~Queue() = default;
+		Queue_t()  = default;
+		~Queue_t() = default;
 
 		static inline constexpr uint32_t capacity() { return N; }
 
-		inline auto data() const volatile { return m_data; }
+		MOS_INLINE inline auto
+		data() const volatile { return m_data; }
 
-		inline value_ref front() volatile
+		MOS_INLINE inline value_ref
+		front() volatile
 		{
 			return *(value_ptr) front((void*) m_data, sizeof(T));
 		}
 
-		inline value_ref back() volatile
+		MOS_INLINE inline value_ref
+		back() volatile
 		{
 			return *(value_ptr) back((void*) m_data, sizeof(T));
 		}
 
-		inline void pop() volatile { pop(N); }
+		MOS_INLINE inline void pop() volatile { pop(N); }
 
-		inline void push(const T& val) volatile
+		MOS_INLINE inline void
+		push(const T& val) volatile
 		{
 			push((void*) (m_data + m_tail), (void*) &val, sizeof(T), N);
 		}
@@ -214,19 +222,19 @@ namespace MOS::DataType
 		Node_t head;
 		uint32_t len = 0;
 
-		__attribute__((always_inline)) inline uint32_t
+		MOS_INLINE inline uint32_t
 		size() const { return len; }
 
-		__attribute__((always_inline)) inline bool
+		MOS_INLINE inline bool
 		empty() const { return size() == 0; }
 
-		__attribute__((always_inline)) inline NodePtr_t
+		MOS_INLINE inline NodePtr_t
 		begin() const { return head.next; }
 
-		__attribute__((always_inline)) inline NodePtr_t
+		MOS_INLINE inline NodePtr_t
 		end() const { return (NodePtr_t) &head; }
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		iter(auto&& fn) const
 		    requires Invocable<decltype(fn), const Node_t&>
 		{
@@ -235,7 +243,7 @@ namespace MOS::DataType
 			}
 		}
 
-		__attribute__((always_inline)) inline NodePtr_t
+		MOS_INLINE inline NodePtr_t
 		iter_until(auto&& fn) const
 		    requires Invocable<decltype(fn), const Node_t&>
 		{
@@ -266,11 +274,8 @@ namespace MOS::DataType
 			insert(node, st);
 		}
 
-		__attribute__((always_inline)) inline void
-		add(Node_t& node)
-		{
-			insert(node, &head);
-		}
+		MOS_INLINE inline void
+		add(Node_t& node) { insert(node, &head); }
 
 		void remove(Node_t& node)
 		{
@@ -283,27 +288,27 @@ namespace MOS::DataType
 			len -= 1;
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		send_to(Node_t& node, List_t& dest)
 		{
 			remove(node);
 			dest.add(node);
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		send_to_in_order(Node_t& node, List_t& dest, auto&& cmp)
 		{
 			remove(node);
 			dest.insert_in_order(node, cmp);
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		re_insert(Node_t& node, auto&& cmp)
 		{
 			send_to_in_order(node, *this, cmp);
 		}
 
-		__attribute__((always_inline)) inline bool
+		MOS_INLINE inline bool
 		contains(const Node_t& node)
 		{
 			return iter_until([&node](const Node_t& x) {
@@ -319,7 +324,7 @@ namespace MOS::DataType
 		volatile bool used             = false;
 		uint32_t raw[Macro::PAGE_SIZE] = {0};
 
-		__attribute__((always_inline)) inline bool
+		MOS_INLINE inline bool
 		is_used() const { return used; }
 	};
 
@@ -374,135 +379,135 @@ namespace MOS::DataType
 		      Prior_t pr = 15, Name_t name = "")
 		    : fn(fn), argv(argv), priority(pr), name(name) {}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		set_tid(Tid_t id) volatile
 		{
 			tid = id;
 		}
 
-		__attribute__((always_inline)) inline Tid_t
+		MOS_INLINE inline Tid_t
 		get_tid() volatile const
 		{
 			return tid;
 		}
 
-		__attribute__((always_inline)) inline SelfPtr_t
+		MOS_INLINE inline SelfPtr_t
 		next() volatile const
 		{
 			return (SelfPtr_t) node.next;
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		deinit() volatile
 		{
 			new ((void*) this) TCB_t {};
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		set_parent(ParentPtr_t parent_ptr) volatile
 		{
 			parent = parent_ptr;
 		}
 
-		__attribute__((always_inline)) inline ParentPtr_t
+		MOS_INLINE inline ParentPtr_t
 		get_parent() volatile const
 		{
 			return parent;
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		set_status(Status_t new_status) volatile
 		{
 			status = new_status;
 		}
 
-		__attribute__((always_inline)) inline Status_t
+		MOS_INLINE inline Status_t
 		get_status() volatile const
 		{
 			return status;
 		}
 
-		__attribute__((always_inline)) inline bool
+		MOS_INLINE inline bool
 		is_status(Status_t expected) volatile const
 		{
 			return get_status() == expected;
 		}
 
-		__attribute__((always_inline)) inline bool
+		MOS_INLINE inline bool
 		is_sleeping() volatile const
 		{
 			return is_status(BLOCKED) && (delay_ticks != 0);
 		}
 
-		__attribute__((always_inline)) inline Name_t
+		MOS_INLINE inline Name_t
 		get_name() volatile const
 		{
 			return name;
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		set_priority(Prior_t pr) volatile
 		{
 			priority = pr;
 		}
 
-		__attribute__((always_inline)) inline Prior_t
+		MOS_INLINE inline Prior_t
 		get_priority() volatile const
 		{
 			return priority;
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		set_SP(StackPtr_t sp_val) volatile
 		{
 			sp = sp_val;
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		set_xPSR(uint32_t xpsr_val) volatile
 		{
 			page->raw[Macro::PAGE_SIZE - 1U] = xpsr_val;
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		set_PC(uint32_t pc_val) volatile
 		{
 			page->raw[Macro::PAGE_SIZE - 2U] = pc_val;
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		set_LR(uint32_t lr_val) volatile
 		{
 			page->raw[Macro::PAGE_SIZE - 3U] = lr_val;
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		set_argv(uint32_t argv_val) volatile
 		{
 			page->raw[Macro::PAGE_SIZE - 8U] = argv_val;
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		set_delay_ticks(Tick_t ticks) volatile
 		{
 			delay_ticks = ticks;
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		attach_page(PagePtr_t page_ptr) volatile
 		{
 			page       = page_ptr;
 			page->used = true;
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		release_page() volatile
 		{
 			page->used = false;
 			page       = nullptr;
 		}
 
-		__attribute__((always_inline)) inline uint32_t
+		MOS_INLINE inline uint32_t
 		page_usage() volatile const
 		{
 			const uint32_t stk_top = (uint32_t) &page->raw[Macro::PAGE_SIZE];
@@ -510,7 +515,7 @@ namespace MOS::DataType
 			return atu * 25 / Macro::PAGE_SIZE;
 		}
 
-		__attribute__((always_inline)) inline uint32_t
+		MOS_INLINE inline uint32_t
 		stack_usage() volatile const
 		{
 			const uint32_t stk_top = (uint32_t) &page->raw[Macro::PAGE_SIZE];
@@ -518,19 +523,19 @@ namespace MOS::DataType
 			return atu * 25 / (Macro::PAGE_SIZE - sizeof(TCB_t) / 4);
 		}
 
-		__attribute__((always_inline)) static inline bool
+		MOS_INLINE static inline bool
 		priority_cmp(const Node_t& lhs, const Node_t& rhs)
 		{
 			return ((const TCB_t&) lhs).get_priority() < ((const TCB_t&) rhs).get_priority();
 		}
 
-		__attribute__((always_inline)) static inline bool
+		MOS_INLINE static inline bool
 		priority_equal(const Node_t& lhs, const Node_t& rhs)
 		{
 			return ((const TCB_t&) lhs).get_priority() == ((const TCB_t&) rhs).get_priority();
 		}
 
-		__attribute__((always_inline)) static inline TcbPtr_t
+		MOS_INLINE static inline TcbPtr_t
 		build(PagePtr_t page_ptr, Fn_t fn, Argv_t argv = nullptr,
 		      Prior_t pr = 15, Name_t name = "")
 		{
@@ -548,10 +553,10 @@ namespace MOS::DataType
 		volatile TcbPtr_t raw[Macro::MAX_TASK_NUM] = {nullptr};
 		volatile uint32_t len                      = 0;
 
-		__attribute__((always_inline)) inline auto
+		MOS_INLINE inline auto
 		size() const volatile { return len; }
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		add(TcbPtr_t tcb) volatile
 		{
 			for (auto& pt: raw) {
@@ -563,7 +568,7 @@ namespace MOS::DataType
 			}
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		remove(TcbPtr_t tcb) volatile
 		{
 			for (auto& pt: raw) {
@@ -575,7 +580,7 @@ namespace MOS::DataType
 			}
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		iter(auto&& fn) volatile
 		{
 			for (auto& pt: raw) {
@@ -585,7 +590,7 @@ namespace MOS::DataType
 			}
 		}
 
-		__attribute__((always_inline)) inline TcbPtr_t
+		MOS_INLINE inline TcbPtr_t
 		iter_until(auto&& fn) volatile
 		{
 			for (auto& pt: raw) {

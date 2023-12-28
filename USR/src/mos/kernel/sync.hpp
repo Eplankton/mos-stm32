@@ -65,7 +65,7 @@ namespace MOS::Sync
 
 		Lock_t(): owner(nullptr), sema(1) {}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		acquire()
 		{
 			MOS_ASSERT(owner != Task::current_task(), "Non-recursive lock");
@@ -73,7 +73,7 @@ namespace MOS::Sync
 			sema.down();
 		}
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		release()
 		{
 			MOS_ASSERT(owner == Task::current_task(),
@@ -89,8 +89,7 @@ namespace MOS::Sync
 
 		Semaphore_t sema;
 		TcbPtr_t owner;
-		Prior_t old_pr;
-		Prior_t ceiling;
+		Prior_t old_pr, ceiling;
 		AtomicCnt_t recursive_cnt;
 
 		MutexImpl_t(Prior_t ceiling = Macro::PRI_MAX)
@@ -142,17 +141,13 @@ namespace MOS::Sync
 
 			if (!sema.waiting_list.empty()) {
 
-				auto st = sema.waiting_list.begin(),
-				     ed = sema.waiting_list.end();
+				auto ed = sema.waiting_list.end();
 
 				// Starvation Prevention
-				for (; st != ed; st = st->next) {
-					if (st->next == ed || !TCB_t::priority_equal(*st, *st->next)) {
-						break;
-					}
-				}
+				auto tcb = (TcbPtr_t) sema.waiting_list.iter_until([&](const auto& node) {
+					return node.next == ed || !TCB_t::priority_equal(node, *node.next);
+				});
 
-				auto tcb = (TcbPtr_t) st;
 				tcb->set_status(Status_t::READY);
 
 				sema.waiting_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
@@ -184,20 +179,22 @@ namespace MOS::Sync
 	template <typename T = void>
 	struct Mutex_t : private MutexImpl_t
 	{
-		T raw;
+		using MutexImpl_t::MutexImpl_t;
+		using Raw_t    = T;
+		using RawRef_t = Raw_t&;
+
+		Raw_t raw;
 
 		struct MutexGuard
 		{
-			Mutex_t<T>& mutex;
+			Mutex_t<Raw_t>& mutex;
 
-			__attribute__((always_inline)) ~MutexGuard() { mutex.unlock(); }
-			__attribute__((always_inline)) T& get() { return mutex.raw; }
-			__attribute__((always_inline)) T& operator*() { return get(); }
+			MOS_INLINE ~MutexGuard() { mutex.unlock(); }
+			MOS_INLINE RawRef_t get() { return mutex.raw; }
+			MOS_INLINE RawRef_t operator*() { return get(); }
 		};
 
-		using MutexImpl_t::MutexImpl_t;
-
-		__attribute__((always_inline)) MutexGuard
+		MOS_INLINE MutexGuard
 		lock()
 		{
 			MutexImpl_t::lock();
@@ -208,15 +205,15 @@ namespace MOS::Sync
 	template <>
 	struct Mutex_t<> : private MutexImpl_t
 	{
+		using MutexImpl_t::MutexImpl_t;
+
 		struct MutexGuard
 		{
 			Mutex_t& mutex;
-			__attribute__((always_inline)) ~MutexGuard() { mutex.unlock(); }
+			MOS_INLINE ~MutexGuard() { mutex.unlock(); }
 		};
 
-		using MutexImpl_t::MutexImpl_t;
-
-		__attribute__((always_inline)) MutexGuard
+		MOS_INLINE MutexGuard
 		lock()
 		{
 			MutexImpl_t::lock();

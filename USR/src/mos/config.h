@@ -1,13 +1,13 @@
 #ifndef _MOS_CONFIG_
 #define _MOS_CONFIG_
 
-#define MOS_VERSION "0.0.2"
-
-// Platform
-#define MOS_DEVICE         "STM32F429"
-#define MOS_ARCH           MOS_ARCH_CORTEX_M4
+// Info Configuration
+#define MOS_VERSION        "0.0.2(beta)"
 #define MOS_ARCH_CORTEX_M4 "Cortex-M4F"
+#define MOS_ARCH           MOS_ARCH_CORTEX_M4
+#define MOS_CHIP           "STM32F429ZIT6"
 
+// MOS Settings
 #define MOS_CONF_ASSERT                          // Whether to use full assert
 #define MOS_CONF_PRINTF                          // Whether to use printf
 #define MOS_CONF_DEBUG_INFO                      // Whether to use debug info

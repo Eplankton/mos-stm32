@@ -23,34 +23,34 @@ namespace MOS::Task
 	using TcbPtr_t  = TCB_t::TcbPtr_t;
 	using PagePtr_t = TCB_t::PagePtr_t;
 
-	__attribute__((always_inline)) inline auto
+	MOS_INLINE inline auto
 	current_task() { return curTCB; }
 
-	__attribute__((always_inline)) inline void
+	MOS_INLINE inline void
 	yield() { MOS_TRIGGER_PENDSV_INTR(); }
 
-	__attribute__((always_inline)) inline void
+	MOS_INLINE inline void
 	nop_and_yield()
 	{
 		curTCB->time_slice -= 1;
 		yield();
 	}
 
-	__attribute__((always_inline)) inline auto
+	MOS_INLINE inline auto
 	inc_ticks()
 	{
 		os_ticks += 1;
 		return os_ticks;
 	}
 
-	__attribute__((always_inline)) inline auto
+	MOS_INLINE inline auto
 	inc_tids()
 	{
 		tids += 1;
 		return tids;
 	}
 
-	__attribute__((always_inline)) inline uint32_t
+	MOS_INLINE inline uint32_t
 	num() { return debug_tcbs.size(); }
 
 	inline void terminate(TcbPtr_t tcb = current_task())
@@ -93,10 +93,10 @@ namespace MOS::Task
 		}
 	}
 
-	__attribute__((always_inline)) static inline void
+	MOS_INLINE static inline void
 	exit() { terminate(current_task()); }
 
-	__attribute__((always_inline)) static inline TcbPtr_t
+	MOS_INLINE static inline TcbPtr_t
 	load_context(TcbPtr_t tcb)
 	{
 		// A descending stack consists of 16 registers as context.
@@ -171,7 +171,7 @@ namespace MOS::Task
 	}
 
 	// Experimental
-	__attribute__((always_inline)) inline TcbPtr_t
+	MOS_INLINE inline TcbPtr_t
 	create(Fn_t fn, auto& argv = nullptr, Prior_t pr = 15, Name_t name = "")
 	{
 		return create(fn, (Argv_t) &argv, pr, name);
@@ -236,7 +236,7 @@ namespace MOS::Task
 		}
 	}
 
-	__attribute__((always_inline)) inline void
+	MOS_INLINE inline void
 	block(TcbPtr_t tcb = current_task())
 	{
 		block_to(tcb, blocked_list);
@@ -271,7 +271,7 @@ namespace MOS::Task
 		blocked_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
 	}
 
-	__attribute__((always_inline)) inline void
+	MOS_INLINE inline void
 	change_priority(TcbPtr_t tcb, TCB_t::Prior_t pr)
 	{
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
@@ -287,14 +287,14 @@ namespace MOS::Task
 	}
 
 	// For debug only
-	__attribute__((always_inline)) inline void
+	MOS_INLINE inline void
 	for_all_tasks(auto&& fn)
 	    requires Invocable<decltype(fn), TcbPtr_t>
 	{
 		debug_tcbs.iter(fn);
 	}
 
-	__attribute__((always_inline)) inline TcbPtr_t
+	MOS_INLINE inline TcbPtr_t
 	find(auto info)
 	{
 		DisIntrGuard guard;
@@ -318,7 +318,7 @@ namespace MOS::Task
 		kprintf("%s\n", current_task()->get_name());
 	}
 
-	__attribute__((always_inline)) inline constexpr auto
+	MOS_INLINE inline constexpr auto
 	status_name(const Status_t status)
 	{
 		switch (status) {
@@ -336,15 +336,14 @@ namespace MOS::Task
 	};
 
 	inline void
-	print_info(const Node_t& node, const char* format = " #%-2d %-9s %-5d %-9s %3d%%\n")
+	print_info(TcbPtr_t tcb, const char* format = " #%-2d %-9s %-5d %-9s %3d%%\n")
 	{
-		const auto& tcb = (const TCB_t&) node;
 		kprintf(format,
-		        tcb.get_tid(),
-		        tcb.get_name(),
-		        tcb.get_priority(),
-		        status_name(tcb.get_status()),
-		        tcb.stack_usage());
+		        tcb->get_tid(),
+		        tcb->get_name(),
+		        tcb->get_priority(),
+		        status_name(tcb->get_status()),
+		        tcb->stack_usage());
 	};
 
 	// For debug only
@@ -352,11 +351,11 @@ namespace MOS::Task
 	{
 		DisIntrGuard guard;
 		kprintf("------------------------------------\n");
-		debug_tcbs.iter([](TcbPtr_t tcb) { print_info(tcb->node); });
+		debug_tcbs.iter([](TcbPtr_t tcb) { print_info(tcb); });
 		kprintf("------------------------------------\n");
 	}
 
-	__attribute__((always_inline)) inline void
+	MOS_INLINE inline void
 	delay(const uint32_t ticks)
 	{
 		auto cur = current_task();

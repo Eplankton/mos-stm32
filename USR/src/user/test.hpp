@@ -9,17 +9,16 @@ namespace MOS::Test
 
 	void MutexTest(void* argv)
 	{
-		auto cur = Task::current_task();
+		auto name = Task::current_task()->get_name();
 		while (true) {
-			// MutexGuard Scope
-			{
+			{// MutexGuard Scope
 				auto guard = mutex.lock();
 				for (uint8_t i = 0; i < 5; i++) {
-					kprintf("%s is working...\n", cur->get_name());
+					kprintf("%s is working...\n", name);
 					Task::delay(100);
 				}
 			}
-			Task::delay(100);
+			Task::delay(10);
 		}
 	}
 }

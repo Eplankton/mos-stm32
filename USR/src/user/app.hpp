@@ -47,7 +47,7 @@ namespace MOS::App
 		using enum Driver::ST7735S::Color;
 		using UserGlobal::lcd;
 
-		static Sync::Mutex_t lcd_mutex {1};
+		static Sync::Mutex_t<> lcd_mutex {1};
 
 		auto GIF = [](void* argv) {
 			while (true) {

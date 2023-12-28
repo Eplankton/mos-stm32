@@ -6,7 +6,7 @@
 
 namespace MOS::Shell
 {
-	struct Command
+	struct Command_t
 	{
 		using Ret_t  = void;
 		using Text_t = const char*;
@@ -16,10 +16,10 @@ namespace MOS::Shell
 		Text_t text;
 		Fn_t callback;
 
-		__attribute__((always_inline)) inline uint32_t
+		MOS_INLINE inline uint32_t
 		len() const { return Util::strlen(text); }
 
-		__attribute__((always_inline)) inline void
+		MOS_INLINE inline void
 		run(Argv_t argv) const { callback(argv); }
 
 		inline Argv_t match(Text_t str) const
@@ -50,7 +50,7 @@ namespace MOS::Shell
 
 	namespace CmdCall
 	{
-		using Argv_t = Command::Argv_t;
+		using Argv_t = Command_t::Argv_t;
 
 		static inline void ls_cmd(Argv_t argv)
 		{
@@ -87,7 +87,7 @@ namespace MOS::Shell
 
 		static inline void reboot_cmd(Argv_t argv)
 		{
-			MOS_MSG("Reboot...\n\n\n");
+			MOS_MSG("Reboot!\n\n\n");
 			MOS_REBOOT();
 		}
 
@@ -97,14 +97,13 @@ namespace MOS::Shell
 			        "o'' )_____//  Version @ %s\n"
 			        " `_/  MOS  )  Build   @ %s, %s\n"
 			        " (_(_/--(_/   Chip    @ %s, %s\n",
-			        MOS_VERSION,
-			        __TIME__, __DATE__,
-			        MOS_DEVICE, MOS_ARCH);
+			        MOS_VERSION, __TIME__, __DATE__,
+			        MOS_CHIP, MOS_ARCH);
 		}
 	}
 
 	// Add more commands with {"text", CmdCall::callback}
-	static constexpr Command cmds[] = {
+	static constexpr Command_t cmds[] = {
 	        {    "ls",     CmdCall::ls_cmd},
 	        {  "kill",   CmdCall::kill_cmd},
 	        { "uname",  CmdCall::uname_cmd},
@@ -114,7 +113,7 @@ namespace MOS::Shell
 	inline void launch(void* argv)
 	{
 		using DataType::RxBuffer;
-		using Text_t = Command::Text_t;
+		using Text_t = Command_t::Text_t;
 
 		auto parser = [](Text_t str) {
 			for (const auto& cmd: cmds) {

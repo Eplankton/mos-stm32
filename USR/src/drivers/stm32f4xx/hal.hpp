@@ -18,9 +18,9 @@ namespace HAL::STM32F4xx
 {
 	template <typename Raw>
 	__attribute__((always_inline)) inline constexpr auto&
-	convert(Raw)
+	convert(Raw raw)
 	{
-		// ...
+		// need specialization
 	}
 
 	template <>
