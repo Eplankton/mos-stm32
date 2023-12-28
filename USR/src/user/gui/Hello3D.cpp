@@ -1,4 +1,4 @@
-#define GUILITE_ON//Do not define this macro once more!!!
+#define GUILITE_ON //Do not define this macro once more!!!
 
 #include "GuiLite.h"
 #include "stdint.h"
@@ -14,7 +14,7 @@ static c_surface* s_surface;
 static c_display* s_display;
 
 // 3D engine
-inline void multiply(int m, int n, int p, float* a, float* b, float* c)// a[m][n] * b[n][p] = c[m][p]
+inline void multiply(int m, int n, int p, float* a, float* b, float* c) // a[m][n] * b[n][p] = c[m][p]
 {
 	for (int i = 0; i < m; i++) {
 		for (int j = 0; j < p; j++) {
@@ -27,7 +27,7 @@ inline void multiply(int m, int n, int p, float* a, float* b, float* c)// a[m][n
 	}
 }
 
-inline void rotateX(float angle, float* point, float* output)// rotate matrix for X
+inline void rotateX(float angle, float* point, float* output) // rotate matrix for X
 {
 	static float rotation[3][3];
 	rotation[0][0] = 1;
@@ -38,7 +38,7 @@ inline void rotateX(float angle, float* point, float* output)// rotate matrix fo
 	multiply(3, 3, 1, (float*) rotation, point, output);
 }
 
-inline void rotateY(float angle, float* point, float* output)// rotate matrix for Y
+inline void rotateY(float angle, float* point, float* output) // rotate matrix for Y
 {
 	static float rotation[3][3];
 	rotation[0][0] = cos(angle);
@@ -49,7 +49,7 @@ inline void rotateY(float angle, float* point, float* output)// rotate matrix fo
 	multiply(3, 3, 1, (float*) rotation, point, output);
 }
 
-inline void rotateZ(float angle, float* point, float* output)// rotate matrix for Z
+inline void rotateZ(float angle, float* point, float* output) // rotate matrix for Z
 {
 	static float rotation[3][3];
 	rotation[0][0] = cos(angle);
@@ -62,9 +62,9 @@ inline void rotateZ(float angle, float* point, float* output)// rotate matrix fo
 
 inline void projectOnXY(float* point, float* output, float zFactor = 1)
 {
-	static float projection[2][3];//project on X/Y face
-	projection[0][0] = zFactor;   //the raio of point.z and camera.z
-	projection[1][1] = zFactor;   //the raio of point.z and camera.z
+	static float projection[2][3]; //project on X/Y face
+	projection[0][0] = zFactor;    //the raio of point.z and camera.z
+	projection[1][1] = zFactor;    //the raio of point.z and camera.z
 	multiply(2, 3, 1, (float*) projection, point, output);
 }
 
@@ -181,7 +181,7 @@ void create_ui(void* phy_fb, uint16_t screen_width, uint16_t screen_height, int 
 		s_display = &display;
 	}
 	else
-	{//for MCU without framebuffer
+	{ //for MCU without framebuffer
 		static c_surface_no_fb surface_no_fb(UI_WIDTH, UI_HEIGHT, color_bytes, gfx_op, Z_ORDER_LEVEL_0);
 		static c_display display(phy_fb, screen_width, screen_height, &surface_no_fb);
 		s_surface = &surface_no_fb;
@@ -193,13 +193,13 @@ void create_ui(void* phy_fb, uint16_t screen_width, uint16_t screen_height, int 
 	Pyramid thePyramid;
 
 	while (true) {
-		theCube.draw(64, 50, true);//erase footprint
+		theCube.draw(64, 50, true); //erase footprint
 		theCube.rotate();
-		theCube.draw(64, 50, false);//refresh cube
+		theCube.draw(64, 50, false); //refresh cube
 
-		thePyramid.draw(64, 120, true);//erase footprint
+		thePyramid.draw(64, 120, true); //erase footprint
 		thePyramid.rotate();
-		thePyramid.draw(64, 120, false);//refresh pyramid
+		thePyramid.draw(64, 120, false); //refresh pyramid
 
 		// thread_sleep(50);
 	}

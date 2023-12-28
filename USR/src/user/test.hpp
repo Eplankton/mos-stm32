@@ -11,7 +11,7 @@ namespace MOS::Test
 	{
 		auto name = Task::current_task()->get_name();
 		while (true) {
-			{// MutexGuard Scope
+			{ // MutexGuard Scope
 				auto guard = mutex.lock();
 				for (uint8_t i = 0; i < 5; i++) {
 					kprintf("%s is working...\n", name);

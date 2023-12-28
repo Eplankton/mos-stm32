@@ -125,7 +125,7 @@ namespace MOS::ISR
 			}
 			else {
 				rx_buf.clear();
-				MOS_MSG("Command too long!\n\n");
+				MOS_MSG("Oops! Command too long!\n\n");
 			}
 		}
 	}

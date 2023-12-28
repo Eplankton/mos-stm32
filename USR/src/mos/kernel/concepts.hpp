@@ -5,7 +5,7 @@
 
 #include "type.hpp"
 
-namespace MOS
+namespace MOS::Concept
 {
 	// clang-format off
 
@@ -27,10 +27,10 @@ namespace MOS
 	template <typename T, typename U>
 	concept Same = is_same_v<T, U>;
 
-	template <typename Fn, typename... Argv>
-	concept Invocable = requires(Fn&& fn, Argv&&... argv)
+	template <typename Fn, typename Ret, typename... Argv>
+	concept Invocable = requires(Fn fn, Argv... argv)
 	{
-		fn(argv...);
+		{ fn(argv...) } -> Same<Ret>;
 	};
 
 	template <typename Box>

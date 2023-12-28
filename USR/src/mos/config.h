@@ -16,8 +16,8 @@
 #define MOS_CONF_SYSTICK      1000               // SystemFrequency / 1000 = every 1ms
 #define MOS_CONF_PRI_MAX      0                  // Max priority
 #define MOS_CONF_PRI_MIN      15                 // Min priority
-#define MOS_CONF_TIME_SLICE   50                 // Time slice
+#define MOS_CONF_TIME_SLICE   50                 // Time slice width
 #define MOS_CONF_POLICY       PreemptivePriority // Scheduler Policy: RoundRobin, PreemptivePriority
-#define MOS_CONF_RX_BUF_SIZE  32                 // UART Rx buffer size
+#define MOS_CONF_RX_BUF_SIZE  16                 // UART RX Buffer Size
 
 #endif

@@ -126,16 +126,16 @@ namespace Driver
 			GREEN      = 0x07E0,
 			CYAN       = 0x7FFF,
 			YELLOW     = 0xFFE0,
-			BROWN      = 0XBC40,//棕色
-			BRRED      = 0XFC07,//棕红色
-			GRAY       = 0X8430,//灰色
-			DARKBLUE   = 0X01CF,//深蓝色
-			LIGHTBLUE  = 0X7D7C,//浅蓝色
-			GRAYBLUE   = 0X5458,//灰蓝色
-			LIGHTGREEN = 0X841F,//浅绿色
-			LGRAY      = 0XC618,//浅灰色(PANNEL),窗体背景色
-			LGRAYBLUE  = 0XA651,//浅灰蓝色(中间层颜色)
-			LBBLUE     = 0X2B12,//浅棕蓝色(选择条目的反色)
+			BROWN      = 0XBC40, //棕色
+			BRRED      = 0XFC07, //棕红色
+			GRAY       = 0X8430, //灰色
+			DARKBLUE   = 0X01CF, //深蓝色
+			LIGHTBLUE  = 0X7D7C, //浅蓝色
+			GRAYBLUE   = 0X5458, //灰蓝色
+			LIGHTGREEN = 0X841F, //浅绿色
+			LGRAY      = 0XC618, //浅灰色(PANNEL),窗体背景色
+			LGRAYBLUE  = 0XA651, //浅灰蓝色(中间层颜色)
+			LBBLUE     = 0X2B12, //浅棕蓝色(选择条目的反色)
 		};
 
 		struct PortPin_t
@@ -152,11 +152,11 @@ namespace Driver
 		};
 
 		SPI_t& spi;
-		PortPin_t sclk;// SCLK(SCL)
-		PortPin_t mosi;// MOSI(SDA)
-		PortPin_t cs;  // CS(SS)
-		PortPin_t rst; // RESET(RES)
-		PortPin_t dc;  // DC(RS)
+		PortPin_t sclk; // SCLK(SCL)
+		PortPin_t mosi; // MOSI(SDA)
+		PortPin_t cs;   // CS(SS)
+		PortPin_t rst;  // RESET(RES)
+		PortPin_t dc;   // DC(RS)
 
 		const Color bkgd = Color::BLACK;
 
@@ -191,7 +191,7 @@ namespace Driver
 		inline void write_8bit_data(uint8_t data)
 		{
 			cs.clr();
-			dc.set();//写数据
+			dc.set(); //写数据
 			spi.write_bus(data);
 			cs.set();
 		}
@@ -199,7 +199,7 @@ namespace Driver
 		inline void write_16bit_data(uint16_t data)
 		{
 			cs.clr();
-			dc.set();//写数据
+			dc.set(); //写数据
 			spi.write_bus(data >> 8);
 			spi.write_bus(data);
 			cs.set();
@@ -208,20 +208,20 @@ namespace Driver
 		inline void write_cmd(uint8_t cmd)
 		{
 			cs.clr();
-			dc.clr();//写命令
+			dc.clr(); //写命令
 			spi.write_bus(cmd);
 			cs.set();
 		}
 
 		inline void address_set(Pixel_t x1, Pixel_t y1, Pixel_t x2, Pixel_t y2)
 		{
-			write_cmd(0x2a);//列地址设置
+			write_cmd(0x2a); //列地址设置
 			write_16bit_data(x1);
 			write_16bit_data(x2);
-			write_cmd(0x2b);//行地址设置
+			write_cmd(0x2b); //行地址设置
 			write_16bit_data(y1);
 			write_16bit_data(y2);
-			write_cmd(0x2c);//储存器写
+			write_cmd(0x2c); //储存器写
 		}
 
 		inline void clear(Color color)
@@ -236,7 +236,7 @@ namespace Driver
 
 		inline void draw_point(Pixel_t x, Pixel_t y, Color color = WHITE)
 		{
-			address_set(x, y, x, y);//设置光标位置
+			address_set(x, y, x, y); //设置光标位置
 			write_16bit_data(color);
 		}
 
@@ -259,19 +259,19 @@ namespace Driver
 		{
 			uint8_t temp;
 			uint16_t x0 = x;
-			if (x > width - 16 || y > height - 16) return;//设置窗口
-			num = num - ' ';                              //得到偏移后的值
-			address_set(x, y, x + 8 - 1, y + 16 - 1);     //设置光标位置
+			if (x > width - 16 || y > height - 16) return; //设置窗口
+			num = num - ' ';                               //得到偏移后的值
+			address_set(x, y, x + 8 - 1, y + 16 - 1);      //设置光标位置
 
 			for (uint8_t pos = 0; pos < 16; pos++) {
-				uint8_t ch = asc2_1608[(uint16_t) num * 16 + pos];//调用1608字体
+				uint8_t ch = asc2_1608[(uint16_t) num * 16 + pos]; //调用1608字体
 				for (uint8_t t = 0; t < 8; t++) {
 					if (ch & 0x01) {
-						if (!mode) {//非叠加方式
+						if (!mode) { //非叠加方式
 							write_16bit_data(color);
 						}
-						else {                                //叠加方式
-							draw_point(x + t, y + pos, color);//画一个点
+						else {                                 //叠加方式
+							draw_point(x + t, y + pos, color); //画一个点
 						}
 					}
 					else if (!mode) {
@@ -355,8 +355,8 @@ namespace Driver
 			spi_delay(100);
 
 			//************* Start Initial Sequence **********//
-			write_cmd(0x11);//Sleep out
-			spi_delay(120); //Delay 120ms
+			write_cmd(0x11); //Sleep out
+			spi_delay(120);  //Delay 120ms
 
 			//------------------------------------ST7735S Frame Rate-----------------------------------------//
 			write_cmd(0xB1);
@@ -376,7 +376,7 @@ namespace Driver
 			write_8bit_data(0x3C);
 			//------------------------------------End ST7735S Frame Rate---------------------------------//
 
-			write_cmd(0xB4);//Dot inversion
+			write_cmd(0xB4); //Dot inversion
 			write_8bit_data(0x03);
 
 			//------------------------------------ST7735S Power Sequence---------------------------------//
@@ -397,9 +397,9 @@ namespace Driver
 			write_8bit_data(0xEE);
 			//---------------------------------End ST7735S Power Sequence-------------------------------------//
 
-			write_cmd(0xC5);//VCOM
+			write_cmd(0xC5); //VCOM
 			write_8bit_data(0x1A);
-			write_cmd(0x36);//MX, MY, RGB mode
+			write_cmd(0x36); //MX, MY, RGB mode
 			switch (direction) {
 				case 0:
 					write_8bit_data(0x00);
@@ -434,9 +434,9 @@ namespace Driver
 			}
 			//------------------------------------End ST7735S Gamma Sequence-----------------------------//
 
-			write_cmd(0x3A);//65k mode
+			write_cmd(0x3A); //65k mode
 			write_8bit_data(0x05);
-			write_cmd(0x29);//Display on
+			write_cmd(0x29); //Display on
 
 			// Clear out the screen
 			clear(bkgd);

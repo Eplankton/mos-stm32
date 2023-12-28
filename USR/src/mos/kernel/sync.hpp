@@ -95,7 +95,7 @@ namespace MOS::Sync
 		MutexImpl_t(Prior_t ceiling = Macro::PRI_MAX)
 		    : sema(1), owner(nullptr), old_pr(-1), recursive_cnt(0), ceiling(ceiling) {}
 
-		void lock()// P
+		void lock() // P-opr
 		{
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
@@ -126,7 +126,7 @@ namespace MOS::Sync
 			}
 		}
 
-		void unlock()// V
+		void unlock() // V-opr
 		{
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 			MOS_ASSERT(owner == curTCB, "Lock can only be released by holder");
@@ -144,9 +144,11 @@ namespace MOS::Sync
 				auto ed = sema.waiting_list.end();
 
 				// Starvation Prevention
-				auto tcb = (TcbPtr_t) sema.waiting_list.iter_until([&](const auto& node) {
-					return node.next == ed || !TCB_t::priority_equal(node, *node.next);
-				});
+				auto tcb = (TcbPtr_t) sema.waiting_list.iter_until(
+				        [&](const auto& node) {
+					        return node.next == ed ||
+					               !TCB_t::priority_equal(node, *node.next);
+				        });
 
 				tcb->set_status(Status_t::READY);
 

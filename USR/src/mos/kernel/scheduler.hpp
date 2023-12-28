@@ -19,7 +19,6 @@ namespace MOS::Scheduler
 		PreemptivePriority,
 	};
 
-	// Execute only once
 	__attribute__((naked)) inline void init()
 	{
 		asm volatile(ARCH_INIT_ASM);
@@ -112,9 +111,8 @@ namespace MOS::Scheduler
 		}
 	}
 
-	// Don't change this name which used in asm("")
-	extern "C" __attribute__((used)) MOS_INLINE inline void
-	nextTCB()
+	extern "C" __attribute__((used, always_inline)) inline void
+	nextTCB() // Don't change this name which used in asm("")
 	{
 		next_tcb<Policy::MOS_CONF_POLICY>();
 	}

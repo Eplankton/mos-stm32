@@ -57,13 +57,13 @@ namespace MOS::Shell
 			auto name = argv;
 			if (*name != '\0') {
 				if (auto tcb = Task::find(name)) {
-					// todo()
+					// todo!()
 				}
 				else {
 					MOS_MSG("Unknown task '%s'\n", name);
 				}
 			}
-			else {// No arguments provided
+			else { // No arguments provided
 				Task::print_all();
 			}
 		}
@@ -112,6 +112,7 @@ namespace MOS::Shell
 
 	inline void launch(void* argv)
 	{
+		using Util::DisIntrGuard;
 		using DataType::RxBuffer;
 		using Text_t = Command_t::Text_t;
 
@@ -132,9 +133,9 @@ namespace MOS::Shell
 			// Valid input should end with '\n'
 			if (rx_buf.back() == '\n') {
 				rx_buf.pop();
-				auto rx_str = rx_buf.c_str();
-				kprintf("> %s\n", rx_str);
-				parser(rx_str);
+				Text_t rx = rx_buf.c_str();
+				kprintf("> %s\n", rx);
+				parser(rx);
 				rx_buf.clear();
 			}
 			else {

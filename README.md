@@ -11,6 +11,7 @@ o'' )_____//    [MOS-STM32]
 - Board: Nucleo-144 F429ZI
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
+`Meoooows?`
 <img src="https://github.com/Eplankton/mos-stm32/assets/86543401/36903bf6-c33e-47d5-a960-ad52d951295f" width="40%">
 
 ### Repository 🌏
@@ -20,9 +21,9 @@ o'' )_____//    [MOS-STM32]
 [USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
 ```    
 src
-├── drivers                  Hardware Drivers(SPL/HAL/...)
+├── drivers                  Hardware Drivers(SPL, HAL...)
 │   ├── stm32f4xx            STM32F4xx on-chip periphs(USART, I2C, SPI...)
-│   └── device               Other hardware components(LED, LCD, etc.)
+│   └── device               Other hardware components(LED, LCD...)
 │
 ├── mos
 │   ├── config.h             System Configuration
@@ -82,7 +83,7 @@ src
 
 namespace MOS::UserGlobal
 {
-    using namespace HAL::STM32F4xx;
+    using namespace HAL;
     using namespace Driver;
     
     // Serial TX/RX
@@ -159,8 +160,8 @@ int main(void)
 ```
  A_A       _
 o'' )_____//   Version @ x.x.x
- `_/  MOS  )   Build   @ xx:xx:xx
- (_(_/--(_/    Chip    @ xxx, xxx
+ `_/  MOS  )   Build   @ HH:MM:SS
+ (_(_/--(_/    Chip    @ MCU, Arch
 
  Tid   Name   Priority   Status   Stack%
 -----------------------------------------
@@ -186,15 +187,14 @@ o'' )_____//   Version @ x.x.x
 ```
 ```
 📦 Version 0.0.2
-1. Sync::{Semaphore_t, Lock_t}
-2. Scheduler::Policy::{PreemptivePriority}, under same priority -> {RoundRobin}
+1. Sync::{Semaphore_t, Lock_t, Mutex_t, MutexGuard}
+2. Scheduler::Policy::PreemptivePriority, under same priority -> RoundRobin
 3. Task::terminate() implicitly be called when task exits
 4. Shell::{Command, CmdCall, launch}
 5. KernelGlobal::os_ticks and Task::delay() as block delay
-6. Driver::{SPI_t, ST7735S}
+6. Driver::{SPI_t, ST7735S} and GuiLite library
 7. Refactor the project into {kernel, arch, drivers}
-8. Support GuiLite library
-9. Support GCC and STM32Cube HAL
+8. Support GCC and STM32Cube HAL
 
 📌 To do
 1. Mutex_t with priority inheritance mechanism

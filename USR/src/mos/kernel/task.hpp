@@ -108,7 +108,7 @@ namespace MOS::Task
 		// V6-m and V7-m cores can only support Thumb state so it should always be set to '1'.
 		tcb->set_xPSR((uint32_t) 0x01000000);
 
-		// Set the stacked PC to point to the task
+		// Set the stacked PC
 		tcb->set_PC((uint32_t) tcb->fn);
 
 		// Call terminate(current_task()) automatically
@@ -286,25 +286,17 @@ namespace MOS::Task
 		}
 	}
 
-	// For debug only
-	MOS_INLINE inline void
-	for_all_tasks(auto&& fn)
-	    requires Invocable<decltype(fn), TcbPtr_t>
-	{
-		debug_tcbs.iter(fn);
-	}
-
 	MOS_INLINE inline TcbPtr_t
 	find(auto info)
 	{
 		DisIntrGuard guard;
 
 		auto fetch = [info](TcbPtr_t tcb) {
-			if constexpr (Same<decltype(info), Tid_t>) {
+			if constexpr (Concept::Same<decltype(info), Tid_t>) {
 				return tcb->get_tid() == info;
 			}
 
-			if constexpr (Same<decltype(info), Name_t>) {
+			if constexpr (Concept::Same<decltype(info), Name_t>) {
 				return strcmp(tcb->get_name(), info) == 0;
 			}
 		};

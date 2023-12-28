@@ -209,10 +209,16 @@ namespace MOS::DataType
 	{
 		using SelfPtr_t = ListNode_t*;
 
-		SelfPtr_t prev, next;
-		// Make it self-linked
-		ListNode_t(): prev(this), next(this) {}
+		// Make it self-linked node
+		SelfPtr_t prev = this,
+		          next = this;
 	};
+
+	template <typename Fn, typename Ret>
+	concept ListIterFn = Concept::Invocable<Fn, Ret, const ListNode_t&>;
+
+	template <typename Fn>
+	concept NodeCmp = Concept::Invocable<Fn, bool, const ListNode_t&, const ListNode_t&>;
 
 	struct List_t
 	{
@@ -235,8 +241,7 @@ namespace MOS::DataType
 		end() const { return (NodePtr_t) &head; }
 
 		MOS_INLINE inline void
-		iter(auto&& fn) const
-		    requires Invocable<decltype(fn), const Node_t&>
+		iter(ListIterFn<bool> auto&& fn) const
 		{
 			for (auto it = begin(); it != end(); it = it->next) {
 				fn(*it);
@@ -244,8 +249,7 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline NodePtr_t
-		iter_until(auto&& fn) const
-		    requires Invocable<decltype(fn), const Node_t&>
+		iter_until(ListIterFn<bool> auto&& fn) const
 		{
 			for (auto it = begin(); it != end(); it = it->next) {
 				if (fn(*it)) return it;
@@ -264,8 +268,7 @@ namespace MOS::DataType
 			len += 1;
 		}
 
-		void insert_in_order(Node_t& node, auto&& cmp)
-		    requires Invocable<decltype(cmp), const Node_t&, const Node_t&>
+		void insert_in_order(Node_t& node, NodeCmp auto&& cmp)
 		{
 			auto st = begin();
 			while (st != end() && cmp(*st, node)) {
@@ -296,14 +299,14 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		send_to_in_order(Node_t& node, List_t& dest, auto&& cmp)
+		send_to_in_order(Node_t& node, List_t& dest, NodeCmp auto&& cmp)
 		{
 			remove(node);
 			dest.insert_in_order(node, cmp);
 		}
 
 		MOS_INLINE inline void
-		re_insert(Node_t& node, auto&& cmp)
+		re_insert(Node_t& node, NodeCmp auto&& cmp)
 		{
 			send_to_in_order(node, *this, cmp);
 		}
@@ -320,8 +323,9 @@ namespace MOS::DataType
 	struct Page_t
 	{
 		using PagePtr_t = Page_t*;
+		using Mark_t    = volatile bool;
 
-		volatile bool used             = false;
+		Mark_t used                    = false;
 		uint32_t raw[Macro::PAGE_SIZE] = {0};
 
 		MOS_INLINE inline bool
@@ -355,7 +359,7 @@ namespace MOS::DataType
 
 		using enum Status_t;
 
-		// Don't change the offset of node and sp, it's important for context switch routine
+		// Don't change the offset of node and sp
 		Node_t node;
 		StackPtr_t sp = nullptr;
 
@@ -367,7 +371,7 @@ namespace MOS::DataType
 		Argv_t argv = nullptr;
 		Name_t name = "";
 
-		Prior_t priority   = 15;// Low-High = 15-0
+		Prior_t priority   = 15; // Low->High = 15->0
 		PagePtr_t page     = nullptr;
 		ParentPtr_t parent = nullptr;
 		Status_t status    = TERMINATED;
@@ -548,10 +552,10 @@ namespace MOS::DataType
 
 	struct DebugTasks
 	{
-		using TcbPtr_t = TCB_t::TcbPtr_t;
+		using TcbPtr_t = volatile TCB_t::TcbPtr_t;
 
-		volatile TcbPtr_t raw[Macro::MAX_TASK_NUM] = {nullptr};
-		volatile uint32_t len                      = 0;
+		TcbPtr_t raw[Macro::MAX_TASK_NUM] = {nullptr};
+		volatile uint32_t len             = 0;
 
 		MOS_INLINE inline auto
 		size() const volatile { return len; }
@@ -582,6 +586,7 @@ namespace MOS::DataType
 
 		MOS_INLINE inline void
 		iter(auto&& fn) volatile
+		    requires Concept::Invocable<decltype(fn), void, TcbPtr_t&>
 		{
 			for (auto& pt: raw) {
 				if (pt != nullptr) {
@@ -592,6 +597,7 @@ namespace MOS::DataType
 
 		MOS_INLINE inline TcbPtr_t
 		iter_until(auto&& fn) volatile
+		    requires Concept::Invocable<decltype(fn), bool, TcbPtr_t&>
 		{
 			for (auto& pt: raw) {
 				if (pt != nullptr) {

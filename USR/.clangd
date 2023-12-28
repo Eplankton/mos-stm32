@@ -1,0 +1,4 @@
+Diagnostics:
+  UnusedIncludes: None
+  ClangTidy:
+    Remove: misc-definitions-in-headers
