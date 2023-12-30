@@ -47,9 +47,9 @@ namespace MOS::Sync
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 			DisIntrGuard guard;
 			if (cnt < 0) {
-				auto& tcb = (TCB_t&) *waiting_list.begin();
-				tcb.set_status(Status_t::READY);
-				waiting_list.send_to_in_order(tcb.node, ready_list, TCB_t::priority_cmp);
+				auto tcb = (TcbPtr_t) waiting_list.begin();
+				tcb->set_status(Status_t::READY);
+				waiting_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
 			}
 			cnt += 1;
 			if (curTCB != (TcbPtr_t) ready_list.begin()) {
@@ -68,15 +68,15 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		acquire()
 		{
-			MOS_ASSERT(owner != Task::current_task(), "Non-recursive lock");
-			owner = Task::current_task();
+			MOS_ASSERT(owner != Task::current(), "Non-recursive lock");
+			owner = Task::current();
 			sema.down();
 		}
 
 		MOS_INLINE inline void
 		release()
 		{
-			MOS_ASSERT(owner == Task::current_task(),
+			MOS_ASSERT(owner == Task::current(),
 			           "Lock can only be released by holder");
 			sema.up();
 			owner = nullptr;
@@ -181,47 +181,88 @@ namespace MOS::Sync
 	template <typename T = void>
 	struct Mutex_t : private MutexImpl_t
 	{
-		using MutexImpl_t::MutexImpl_t;
 		using Raw_t    = T;
 		using RawRef_t = Raw_t&;
 
-		Raw_t raw;
-
 		struct MutexGuard
 		{
-			Mutex_t<Raw_t>& mutex;
+			// Unlock when scope ends
+			MOS_INLINE inline ~MutexGuard() { mutex.unlock(); }
+			MOS_INLINE inline MutexGuard(Mutex_t<T>& mutex): mutex(mutex) {}
 
-			MOS_INLINE ~MutexGuard() { mutex.unlock(); }
-			MOS_INLINE RawRef_t get() { return mutex.raw; }
-			MOS_INLINE RawRef_t operator*() { return get(); }
+			// Raw Accessor
+			MOS_INLINE inline RawRef_t get() { return mutex.raw; }
+			MOS_INLINE inline RawRef_t operator*() { return get(); }
+
+		private:
+			Mutex_t<Raw_t>& mutex;
 		};
 
-		MOS_INLINE MutexGuard
+		Mutex_t(T raw, Prior_t ceiling)
+		    : MutexImpl_t(ceiling), raw(raw) {}
+
+		MOS_INLINE inline MutexGuard
 		lock()
 		{
 			MutexImpl_t::lock();
 			return MutexGuard {*this};
 		}
+
+		MOS_INLINE inline auto
+		exec(auto&& section) // To safely execute
+		{
+			// MutexGuard scope begins
+			auto guard = lock();
+			return section();
+			// MutexGuard scope ends
+		}
+
+	private:
+		Raw_t raw;
 	};
 
 	template <>
 	struct Mutex_t<> : private MutexImpl_t
 	{
-		using MutexImpl_t::MutexImpl_t;
-
 		struct MutexGuard
 		{
+			// Unlock when scope ends
+			MOS_INLINE inline ~MutexGuard() { mutex.unlock(); }
+			MutexGuard(Mutex_t& mutex): mutex(mutex) {}
+
+		private:
 			Mutex_t& mutex;
-			MOS_INLINE ~MutexGuard() { mutex.unlock(); }
 		};
 
-		MOS_INLINE MutexGuard
+		MOS_INLINE inline Mutex_t(Prior_t ceiling = Macro::PRI_MAX)
+		    : MutexImpl_t(ceiling) {}
+
+		MOS_INLINE inline MutexGuard
 		lock()
 		{
 			MutexImpl_t::lock();
 			return MutexGuard {*this};
 		}
+
+		MOS_INLINE inline auto
+		exec(auto&& section) // To safely execute
+		{
+			// MutexGuard scope begins
+			auto guard = lock();
+			return section();
+			// MutexGuard scope ends
+		}
 	};
+
+	// Template deduction where T = void
+	Mutex_t() -> Mutex_t<void>;
+	Mutex_t(Task::Prior_t) -> Mutex_t<void>;
+
+	template <typename T>
+	Mutex_t(T&&, Task::Prior_t) -> Mutex_t<T>;
+
+	template <typename T>
+	Mutex_t(T&, Task::Prior_t) -> Mutex_t<T&>;
 }
 
 #endif

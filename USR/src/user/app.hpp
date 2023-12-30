@@ -11,27 +11,32 @@ namespace MOS::App
 {
 	namespace Gui
 	{
-		using Color = enum Driver::ST7735S::Color;
+		using Color = Driver::ST7735S::Color;
 		using UserGlobal::lcd;
 
 		extern "C" void gui_delay_ms(uint32_t ms) { Task::delay(ms); }
-		extern "C" void gfx_draw_pixel(int x, int y, unsigned int rgb)
+		extern "C" void gfx_draw_pixel(int32_t x, int32_t y, uint32_t rgb)
 		{
 			lcd.draw_point(x, y, (Color) GL_RGB_32_to_16(rgb));
 		}
 
 		struct EXTERNAL_GFX_OP
 		{
-			void (*draw_pixel)(int x, int y, unsigned int rgb);
-			void (*fill_rect)(int x0, int y0, int x1, int y1, unsigned int rgb);
+			using DrawPixelFn_t = void (*)(int32_t x, int32_t y, uint32_t rgb);
+			using FillRectFn_t  = void (*)(
+                    int32_t x0, int32_t y0,
+                    int32_t x1, int32_t y1,
+                    uint32_t rgb);
+
+			DrawPixelFn_t draw_pixel;
+			FillRectFn_t fill_rect;
 		};
 
 		// GUI entry point
 		extern "C" void startHello3D(
 		        void* phy_fb,
-		        int width,
-		        int height,
-		        int color_bytes,
+		        int32_t width, int32_t height,
+		        int32_t color_bytes,
 		        EXTERNAL_GFX_OP* gfx_op);
 	}
 
@@ -39,29 +44,28 @@ namespace MOS::App
 	{
 		using namespace Gui;
 		EXTERNAL_GFX_OP gfx_op {gfx_draw_pixel, nullptr};
-		startHello3D(NULL, lcd.width, lcd.height, 1, &gfx_op);
+		startHello3D(nullptr, lcd.width, lcd.height, 1, &gfx_op);
 	}
 
 	void LCD(void* argv)
 	{
-		using enum Driver::ST7735S::Color;
+		using Color = Driver::ST7735S::Color;
 		using UserGlobal::lcd;
+		using Sync::Mutex_t;
 
-		static Sync::Mutex_t<void> lcd_mutex {1};
+		static auto lcd_mutex = Mutex_t {lcd, 1};
 
 		auto GIF = [](void* argv) {
 			while (true) {
 				for (auto frame: cat_gif) {
-					auto guard = lcd_mutex.lock();
-					lcd.draw_img(0, 0, 128, 128, frame);
+					lcd_mutex.lock().get().draw_img(0, 0, 128, 128, frame);
 				}
 			}
 		};
 
 		auto Slogan = [](void* argv) {
 			while (true) {
-				auto guard = lcd_mutex.lock();
-				lcd.show_string(0, 130, "Hello, World!", GREEN);
+				lcd_mutex.lock().get().show_string(0, 130, "Hello, World!", Color::GREEN);
 			}
 		};
 
@@ -76,19 +80,16 @@ namespace MOS::App
 	void Task1(void* argv)
 	{
 		using UserGlobal::leds;
-
 		for (uint32_t i = 0; i < 20; i++) {
 			leds[1].toggle();
 			Task::delay(100);
 		}
-
 		kprintf("T1 exits...\n");
 	}
 
 	void Task0(void* argv)
 	{
 		using UserGlobal::leds;
-
 		Task::create(App::Task1, nullptr, 1, "T1");
 		while (true) {
 			leds[0].toggle();

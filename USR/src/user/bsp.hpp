@@ -55,8 +55,8 @@ namespace MOS::Bsp
 		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
 
 		uart3.init(9600, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
-		        .rx_config(GPIOD, GPIO_t::get_pin_src(9), GPIO_AF_USART3)
-		        .tx_config(GPIOD, GPIO_t::get_pin_src(8), GPIO_AF_USART3)
+		        .rx_config(GPIOD, GPIO_t::get_pin_src(9), GPIO_AF_USART3) // RX -> PD9
+		        .tx_config(GPIOD, GPIO_t::get_pin_src(8), GPIO_AF_USART3) // TX -> PD8
 		        .it_enable(USART_IT_RXNE)
 		        .enable();
 	}
@@ -103,11 +103,11 @@ namespace MOS::ISR
 		static uint32_t k1_cnt = 0;
 
 		EXTI_t::handle_line(EXTI_Line13, [&] {
-			MOS_MSG("K1 Cnt = %d\n", k1_cnt++);
+			MOS_MSG("K1 Cnt = %d\n", ++k1_cnt);
 			Task::create_fromISR(
 			        K1_IRQ,
 			        nullptr,
-			        Task::current_task()->get_priority(),
+			        Task::current()->get_priority(),
 			        "K1");
 		});
 	}

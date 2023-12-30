@@ -1,15 +1,15 @@
-///////////////////////////////////////////////////////////////////////////////
-// The MOS Kernel
-// \author (c) Eplankton (wikechao@gmail.com)
-//                  https://github.com/Eplankton
-//                  East China Normal University, Shanghai
-// \license The Apache License, Version 2.0
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//                          The MOS Kernel
+//                  Eplankton (wikechao@gmail.com)
+//                   https://github.com/Eplankton
+//               East China Normal University, Shanghai
+//                  The Apache License, Version 2.0
+//////////////////////////////////////////////////////////////////////////
 
 #ifndef _MOS_KERNEL_
 #define _MOS_KERNEL_
 
-// MOS Kernel Componments
+// MOS Kernel Components
 #include "config.h"
 #include "kernel/macro.hpp"
 #include "kernel/util.hpp"

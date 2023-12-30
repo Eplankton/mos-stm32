@@ -11,7 +11,8 @@ o'' )_____//    [MOS-STM32]
 - Board: Nucleo-144 F429ZI
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
-`Meoooows?`
+`Meooows?`
+
 <img src="https://github.com/Eplankton/mos-stm32/assets/86543401/36903bf6-c33e-47d5-a960-ad52d951295f" width="40%">
 
 ### Repository 🌏
@@ -87,7 +88,7 @@ namespace MOS::UserGlobal
     using namespace Driver;
     
     // Serial TX/RX
-    auto& uart = STM32F4xx::convert(USART3);
+    auto& uart = STM32F4xx::convert(USARTx);
 
     // RX Buffer
     RxBuffer<Macro::RX_BUF_SIZE> rx_buf;
@@ -110,7 +111,12 @@ namespace MOS::Bsp
 
     void USART_Config()
     {
-        uart.init(9600-8-1-N);
+        // Simplified
+        uart.init(9600-8-1-N)
+            .rx_config(PD9) // RX -> PD9
+            .tx_config(PD8) // TX -> PD8
+            .it_enable(USART_IT_RXNE) // Enable RX interrupt
+            .enable();
     }
 
     void config()
@@ -161,13 +167,13 @@ int main(void)
  A_A       _
 o'' )_____//   Version @ x.x.x
  `_/  MOS  )   Build   @ HH:MM:SS
- (_(_/--(_/    Chip    @ MCU, Arch
+ (_(_/--(_/    Chip    @ MCU, ARCH
 
  Tid   Name   Priority   Status   Stack%
 -----------------------------------------
  #0    idle      15      READY       10%
- #1    Shell     1       READY       21%
- #2    T0        2       RUNNING      9%
+ #1    Shell      1      READY       21%
+ #2    T0         2      RUNNING      9%
 -----------------------------------------
 ```
 
@@ -183,7 +189,7 @@ o'' )_____//   Version @ x.x.x
 4. Porting simple shells
 5. Mutable page size, memory allocator
 6. SPI driver and LVGL library
-7. Port to ESP32-C3, RISC-V
+7. Port to ESP32-C3(RISC-V)
 ```
 ```
 📦 Version 0.0.2
@@ -191,14 +197,14 @@ o'' )_____//   Version @ x.x.x
 2. Scheduler::Policy::PreemptivePriority, under same priority -> RoundRobin
 3. Task::terminate() implicitly be called when task exits
 4. Shell::{Command, CmdCall, launch}
-5. KernelGlobal::os_ticks and Task::delay() as block delay
+5. KernelGlobal::os_ticks and Task::delay() for block delay
 6. Driver::{SPI_t, ST7735S} and GuiLite library
 7. Refactor the project into {kernel, arch, drivers}
 8. Support GCC and STM32Cube HAL
 
 📌 To do
 1. Mutex_t with priority inheritance mechanism
-2. IPC::{pipes, message queues}, etc.
+2. IPC::{pipe, message queue}, etc.
 3. Simple dynamic memory allocator
 4. Hardware Timers
 5. BitMap for faster allocation

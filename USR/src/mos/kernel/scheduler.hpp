@@ -19,21 +19,22 @@ namespace MOS::Scheduler
 		PreemptivePriority,
 	};
 
-	__attribute__((naked)) inline void init()
+	__attribute__((naked)) inline void
+	init() // This will execute only once for the first task
 	{
 		asm volatile(ARCH_INIT_ASM);
 	}
 
 	extern "C" __attribute__((naked, used)) inline void
-	ContextSwitch(void)
+	ContextSwitch(void) // Don't change this name which used in asm("")
 	{
 		asm volatile(ARCH_CONTEXT_SWITCH_ASM);
 	}
 
-	// Called only once
+	// Called only once to start scheduling
 	static inline void launch(Fn_t hook = nullptr)
 	{
-		// Default idle can be replaced by hook
+		// Default idle can be replaced by user-defined hook
 		auto idle = [](void* argv) {
 			while (true) {
 				asm volatile("");
@@ -41,7 +42,7 @@ namespace MOS::Scheduler
 		};
 
 		// Create idle task with hook
-		Task::create(hook == nullptr ? idle : hook, nullptr, Macro::PRI_MIN, "idle");
+		Task::create((hook == nullptr ? idle : hook), nullptr, Macro::PRI_MIN, "idle");
 		curTCB = (TcbPtr_t) ready_list.begin();
 		curTCB->set_status(Status_t::RUNNING);
 		init();
@@ -49,28 +50,25 @@ namespace MOS::Scheduler
 
 	static inline void try_wake_up()
 	{
-		auto fetch = [](const Node_t& node) {
-			return ((const TCB_t&) node).delay_ticks <= os_ticks;
-		};
-
-		if (auto to_wake = (TcbPtr_t) sleep_list.iter_until(fetch)) {
+		auto to_wake = (TcbPtr_t) sleep_list.begin();
+		if (to_wake->delay_ticks <= os_ticks) {
 			to_wake->set_delay_ticks(0);
 			to_wake->set_status(Status_t::READY);
 			sleep_list.send_to_in_order(to_wake->node, ready_list, TCB_t::priority_cmp);
 		}
 	}
 
-	// Custom Scheduler Policy
 	template <Policy policy>
 	static inline void next_tcb()
 	{
-		if (!sleep_list.empty())
-			try_wake_up();
-
 		static auto switch_to = [](TcbPtr_t tcb) {
 			tcb->set_status(Status_t::RUNNING);
 			curTCB = tcb;
 		};
+
+		if (!sleep_list.empty()) {
+			try_wake_up();
+		}
 
 		auto st = (TcbPtr_t) ready_list.begin(),
 		     ed = (TcbPtr_t) ready_list.end(),
@@ -98,8 +96,8 @@ namespace MOS::Scheduler
 			}
 
 			if (curTCB->time_slice <= 0) {
-				curTCB->set_status(Status_t::READY);
 				curTCB->time_slice = Macro::TIME_SLICE;
+				curTCB->set_status(Status_t::READY);
 				// RoundRobin in same group
 				if (nx != ed && TCB_t::priority_equal(nx->node, curTCB->node)) {
 					return switch_to(nx);
@@ -132,7 +130,7 @@ namespace MOS::ISR
 	{
 		DisIntrGuard guard;
 		Task::inc_ticks();
-		if (Task::current_task() != nullptr) {
+		if (Task::current() != nullptr) {
 			Task::nop_and_yield();
 		}
 	}

@@ -324,9 +324,10 @@ namespace MOS::DataType
 	{
 		using PagePtr_t = Page_t*;
 		using Mark_t    = volatile bool;
+		using Raw_t     = uint32_t[Macro::PAGE_SIZE];
 
-		Mark_t used                    = false;
-		uint32_t raw[Macro::PAGE_SIZE] = {0};
+		Mark_t used = false;
+		Raw_t raw   = {0};
 
 		MOS_INLINE inline bool
 		is_used() const { return used; }
@@ -468,37 +469,37 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		set_xPSR(uint32_t xpsr_val) volatile
+		set_xPSR(const uint32_t xpsr_val) volatile
 		{
 			page->raw[Macro::PAGE_SIZE - 1U] = xpsr_val;
 		}
 
 		MOS_INLINE inline void
-		set_PC(uint32_t pc_val) volatile
+		set_PC(const uint32_t pc_val) volatile
 		{
 			page->raw[Macro::PAGE_SIZE - 2U] = pc_val;
 		}
 
 		MOS_INLINE inline void
-		set_LR(uint32_t lr_val) volatile
+		set_LR(const uint32_t lr_val) volatile
 		{
 			page->raw[Macro::PAGE_SIZE - 3U] = lr_val;
 		}
 
 		MOS_INLINE inline void
-		set_argv(uint32_t argv_val) volatile
+		set_argv(const uint32_t argv_val) volatile
 		{
 			page->raw[Macro::PAGE_SIZE - 8U] = argv_val;
 		}
 
 		MOS_INLINE inline void
-		set_delay_ticks(Tick_t ticks) volatile
+		set_delay_ticks(const Tick_t ticks) volatile
 		{
 			delay_ticks = ticks;
 		}
 
 		MOS_INLINE inline void
-		attach_page(PagePtr_t page_ptr) volatile
+		attach_page(const PagePtr_t page_ptr) volatile
 		{
 			page       = page_ptr;
 			page->used = true;
@@ -530,18 +531,23 @@ namespace MOS::DataType
 		MOS_INLINE static inline bool
 		priority_cmp(const Node_t& lhs, const Node_t& rhs)
 		{
-			return ((const TCB_t&) lhs).get_priority() < ((const TCB_t&) rhs).get_priority();
+			return ((const TCB_t&) lhs).get_priority() <
+			       ((const TCB_t&) rhs).get_priority();
 		}
 
 		MOS_INLINE static inline bool
 		priority_equal(const Node_t& lhs, const Node_t& rhs)
 		{
-			return ((const TCB_t&) lhs).get_priority() == ((const TCB_t&) rhs).get_priority();
+			return ((const TCB_t&) lhs).get_priority() ==
+			       ((const TCB_t&) rhs).get_priority();
 		}
 
 		MOS_INLINE static inline TcbPtr_t
-		build(PagePtr_t page_ptr, Fn_t fn, Argv_t argv = nullptr,
-		      Prior_t pr = 15, Name_t name = "")
+		build(PagePtr_t page_ptr,
+		      Fn_t fn,
+		      Argv_t argv = nullptr,
+		      Prior_t pr  = 15,
+		      Name_t name = "")
 		{
 			// In-placement new
 			auto tcb = new (page_ptr->raw) TCB_t {fn, argv, pr, name};
@@ -553,9 +559,11 @@ namespace MOS::DataType
 	struct DebugTasks
 	{
 		using TcbPtr_t = volatile TCB_t::TcbPtr_t;
+		using Len_t    = volatile uint32_t;
+		using Raw_t    = TcbPtr_t[Macro::PAGE_SIZE];
 
-		TcbPtr_t raw[Macro::MAX_TASK_NUM] = {nullptr};
-		volatile uint32_t len             = 0;
+		Raw_t raw = {nullptr};
+		Len_t len = 0;
 
 		MOS_INLINE inline auto
 		size() const volatile { return len; }

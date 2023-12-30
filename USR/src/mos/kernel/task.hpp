@@ -20,40 +20,42 @@ namespace MOS::Task
 	using Status_t  = TCB_t::Status_t;
 	using Name_t    = TCB_t::Name_t;
 	using Tid_t     = TCB_t::Tid_t;
+	using Tick_t    = TCB_t::Tick_t;
 	using TcbPtr_t  = TCB_t::TcbPtr_t;
 	using PagePtr_t = TCB_t::PagePtr_t;
 
-	MOS_INLINE inline auto
-	current_task() { return curTCB; }
+	MOS_INLINE inline TcbPtr_t
+	current() { return curTCB; }
 
 	MOS_INLINE inline void
 	yield() { MOS_TRIGGER_PENDSV_INTR(); }
 
 	MOS_INLINE inline void
-	nop_and_yield()
+	nop_and_yield() // This will consume time_slice and yield
 	{
 		curTCB->time_slice -= 1;
 		yield();
 	}
 
-	MOS_INLINE inline auto
+	MOS_INLINE inline Tick_t
 	inc_ticks()
 	{
 		os_ticks += 1;
 		return os_ticks;
 	}
 
-	MOS_INLINE inline auto
+	MOS_INLINE inline Tid_t
 	inc_tids()
 	{
 		tids += 1;
 		return tids;
 	}
 
+	// For debug only
 	MOS_INLINE inline uint32_t
 	num() { return debug_tcbs.size(); }
 
-	inline void terminate(TcbPtr_t tcb = current_task())
+	inline void terminate(TcbPtr_t tcb = current())
 	{
 		if (tcb == nullptr || tcb->is_status(Status_t::TERMINATED))
 			return;
@@ -61,8 +63,7 @@ namespace MOS::Task
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
-		// Disable interrupt to enter critical section
-		{
+		{ // Disable interrupt to enter critical section
 			DisIntrGuard guard;
 
 			// Remove the task from list
@@ -85,16 +86,15 @@ namespace MOS::Task
 
 			// For debug only
 			debug_tcbs.remove(tcb);
-		}
-		// Enable interrupt, leave critical section
+		} // Enable interrupt, leave critical section
 
-		if (tcb == current_task()) {
+		if (tcb == current()) {
 			yield();
 		}
 	}
 
 	MOS_INLINE static inline void
-	exit() { terminate(current_task()); }
+	exit() { terminate(current()); }
 
 	MOS_INLINE static inline TcbPtr_t
 	load_context(TcbPtr_t tcb)
@@ -111,7 +111,7 @@ namespace MOS::Task
 		// Set the stacked PC
 		tcb->set_PC((uint32_t) tcb->fn);
 
-		// Call terminate(current_task()) automatically
+		// Call terminate(current()) automatically
 		tcb->set_LR((uint32_t) exit);
 
 		// Set arguments
@@ -130,14 +130,18 @@ namespace MOS::Task
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		MOS_ASSERT(fn != nullptr, "fn ptr can't be null");
 
-		TcbPtr_t tcb = nullptr, cur = current_task();
+		TcbPtr_t tcb = nullptr, cur = current();
 
-		// Disable interrupt to enter critical section
-		{
+		{ // Disable interrupt to enter critical section
 			DisIntrGuard guard;
 
 			// Page Alloc
 			auto page = Alloc::palloc();
+
+			if (page == nullptr) {
+				MOS_MSG("Page Alloc Failed!");
+				return nullptr;
+			}
 
 			// Construct a TCB at the head of a page block
 			tcb = TCB_t::build(page, fn, argv, pr, name);
@@ -159,8 +163,7 @@ namespace MOS::Task
 
 			// For debug only
 			debug_tcbs.add(tcb);
-		}
-		// Enable interrupt, leave critical section
+		} // Enable interrupt, leave critical section
 
 		// If the new task's priority is higher, switch at once
 		if (TCB_t::priority_cmp(tcb->node, cur->node)) {
@@ -186,13 +189,18 @@ namespace MOS::Task
 
 		MOS_ASSERT(fn != nullptr, "fn can't be null");
 
-		TcbPtr_t tcb = nullptr, cur = current_task();
+		TcbPtr_t tcb = nullptr, cur = current();
 
 		{
 			DisIntrGuard guard;
 
 			// Page Alloc
 			auto page = Alloc::palloc();
+
+			if (page == nullptr) {
+				MOS_MSG("Page Alloc Failed!");
+				return nullptr;
+			}
 
 			// Construct a TCB at the head of a page block
 			tcb = TCB_t::build(page, fn, argv, pr, name);
@@ -231,13 +239,30 @@ namespace MOS::Task
 		tcb->set_status(Status_t::BLOCKED);
 		ready_list.send_to(tcb->node, dest);
 
-		if (tcb == current_task()) {
+		if (tcb == current()) {
+			return yield();
+		}
+	}
+
+	inline void block_to_in_order(TcbPtr_t tcb, List_t& dest, NodeCmp auto&& cmp)
+	{
+		if (tcb == nullptr || tcb->is_status(Status_t::BLOCKED))
+			return;
+
+		// Assert if irq disabled
+		MOS_ASSERT(test_irq(), "Disabled Interrupt");
+
+		DisIntrGuard guard;
+		tcb->set_status(Status_t::BLOCKED);
+		ready_list.send_to_in_order(tcb->node, dest, cmp);
+
+		if (tcb == current()) {
 			return yield();
 		}
 	}
 
 	MOS_INLINE inline void
-	block(TcbPtr_t tcb = current_task())
+	block(TcbPtr_t tcb = current())
 	{
 		block_to(tcb, blocked_list);
 	}
@@ -254,7 +279,7 @@ namespace MOS::Task
 		tcb->set_status(Status_t::READY);
 		blocked_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
 
-		if (current_task() != (TcbPtr_t) ready_list.begin()) {
+		if (current() != (TcbPtr_t) ready_list.begin()) {
 			// if curTCB isn't the highest priority
 			return yield();
 		}
@@ -280,7 +305,7 @@ namespace MOS::Task
 		tcb->set_priority(pr);
 		ready_list.re_insert(tcb->node, TCB_t::priority_cmp);
 
-		if (current_task() != (TcbPtr_t) ready_list.begin()) {
+		if (current() != (TcbPtr_t) ready_list.begin()) {
 			// if curTCB isn't the highest priority
 			return yield();
 		}
@@ -307,7 +332,7 @@ namespace MOS::Task
 	inline void print_name()
 	{
 		DisIntrGuard guard;
-		kprintf("%s\n", current_task()->get_name());
+		kprintf("%s\n", current()->get_name());
 	}
 
 	MOS_INLINE inline constexpr auto
@@ -348,11 +373,16 @@ namespace MOS::Task
 	}
 
 	MOS_INLINE inline void
-	delay(const uint32_t ticks)
+	delay(const Tick_t ticks)
 	{
-		auto cur = current_task();
+		static auto delay_ticks_cmp = [](const auto& lhs, const auto& rhs) {
+			return ((const TCB_t&) lhs).delay_ticks <
+			       ((const TCB_t&) rhs).delay_ticks;
+		};
+
+		auto cur = current();
 		cur->set_delay_ticks(os_ticks + ticks);
-		block_to(cur, sleep_list);
+		block_to_in_order(cur, sleep_list, delay_ticks_cmp);
 	}
 }
 

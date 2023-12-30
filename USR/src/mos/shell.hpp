@@ -1,3 +1,11 @@
+//////////////////////////////////////////////////////////////////////////
+//                          The MOS Shell
+//                  Eplankton (wikechao@gmail.com)
+//                   https://github.com/Eplankton
+//               East China Normal University, Shanghai
+//                  The Apache License, Version 2.0
+//////////////////////////////////////////////////////////////////////////
+
 #ifndef _MOS_SHELL_
 #define _MOS_SHELL_
 
@@ -24,14 +32,14 @@ namespace MOS::Shell
 
 		inline Argv_t match(Text_t str) const
 		{
-			const uint32_t xlen = len();
+			const uint32_t xlen = len(); // The length of a command
 
-			auto skip = [](Text_t str) {
+			auto skip = [](Text_t str) { // Skip all blank
 				while (*str == ' ') ++str;
 				return str;
 			};
 
-			auto check = [&](Text_t str) {
+			auto check = [&](Text_t str) { // Check whether match or not
 				return (str[xlen] == ' ' || str[xlen] == '\0') &&
 				       Util::strncmp(str, text, xlen) == 0;
 			};
