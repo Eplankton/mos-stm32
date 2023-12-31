@@ -165,8 +165,12 @@ namespace Driver
 
 		ST7735S(SPI_t::Raw_t spi, PortPin_t sclk, PortPin_t mosi,
 		        PortPin_t cs, PortPin_t rst, PortPin_t dc)
-		    : spi(SPI_t::convert(spi)), sclk(sclk), mosi(mosi),
-		      cs(cs), rst(rst), dc(dc) {}
+		    : spi(SPI_t::convert(spi)),
+		      sclk(sclk),
+		      mosi(mosi),
+		      cs(cs),
+		      rst(rst),
+		      dc(dc) {}
 
 		inline void sclk_clear() { sclk.clr(); }
 		inline void sclk_set() { sclk.set(); }

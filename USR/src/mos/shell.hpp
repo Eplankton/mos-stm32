@@ -120,9 +120,8 @@ namespace MOS::Shell
 
 	inline void launch(void* argv)
 	{
-		using Util::DisIntrGuard;
-		using DataType::RxBuffer;
-		using Text_t = Command_t::Text_t;
+		using Text_t  = Command_t::Text_t;
+		using RxBuf_t = DataType::RxBuffer<Macro::RX_BUF_SIZE>*;
 
 		auto parser = [](Text_t str) {
 			for (const auto& cmd: cmds) {
@@ -136,12 +135,12 @@ namespace MOS::Shell
 		CmdCall::uname_cmd(nullptr);
 		Task::print_all();
 
-		auto& rx_buf = *(RxBuffer<Macro::RX_BUF_SIZE>*) argv;
+		auto& rx_buf = *(RxBuf_t) argv;
 		while (true) {
 			// Valid input should end with '\n'
 			if (rx_buf.back() == '\n') {
 				rx_buf.pop();
-				Text_t rx = rx_buf.c_str();
+				auto rx = rx_buf.c_str();
 				kprintf("> %s\n", rx);
 				parser(rx);
 				rx_buf.clear();

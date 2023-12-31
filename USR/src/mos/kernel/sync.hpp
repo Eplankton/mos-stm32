@@ -188,7 +188,8 @@ namespace MOS::Sync
 		{
 			// Unlock when scope ends
 			MOS_INLINE inline ~MutexGuard() { mutex.unlock(); }
-			MOS_INLINE inline MutexGuard(Mutex_t<T>& mutex): mutex(mutex) {}
+			MOS_INLINE inline MutexGuard(Mutex_t<T>& mutex)
+			    : mutex(mutex) { mutex.MutexImpl_t::lock(); }
 
 			// Raw Accessor
 			MOS_INLINE inline RawRef_t get() { return mutex.raw; }
@@ -202,11 +203,7 @@ namespace MOS::Sync
 		    : MutexImpl_t(ceiling), raw(raw) {}
 
 		MOS_INLINE inline MutexGuard
-		lock()
-		{
-			MutexImpl_t::lock();
-			return MutexGuard {*this};
-		}
+		lock() { return MutexGuard {*this}; }
 
 		MOS_INLINE inline auto
 		exec(auto&& section) // To safely execute
@@ -228,7 +225,8 @@ namespace MOS::Sync
 		{
 			// Unlock when scope ends
 			MOS_INLINE inline ~MutexGuard() { mutex.unlock(); }
-			MutexGuard(Mutex_t& mutex): mutex(mutex) {}
+			MutexGuard(Mutex_t& mutex)
+			    : mutex(mutex) { mutex.MutexImpl_t::lock(); }
 
 		private:
 			Mutex_t& mutex;
@@ -238,11 +236,7 @@ namespace MOS::Sync
 		    : MutexImpl_t(ceiling) {}
 
 		MOS_INLINE inline MutexGuard
-		lock()
-		{
-			MutexImpl_t::lock();
-			return MutexGuard {*this};
-		}
+		lock() { return MutexGuard {*this}; }
 
 		MOS_INLINE inline auto
 		exec(auto&& section) // To safely execute
