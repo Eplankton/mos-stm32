@@ -80,7 +80,7 @@ namespace MOS::App
 	void Task1(void* argv)
 	{
 		using UserGlobal::leds;
-		for (uint32_t i = 0; i < 20; i++) {
+		for (uint8_t i = 0; i < 20; i++) {
 			leds[1].toggle();
 			Task::delay(100);
 		}

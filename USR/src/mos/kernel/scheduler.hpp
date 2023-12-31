@@ -121,12 +121,13 @@ namespace MOS::ISR
 	using Util::DisIntrGuard;
 
 	extern "C" __attribute__((naked)) void
-	PendSV_Handler()
+	MOS_PENDSV_HANDLER()
 	{
 		asm volatile(ARCH_JUMP_TO_CONTEXT_SWITCH);
 	}
 
-	extern "C" void SysTick_Handler()
+	extern "C" void
+	MOS_SYSTICK_HANDLER()
 	{
 		DisIntrGuard guard;
 		Task::inc_ticks();

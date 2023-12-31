@@ -11,9 +11,7 @@ o'' )_____//    [MOS-STM32]
 - Board: Nucleo-144 F429ZI
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
-`Meooows?`
-
-<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/36903bf6-c33e-47d5-a960-ad52d951295f" width="40%">
+<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/36903bf6-c33e-47d5-a960-ad52d951295f" width="50%">
 
 ### Repository 🌏
 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
@@ -86,6 +84,7 @@ namespace MOS::UserGlobal
 {
     using namespace HAL;
     using namespace Driver;
+    using namespace DataType;
     
     // Serial TX/RX
     auto& uart = STM32F4xx::convert(USARTx);
@@ -94,7 +93,7 @@ namespace MOS::UserGlobal
     RxBuffer<Macro::RX_BUF_SIZE> rx_buf;
 
     // LED red, green, blue
-    Driver::LED_t leds[] = {...};
+    LED_t leds[] = {...};
 }
 
 namespace MOS::Bsp
@@ -166,7 +165,7 @@ int main(void)
 ```
  A_A       _
 o'' )_____//   Version @ x.x.x
- `_/  MOS  )   Build   @ HH:MM:SS
+ `_/  MOS  )   Build   @ TIME, DATE
  (_(_/--(_/    Chip    @ MCU, ARCH
 
  Tid   Name   Priority   Status   Stack%
@@ -200,7 +199,7 @@ o'' )_____//   Version @ x.x.x
 5. KernelGlobal::os_ticks and Task::delay() for block delay
 6. Driver::{SPI_t, ST7735S} and GuiLite library
 7. Refactor the project into {kernel, arch, drivers}
-8. Support GCC and STM32Cube HAL
+8. Support GCC and STM32CubeMX HAL
 
 📌 To do
 1. Mutex_t with priority inheritance mechanism

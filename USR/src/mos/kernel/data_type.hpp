@@ -380,8 +380,10 @@ namespace MOS::DataType
 		Tick_t delay_ticks = 0;
 
 		TCB_t() = default;
-		TCB_t(Fn_t fn, Argv_t argv = nullptr,
-		      Prior_t pr = 15, Name_t name = "")
+		TCB_t(Fn_t fn,
+		      Argv_t argv = nullptr,
+		      Prior_t pr  = 15,
+		      Name_t name = "")
 		    : fn(fn), argv(argv), priority(pr), name(name) {}
 
 		MOS_INLINE inline void
@@ -559,8 +561,8 @@ namespace MOS::DataType
 	struct DebugTasks
 	{
 		using TcbPtr_t = volatile TCB_t::TcbPtr_t;
+		using Raw_t    = volatile TcbPtr_t[Macro::MAX_TASK_NUM];
 		using Len_t    = volatile uint32_t;
-		using Raw_t    = TcbPtr_t[Macro::PAGE_SIZE];
 
 		Raw_t raw = {nullptr};
 		Len_t len = 0;
