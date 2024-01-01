@@ -17,7 +17,7 @@ namespace MOS::Test
 					Task::delay(100);
 				}
 			});
-			Task::delay(10);
+			Task::delay(5);
 		}
 	}
 }

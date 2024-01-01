@@ -11,21 +11,21 @@ namespace MOS::Task
 	using namespace Util;
 	using namespace KernelGlobal;
 
-	using TCB_t     = DataType::TCB_t;
+	using Tcb_t     = DataType::Tcb_t;
 	using List_t    = DataType::List_t;
-	using Fn_t      = TCB_t::Fn_t;
-	using Argv_t    = TCB_t::Argv_t;
-	using Prior_t   = TCB_t::Prior_t;
-	using Node_t    = TCB_t::Node_t;
-	using Status_t  = TCB_t::Status_t;
-	using Name_t    = TCB_t::Name_t;
-	using Tid_t     = TCB_t::Tid_t;
-	using Tick_t    = TCB_t::Tick_t;
-	using TcbPtr_t  = TCB_t::TcbPtr_t;
-	using PagePtr_t = TCB_t::PagePtr_t;
+	using Fn_t      = Tcb_t::Fn_t;
+	using Argv_t    = Tcb_t::Argv_t;
+	using Prior_t   = Tcb_t::Prior_t;
+	using Node_t    = Tcb_t::Node_t;
+	using Name_t    = Tcb_t::Name_t;
+	using Tid_t     = Tcb_t::Tid_t;
+	using Tick_t    = Tcb_t::Tick_t;
+	using TcbPtr_t  = Tcb_t::TcbPtr_t;
+	using PagePtr_t = Tcb_t::PagePtr_t;
+	using Status    = Tcb_t::Status;
 
 	MOS_INLINE inline TcbPtr_t
-	current() { return curTCB; }
+	current() { return cur_tcb; }
 
 	MOS_INLINE inline void
 	yield() { MOS_TRIGGER_PENDSV_INTR(); }
@@ -33,7 +33,7 @@ namespace MOS::Task
 	MOS_INLINE inline void
 	nop_and_yield() // This will consume time_slice and yield
 	{
-		curTCB->time_slice -= 1;
+		cur_tcb->time_slice -= 1;
 		yield();
 	}
 
@@ -57,7 +57,7 @@ namespace MOS::Task
 
 	inline void terminate(TcbPtr_t tcb = current())
 	{
-		if (tcb == nullptr || tcb->is_status(Status_t::TERMINATED))
+		if (tcb == nullptr || tcb->is_status(Status::TERMINATED))
 			return;
 
 		// Assert if irq disabled
@@ -67,8 +67,8 @@ namespace MOS::Task
 			DisIntrGuard guard;
 
 			// Remove the task from list
-			if (tcb->is_status(Status_t::RUNNING) ||
-			    tcb->is_status(Status_t::READY)) {
+			if (tcb->is_status(Status::RUNNING) ||
+			    tcb->is_status(Status::READY)) {
 				ready_list.remove(tcb->node);
 			}
 			else if (tcb->is_sleeping()) {
@@ -144,7 +144,7 @@ namespace MOS::Task
 			}
 
 			// Construct a TCB at the head of a page block
-			tcb = TCB_t::build(page, fn, argv, pr, name);
+			tcb = Tcb_t::build(page, fn, argv, pr, name);
 
 			// Load empty context
 			load_context(tcb);
@@ -156,17 +156,17 @@ namespace MOS::Task
 			tcb->set_parent(cur);
 
 			// Set TCB to be READY
-			tcb->set_status(Status_t::READY);
+			tcb->set_status(Status::READY);
 
 			// Add to TCBs list
-			ready_list.insert_in_order(tcb->node, TCB_t::priority_cmp);
+			ready_list.insert_in_order(tcb->node, Tcb_t::priority_cmp);
 
 			// For debug only
 			debug_tcbs.add(tcb);
 		} // Enable interrupt, leave critical section
 
 		// If the new task's priority is higher, switch at once
-		if (TCB_t::priority_cmp(tcb->node, cur->node)) {
+		if (Tcb_t::priority_cmp(tcb->node, cur->node)) {
 			yield();
 		}
 
@@ -203,7 +203,7 @@ namespace MOS::Task
 			}
 
 			// Construct a TCB at the head of a page block
-			tcb = TCB_t::build(page, fn, argv, pr, name);
+			tcb = Tcb_t::build(page, fn, argv, pr, name);
 
 			// Load empty context
 			load_context(tcb);
@@ -215,10 +215,10 @@ namespace MOS::Task
 			tcb->set_parent(cur);
 
 			// Set TCB to be READY
-			tcb->set_status(Status_t::READY);
+			tcb->set_status(Status::READY);
 
-			// Add to TCBs list
-			ready_list.insert_in_order(tcb->node, TCB_t::priority_cmp);
+			// Add to ready_list
+			ready_list.insert_in_order(tcb->node, Tcb_t::priority_cmp);
 
 			// For debug only
 			debug_tcbs.add(tcb);
@@ -229,14 +229,14 @@ namespace MOS::Task
 
 	inline void block_to(TcbPtr_t tcb, List_t& dest)
 	{
-		if (tcb == nullptr || tcb->is_status(Status_t::BLOCKED))
+		if (tcb == nullptr || tcb->is_status(Status::BLOCKED))
 			return;
 
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
 		DisIntrGuard guard;
-		tcb->set_status(Status_t::BLOCKED);
+		tcb->set_status(Status::BLOCKED);
 		ready_list.send_to(tcb->node, dest);
 
 		if (tcb == current()) {
@@ -246,14 +246,14 @@ namespace MOS::Task
 
 	inline void block_to_in_order(TcbPtr_t tcb, List_t& dest, NodeCmpFn auto&& cmp)
 	{
-		if (tcb == nullptr || tcb->is_status(Status_t::BLOCKED))
+		if (tcb == nullptr || tcb->is_status(Status::BLOCKED))
 			return;
 
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
 		DisIntrGuard guard;
-		tcb->set_status(Status_t::BLOCKED);
+		tcb->set_status(Status::BLOCKED);
 		ready_list.send_to_in_order(tcb->node, dest, cmp);
 
 		if (tcb == current()) {
@@ -269,18 +269,18 @@ namespace MOS::Task
 
 	inline void resume(TcbPtr_t tcb)
 	{
-		if (tcb == nullptr || !tcb->is_status(Status_t::BLOCKED))
+		if (tcb == nullptr || !tcb->is_status(Status::BLOCKED))
 			return;
 
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
 		DisIntrGuard guard;
-		tcb->set_status(Status_t::READY);
-		blocked_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
+		tcb->set_status(Status::READY);
+		blocked_list.send_to_in_order(tcb->node, ready_list, Tcb_t::priority_cmp);
 
 		if (current() != (TcbPtr_t) ready_list.begin()) {
-			// if curTCB isn't the highest priority
+			// if cur_tcb isn't the highest priority
 			return yield();
 		}
 	}
@@ -288,25 +288,25 @@ namespace MOS::Task
 	// Not recommended
 	inline void resume_fromISR(TcbPtr_t tcb)
 	{
-		if (tcb == nullptr || !tcb->is_status(Status_t::BLOCKED))
+		if (tcb == nullptr || !tcb->is_status(Status::BLOCKED))
 			return;
 
 		DisIntrGuard guard;
-		tcb->set_status(Status_t::READY);
-		blocked_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
+		tcb->set_status(Status::READY);
+		blocked_list.send_to_in_order(tcb->node, ready_list, Tcb_t::priority_cmp);
 	}
 
 	MOS_INLINE inline void
-	change_priority(TcbPtr_t tcb, TCB_t::Prior_t pr)
+	change_priority(TcbPtr_t tcb, Tcb_t::Prior_t pr)
 	{
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
 		DisIntrGuard guard;
 		tcb->set_priority(pr);
-		ready_list.re_insert(tcb->node, TCB_t::priority_cmp);
+		ready_list.re_insert(tcb->node, Tcb_t::priority_cmp);
 
 		if (current() != (TcbPtr_t) ready_list.begin()) {
-			// if curTCB isn't the highest priority
+			// if cur_tcb isn't the highest priority
 			return yield();
 		}
 	}
@@ -336,16 +336,16 @@ namespace MOS::Task
 	}
 
 	MOS_INLINE inline constexpr auto
-	status_name(const Status_t status)
+	status_name(const Status status)
 	{
 		switch (status) {
-			case Status_t::READY:
+			case Status::READY:
 				return "READY";
-			case Status_t::RUNNING:
+			case Status::RUNNING:
 				return "RUNNING";
-			case Status_t::BLOCKED:
+			case Status::BLOCKED:
 				return "BLOCKED";
-			case Status_t::TERMINATED:
+			case Status::TERMINATED:
 				return "TERMINATED";
 			default:
 				return "INVALID";
@@ -376,8 +376,8 @@ namespace MOS::Task
 	delay(const Tick_t ticks)
 	{
 		static auto delay_ticks_cmp = [](const auto& lhs, const auto& rhs) {
-			return ((const TCB_t&) lhs).delay_ticks <
-			       ((const TCB_t&) rhs).delay_ticks;
+			return ((const Tcb_t&) lhs).delay_ticks <
+			       ((const Tcb_t&) rhs).delay_ticks;
 		};
 
 		auto cur = current();

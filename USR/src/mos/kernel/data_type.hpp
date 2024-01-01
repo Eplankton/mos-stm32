@@ -333,16 +333,16 @@ namespace MOS::DataType
 		is_used() const { return used; }
 	};
 
-	struct __attribute__((packed)) TCB_t
+	struct __attribute__((packed)) Tcb_t
 	{
-		using Tid_t       = int16_t;
-		using Self_t      = TCB_t;
-		using SelfPtr_t   = TCB_t*;
+		using Self_t      = Tcb_t;
+		using SelfPtr_t   = Tcb_t*;
 		using TcbPtr_t    = SelfPtr_t;
 		using ParentPtr_t = TcbPtr_t;
 		using StackPtr_t  = uint32_t*;
 		using Node_t      = ListNode_t;
 		using PagePtr_t   = Page_t::PagePtr_t;
+		using Tid_t       = int16_t;
 		using Tick_t      = uint32_t;
 		using Ret_t       = void;
 		using Argv_t      = void*;
@@ -350,15 +350,13 @@ namespace MOS::DataType
 		using Prior_t     = int8_t;
 		using Name_t      = const char*;
 
-		enum class Status_t
+		enum class Status
 		{
 			READY,
 			RUNNING,
 			BLOCKED,
 			TERMINATED,
 		};
-
-		using enum Status_t;
 
 		// Don't change the offset of node and sp
 		Node_t node;
@@ -375,12 +373,12 @@ namespace MOS::DataType
 		Prior_t priority   = 15; // Low->High = 15->0
 		PagePtr_t page     = nullptr;
 		ParentPtr_t parent = nullptr;
-		Status_t status    = TERMINATED;
+		Status status      = Status::TERMINATED;
 		Tick_t time_slice  = Macro::TIME_SLICE;
 		Tick_t delay_ticks = 0;
 
-		TCB_t() = default;
-		TCB_t(Fn_t fn,
+		Tcb_t() = default;
+		Tcb_t(Fn_t fn,
 		      Argv_t argv = nullptr,
 		      Prior_t pr  = 15,
 		      Name_t name = "")
@@ -407,7 +405,7 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		deinit() volatile
 		{
-			new ((void*) this) TCB_t {};
+			new ((void*) this) Tcb_t {};
 		}
 
 		MOS_INLINE inline void
@@ -423,19 +421,19 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		set_status(Status_t new_status) volatile
+		set_status(Status new_status) volatile
 		{
 			status = new_status;
 		}
 
-		MOS_INLINE inline Status_t
+		MOS_INLINE inline Status
 		get_status() volatile const
 		{
 			return status;
 		}
 
 		MOS_INLINE inline bool
-		is_status(Status_t expected) volatile const
+		is_status(Status expected) volatile const
 		{
 			return get_status() == expected;
 		}
@@ -443,7 +441,7 @@ namespace MOS::DataType
 		MOS_INLINE inline bool
 		is_sleeping() volatile const
 		{
-			return is_status(BLOCKED) && (delay_ticks != 0);
+			return is_status(Status::BLOCKED) && (delay_ticks != 0);
 		}
 
 		MOS_INLINE inline Name_t
@@ -518,7 +516,7 @@ namespace MOS::DataType
 		page_usage() volatile const
 		{
 			const uint32_t stk_top = (uint32_t) &page->raw[Macro::PAGE_SIZE];
-			const uint32_t atu     = (stk_top - (uint32_t) sp + sizeof(TCB_t));
+			const uint32_t atu     = (stk_top - (uint32_t) sp + sizeof(Tcb_t));
 			return atu * 25 / Macro::PAGE_SIZE;
 		}
 
@@ -527,21 +525,21 @@ namespace MOS::DataType
 		{
 			const uint32_t stk_top = (uint32_t) &page->raw[Macro::PAGE_SIZE];
 			const uint32_t atu     = (stk_top - (uint32_t) sp);
-			return atu * 25 / (Macro::PAGE_SIZE - sizeof(TCB_t) / 4);
+			return atu * 25 / (Macro::PAGE_SIZE - sizeof(Tcb_t) / sizeof(void*));
 		}
 
 		MOS_INLINE static inline bool
 		priority_cmp(const Node_t& lhs, const Node_t& rhs)
 		{
-			return ((const TCB_t&) lhs).get_priority() <
-			       ((const TCB_t&) rhs).get_priority();
+			return ((const Tcb_t&) lhs).get_priority() <
+			       ((const Tcb_t&) rhs).get_priority();
 		}
 
 		MOS_INLINE static inline bool
 		priority_equal(const Node_t& lhs, const Node_t& rhs)
 		{
-			return ((const TCB_t&) lhs).get_priority() ==
-			       ((const TCB_t&) rhs).get_priority();
+			return ((const Tcb_t&) lhs).get_priority() ==
+			       ((const Tcb_t&) rhs).get_priority();
 		}
 
 		MOS_INLINE static inline TcbPtr_t
@@ -552,15 +550,15 @@ namespace MOS::DataType
 		      Name_t name = "")
 		{
 			// In-placement new
-			auto tcb = new (page_ptr->raw) TCB_t {fn, argv, pr, name};
+			auto tcb = new (page_ptr->raw) Tcb_t {fn, argv, pr, name};
 			tcb->attach_page(page_ptr);
 			return tcb;
 		}
 	};
 
-	struct DebugTasks
+	struct DebugTcbs_t
 	{
-		using TcbPtr_t = volatile TCB_t::TcbPtr_t;
+		using TcbPtr_t = volatile Tcb_t::TcbPtr_t;
 		using Raw_t    = volatile TcbPtr_t[Macro::MAX_TASK_NUM];
 		using Len_t    = volatile uint32_t;
 
@@ -606,7 +604,7 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline TcbPtr_t
-		iter_until(auto&& fn) volatile
+		iter_until(auto&& fn) volatile const
 		    requires Concept::Invocable<decltype(fn), bool, TcbPtr_t&>
 		{
 			for (auto& pt: raw) {

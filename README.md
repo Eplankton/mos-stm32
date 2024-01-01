@@ -128,12 +128,23 @@ namespace MOS::Bsp
 
 namespace MOS::App
 {
+    void Task1(void* argv)
+    {
+        using UserGlobal::leds;
+        for (uint8_t i = 0; i < 20; i++) {
+           leds[1].toggle();
+           Task::delay(100);
+        }
+        kprintf("T1 exits...\n");
+    }
+
     void Task0(void* argv)
     {
         using UserGlobal::leds;
+        Task::create(Task1, nullptr, 1, "T1");
         while (true) {
             leds[0].toggle();
-            Task::delay(500);
+            Task::delay(200);
         }
     }
 }
@@ -230,7 +241,7 @@ o'' )_____//   Version @ x.x.x
 2. IPC::{pipe, message queue}, etc.
 3. Simple dynamic memory allocator
 4. Hardware Timers
-5. BitMap for faster allocation
+5. BitMap for faster Page Allocation
 6. Basic formal verification on Scheduler
 ```
 

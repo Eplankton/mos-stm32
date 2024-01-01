@@ -7,15 +7,16 @@ namespace MOS::Sync
 {
 	using KernelGlobal::ready_list;
 	using KernelGlobal::blocked_list;
-	using KernelGlobal::curTCB;
+	using KernelGlobal::cur_tcb;
 	using Util::DisIntrGuard;
 	using Util::test_irq;
 
-	using TCB_t       = DataType::TCB_t;
-	using TcbPtr_t    = TCB_t::TcbPtr_t;
-	using AtomicCnt_t = volatile int32_t;
+	using Tcb_t       = DataType::Tcb_t;
+	using TcbPtr_t    = Tcb_t::TcbPtr_t;
+	using Prior_t     = Tcb_t::Prior_t;
 	using List_t      = DataType::List_t;
-	using Status_t    = TCB_t::Status_t;
+	using AtomicCnt_t = volatile int32_t;
+	using Status      = Tcb_t::Status;
 
 	struct Semaphore_t
 	{
@@ -34,8 +35,8 @@ namespace MOS::Sync
 			DisIntrGuard guard;
 			cnt -= 1;
 			if (cnt < 0) {
-				curTCB->set_status(Status_t::BLOCKED);
-				ready_list.send_to(curTCB->node, waiting_list);
+				cur_tcb->set_status(Status::BLOCKED);
+				ready_list.send_to(cur_tcb->node, waiting_list);
 				return Task::yield();
 			}
 		}
@@ -48,11 +49,11 @@ namespace MOS::Sync
 			DisIntrGuard guard;
 			if (cnt < 0) {
 				auto tcb = (TcbPtr_t) waiting_list.begin();
-				tcb->set_status(Status_t::READY);
-				waiting_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
+				tcb->set_status(Status::READY);
+				waiting_list.send_to_in_order(tcb->node, ready_list, Tcb_t::priority_cmp);
 			}
 			cnt += 1;
-			if (curTCB != (TcbPtr_t) ready_list.begin()) {
+			if (cur_tcb != (TcbPtr_t) ready_list.begin()) {
 				return Task::yield();
 			}
 		}
@@ -85,8 +86,6 @@ namespace MOS::Sync
 
 	struct MutexImpl_t
 	{
-		using Prior_t = TCB_t::Prior_t;
-
 		Semaphore_t sema;
 		TcbPtr_t owner;
 		Prior_t old_pr, ceiling;
@@ -101,27 +100,27 @@ namespace MOS::Sync
 
 			DisIntrGuard guard;
 
-			if (owner == curTCB) {
+			if (owner == cur_tcb) {
 				// If the current task already owns the lock, just increment the lock count
 				recursive_cnt += 1;
 				return;
 			}
 
 			// Raise the priority of the current task to the ceiling of the mutex
-			old_pr = curTCB->get_priority();
-			if (ceiling < curTCB->get_priority()) {
-				curTCB->set_priority(ceiling);
+			old_pr = cur_tcb->get_priority();
+			if (ceiling < cur_tcb->get_priority()) {
+				cur_tcb->set_priority(ceiling);
 			}
 
 			sema.cnt -= 1;
 
 			if (sema.cnt < 0) {
-				curTCB->set_status(Status_t::BLOCKED);
-				ready_list.send_to_in_order(curTCB->node, sema.waiting_list, TCB_t::priority_cmp);
+				cur_tcb->set_status(Status::BLOCKED);
+				ready_list.send_to_in_order(cur_tcb->node, sema.waiting_list, Tcb_t::priority_cmp);
 				return Task::yield();
 			}
 			else {
-				owner = curTCB;
+				owner = cur_tcb;
 				recursive_cnt += 1;
 			}
 		}
@@ -129,7 +128,7 @@ namespace MOS::Sync
 		void unlock() // V-opr
 		{
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
-			MOS_ASSERT(owner == curTCB, "Lock can only be released by holder");
+			MOS_ASSERT(owner == cur_tcb, "Lock can only be released by holder");
 
 			DisIntrGuard guard;
 			recursive_cnt -= 1;
@@ -147,18 +146,18 @@ namespace MOS::Sync
 				auto tcb = (TcbPtr_t) sema.waiting_list.iter_until(
 				        [&](const auto& node) {
 					        return node.next == ed ||
-					               !TCB_t::priority_equal(node, *node.next);
+					               !Tcb_t::priority_equal(node, *node.next);
 				        });
 
-				tcb->set_status(Status_t::READY);
+				tcb->set_status(Status::READY);
 
-				sema.waiting_list.send_to_in_order(tcb->node, ready_list, TCB_t::priority_cmp);
+				sema.waiting_list.send_to_in_order(tcb->node, ready_list, Tcb_t::priority_cmp);
 
 				// Transfer ownership to the last highest priority task in queue
 				owner = tcb;
 				sema.cnt += 1;
 
-				if (curTCB != (TcbPtr_t) ready_list.begin()) {
+				if (cur_tcb != (TcbPtr_t) ready_list.begin()) {
 					return Task::yield();
 				}
 			}
@@ -221,7 +220,7 @@ namespace MOS::Sync
 	template <>
 	struct Mutex_t<> : private MutexImpl_t
 	{
-		struct MutexGuard
+		struct MutexGuard // No Raw Accessor for T=void
 		{
 			// Unlock when scope ends
 			MOS_INLINE inline ~MutexGuard() { mutex.unlock(); }

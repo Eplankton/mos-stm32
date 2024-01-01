@@ -108,7 +108,7 @@ namespace MOS::Shell
 			        " `_/  MOS  )  Build   @ %s, %s\n"
 			        " (_(_/--(_/   Chip    @ %s, %s\n",
 			        MOS_VERSION, __TIME__, __DATE__,
-			        MOS_CHIP, MOS_ARCH);
+			        MOS_MCU, MOS_ARCH);
 		}
 	}
 
@@ -122,8 +122,8 @@ namespace MOS::Shell
 
 	inline void launch(void* argv)
 	{
-		using Text_t  = Command_t::Text_t;
-		using RxBuf_t = DataType::RxBuffer<Macro::RX_BUF_SIZE>*;
+		using Text_t     = Command_t::Text_t;
+		using RxBufPtr_t = DataType::RxBuffer<Macro::RX_BUF_SIZE>*;
 
 		auto parser = [](Text_t str) {
 			for (const auto& cmd: cmds) {
@@ -137,7 +137,7 @@ namespace MOS::Shell
 		CmdCall::uname_cmd(nullptr);
 		Task::print_all();
 
-		auto& rx_buf = *(RxBuf_t) argv;
+		auto& rx_buf = *(RxBufPtr_t) argv;
 
 		while (true) {
 			// Valid input should end with '\n'

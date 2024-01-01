@@ -15,7 +15,7 @@ namespace MOS::Bsp
 	{
 		using UserGlobal::uart3;
 		uart3.send_data(ch);
-		uart3.wait_flag_clear(USART_FLAG_TXE);
+		uart3.wait_flag(USART_FLAG_TXE);
 	}
 
 	static inline void LED_Config()
@@ -41,7 +41,7 @@ namespace MOS::Bsp
 	{
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOC);
 		RCC_t::APB2::enable(RCC_APB2Periph_SYSCFG);
-		SYSCFG_t::exti_line_config(EXTI_PortSourceGPIOC, EXTI_PinSource13);
+		SYSCFG_t::exti_line_config(EXTI_PortSourceGPIOC, EXTI_PinSource13); // K1 -> PC13
 		EXTI_t::init(EXTI_Line13, EXTI_Mode_Interrupt, EXTI_Trigger_Rising, ENABLE);
 		NVIC_t::init(EXTI15_10_IRQn, 1, 1, ENABLE);
 	}
@@ -68,8 +68,8 @@ namespace MOS::Bsp
 		RCC_t::APB2::enable(RCC_APB2Periph_SPI1);
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOD);
 
-		lcd.spi.sclk_config(GPIOA, GPIO_t::get_pin_src(5), GPIO_AF_SPI1)
-		        .mosi_config(GPIOA, GPIO_t::get_pin_src(7), GPIO_AF_SPI1);
+		lcd.spi.sclk_config(GPIOA, GPIO_t::get_pin_src(5), GPIO_AF_SPI1)   // SCLK -> PA5
+		        .mosi_config(GPIOA, GPIO_t::get_pin_src(7), GPIO_AF_SPI1); // MOSI -> PA7
 		lcd.init();
 	}
 
@@ -92,7 +92,7 @@ namespace MOS::ISR
 		using HAL::STM32F4xx::EXTI_t;
 		using UserGlobal::leds;
 
-		auto K1_IRQ = [](void* argv) {
+		static auto K1_IRQ = [](void* argv) {
 			for (uint8_t i = 0; i < 10; i++) {
 				leds[2].toggle();
 				Task::print_name();
@@ -102,7 +102,7 @@ namespace MOS::ISR
 
 		static uint32_t k1_cnt = 0;
 
-		EXTI_t::handle_line(EXTI_Line13, [&] {
+		EXTI_t::handle_line(EXTI_Line13, [] {
 			MOS_MSG("K1 Cnt = %d\n", ++k1_cnt);
 			Task::create_fromISR(
 			        K1_IRQ,
@@ -119,7 +119,7 @@ namespace MOS::ISR
 		using UserGlobal::rx_buf;
 
 		if (uart3.get_it_status(USART_IT_RXNE) != RESET) {
-			char data = uart3.receive_data();
+			char8_t data = uart3.receive_data();
 			if (!rx_buf.full()) {
 				rx_buf.add(data);
 			}

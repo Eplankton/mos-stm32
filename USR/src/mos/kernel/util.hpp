@@ -22,9 +22,9 @@
 #define MOS_ASSERT(expr, format, ...) \
 	((expr) ? ((void) 0) : mos_assert_failed((uint8_t*) __FILE__, __LINE__, format))
 
-inline void mos_assert_failed(uint8_t* file, uint32_t line, const char* message)
+inline void mos_assert_failed(uint8_t* file, uint32_t line, const char* msg)
 {
-	kprintf("%s, %d: %s\n", file, line, message);
+	kprintf("%s, %d: %s\n", file, line, msg);
 	while (true) {
 		asm volatile("");
 	}

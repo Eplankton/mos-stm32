@@ -130,9 +130,9 @@ namespace HAL::STM32F4xx
 		}
 
 		inline auto
-		get_it_status(IT_t usart_it) const
+		get_it_status(IT_t it) const
 		{
-			return USART_GetITStatus((Raw_t) this, usart_it);
+			return USART_GetITStatus((Raw_t) this, it);
 		}
 
 		inline auto
@@ -142,7 +142,7 @@ namespace HAL::STM32F4xx
 		}
 
 		inline void
-		wait_flag_clear(Flag_t flag) const
+		wait_flag(Flag_t flag) const
 		{
 			while (get_flag_status(flag) == RESET)
 				;
@@ -158,7 +158,7 @@ namespace HAL::STM32F4xx
 		send_byte(uint8_t ch)
 		{
 			send_data(ch);
-			wait_flag_clear(USART_FLAG_TXE);
+			wait_flag(USART_FLAG_TXE);
 		}
 
 		inline void
@@ -169,7 +169,7 @@ namespace HAL::STM32F4xx
 				send_byte(*((uint8_t*) buf + k++));
 			} while (k != len);
 
-			wait_flag_clear(USART_FLAG_TC);
+			wait_flag(USART_FLAG_TC);
 		}
 
 		inline void send_string(const char* str)
@@ -179,7 +179,7 @@ namespace HAL::STM32F4xx
 				send_byte(*(str + k++));
 			}
 
-			wait_flag_clear(USART_FLAG_TC);
+			wait_flag(USART_FLAG_TC);
 		}
 
 		inline void println(const char* str)

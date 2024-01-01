@@ -25,9 +25,9 @@ namespace MOS::UserGlobal
 
 	// RGB LEDs
 	LED_t leds[] = {
-	        {GPIOB, GPIO_Pin_14}, // red
-	        {GPIOB,  GPIO_Pin_0}, // green
-	        {GPIOB,  GPIO_Pin_7}, // blue
+	        {GPIOB, GPIO_Pin_14}, // red -> PB14
+	        {GPIOB,  GPIO_Pin_0}, // green -> PB0
+	        {GPIOB,  GPIO_Pin_7}, // blue -> PB7
 	};
 
 	// LCD with ST7735S SPI Driver
