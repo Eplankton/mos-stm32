@@ -8,17 +8,17 @@
 #include "src/drivers/device/st7735s.hpp"
 #include "src/drivers/device/led.hpp"
 
+// Data Types
 #include "src/mos/kernel/data_type.hpp"
 
-// Put user global data here
 namespace MOS::UserGlobal
 {
-	using namespace HAL;
-	using namespace Driver;
-	using namespace DataType;
+	using namespace HAL::STM32F4xx;
+	using namespace Driver::Device;
+	using DataType::RxBuffer;
 
 	// Serial Input/Output
-	auto& uart3 = STM32F4xx::convert(USART3);
+	auto& uart3 = convert(USART3);
 
 	// UART RX Buffer
 	RxBuffer<Macro::RX_BUF_SIZE> rx_buf;

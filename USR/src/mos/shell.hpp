@@ -34,12 +34,14 @@ namespace MOS::Shell
 		{
 			const uint32_t xlen = len(); // The length of a command
 
-			auto skip = [](Text_t str) { // Skip all blank
+			// Skip all blank
+			auto skip = [](Text_t str) {
 				while (*str == ' ') ++str;
 				return str;
 			};
 
-			auto check = [&](Text_t str) { // Check whether match or not
+			// Check whether match or not
+			auto check = [&](Text_t str) {
 				return (str[xlen] == ' ' || str[xlen] == '\0') &&
 				       Util::strncmp(str, text, xlen) == 0;
 			};
@@ -136,6 +138,7 @@ namespace MOS::Shell
 		Task::print_all();
 
 		auto& rx_buf = *(RxBuf_t) argv;
+
 		while (true) {
 			// Valid input should end with '\n'
 			if (rx_buf.back() == '\n') {

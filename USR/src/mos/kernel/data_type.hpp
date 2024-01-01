@@ -218,7 +218,7 @@ namespace MOS::DataType
 	concept ListIterFn = Concept::Invocable<Fn, Ret, const ListNode_t&>;
 
 	template <typename Fn>
-	concept NodeCmp = Concept::Invocable<Fn, bool, const ListNode_t&, const ListNode_t&>;
+	concept NodeCmpFn = Concept::Invocable<Fn, bool, const ListNode_t&, const ListNode_t&>;
 
 	struct List_t
 	{
@@ -268,7 +268,7 @@ namespace MOS::DataType
 			len += 1;
 		}
 
-		void insert_in_order(Node_t& node, NodeCmp auto&& cmp)
+		void insert_in_order(Node_t& node, NodeCmpFn auto&& cmp)
 		{
 			auto st = begin();
 			while (st != end() && cmp(*st, node)) {
@@ -299,14 +299,14 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		send_to_in_order(Node_t& node, List_t& dest, NodeCmp auto&& cmp)
+		send_to_in_order(Node_t& node, List_t& dest, NodeCmpFn auto&& cmp)
 		{
 			remove(node);
 			dest.insert_in_order(node, cmp);
 		}
 
 		MOS_INLINE inline void
-		re_insert(Node_t& node, NodeCmp auto&& cmp)
+		re_insert(Node_t& node, NodeCmpFn auto&& cmp)
 		{
 			send_to_in_order(node, *this, cmp);
 		}

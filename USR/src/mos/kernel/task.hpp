@@ -244,7 +244,7 @@ namespace MOS::Task
 		}
 	}
 
-	inline void block_to_in_order(TcbPtr_t tcb, List_t& dest, NodeCmp auto&& cmp)
+	inline void block_to_in_order(TcbPtr_t tcb, List_t& dest, NodeCmpFn auto&& cmp)
 	{
 		if (tcb == nullptr || tcb->is_status(Status_t::BLOCKED))
 			return;

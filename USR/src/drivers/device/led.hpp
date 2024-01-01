@@ -3,7 +3,7 @@
 
 #include "../stm32f4xx/gpio.hpp"
 
-namespace Driver
+namespace Driver::Device
 {
 	using HAL::STM32F4xx::GPIO_t;
 

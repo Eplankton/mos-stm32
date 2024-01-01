@@ -1,10 +1,9 @@
 #ifndef _DEVICE_ST7735S_
 #define _DEVICE_ST7735S_
 
-#include <string.h>
 #include "../stm32f4xx/spi.hpp"
 
-namespace Driver
+namespace Driver::Device
 {
 	using HAL::STM32F4xx::SPI_t;
 	using HAL::STM32F4xx::GPIO_t;

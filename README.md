@@ -82,12 +82,12 @@ src
 
 namespace MOS::UserGlobal
 {
-    using namespace HAL;
-    using namespace Driver;
-    using namespace DataType;
+    using namespace HAL::STM32F4xx;
+    using namespace Driver::Device;
+    using DataType::RxBuffer;
     
     // Serial TX/RX
-    auto& uart = STM32F4xx::convert(USARTx);
+    auto& uart = convert(USARTx);
 
     // RX Buffer
     RxBuffer<Macro::RX_BUF_SIZE> rx_buf;
@@ -126,7 +126,7 @@ namespace MOS::Bsp
     }
 }
 
-namespace MOS::App // User tasks
+namespace MOS::App
 {
     void Task0(void* argv)
     {
@@ -134,6 +134,25 @@ namespace MOS::App // User tasks
         while (true) {
             leds[0].toggle();
             Task::delay(500);
+        }
+    }
+}
+
+namespace MOS::Test
+{
+    static Sync::Mutex_t mutex; // 1-2-3 order
+
+    void MutexTest(void* argv)
+    {
+        auto name = Task::current()->get_name();
+        while (true) {
+            mutex.exec([&] {
+                for (uint8_t i = 0; i < 5; i++) {
+                    kprintf("%s is working...\n", name);
+                    Task::delay(100);
+                }
+            });
+            Task::delay(5);
         }
     }
 }
@@ -151,6 +170,11 @@ int main(void)
     
     // Create LED task
     Task::create(App::Task0, nullptr, 1, "T0");
+
+    // Test example
+    // Task::create(Test::MutexTest, nullptr, 1, "T1");
+    // Task::create(Test::MutexTest, nullptr, 2, "T2");
+    // Task::create(Test::MutexTest, nullptr, 3, "T3");
     
     // Start scheduling, never return
     Scheduler::launch();
@@ -192,8 +216,8 @@ o'' )_____//   Version @ x.x.x
 ```
 ```
 📦 Version 0.0.2
-1. Sync::{Semaphore_t, Lock_t, Mutex_t, MutexGuard}
-2. Scheduler::Policy::PreemptivePriority, under same priority -> RoundRobin
+1. Sync::{Semaphore_t, Lock_t, Mutex_t<T>, MutexGuard}
+2. Scheduler::Policy::PreemptivePriority, same priority -> RoundRobin
 3. Task::terminate() implicitly be called when task exits
 4. Shell::{Command, CmdCall, launch}
 5. KernelGlobal::os_ticks and Task::delay() for block delay
