@@ -22,7 +22,7 @@ o'' )_____//    [MOS-STM32]
 src
 ├── drivers                  Hardware Drivers(SPL, HAL...)
 │   ├── stm32f4xx            STM32F4xx on-chip periphs(USART, I2C, SPI...)
-│   └── device               Other hardware components(LED, LCD...)
+│   └── device               Other components(LED, LCD...)
 │
 ├── mos
 │   ├── config.h             System Configuration
@@ -40,7 +40,7 @@ src
 │   │   ├── task.hpp         Task create, yield, terminate, block...
 │   │   ├── sync.hpp         Sync primitives
 │   │   ├── scheduler.hpp    Scheduler and Policy
-│   │   └── util.hpp         Utils
+│   │   └── utils.hpp        Utils
 │   │
 │   ├── kernel.hpp           Import Kernel Modules
 │   └── shell.hpp            Simple Shell

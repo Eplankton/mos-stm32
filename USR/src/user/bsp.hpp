@@ -54,7 +54,7 @@ namespace MOS::Bsp
 		RCC_t::APB1::enable(RCC_APB1Periph_USART3);
 		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
 
-		uart3.init(9600, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
+		uart3.init(19200, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
 		        .rx_config(GPIOD, GPIO_t::get_pin_src(9), GPIO_AF_USART3) // RX -> PD9
 		        .tx_config(GPIOD, GPIO_t::get_pin_src(8), GPIO_AF_USART3) // TX -> PD8
 		        .it_enable(USART_IT_RXNE)

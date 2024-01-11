@@ -12,11 +12,13 @@ namespace MOS::Alloc
 	inline PagePtr_t palloc()
 	{
 		using KernelGlobal::page_pool;
+
 		for (auto& page: page_pool) {
 			if (!page.is_used()) {
 				return &page;
 			}
 		}
+
 		return nullptr;
 	}
 }

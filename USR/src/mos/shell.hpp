@@ -9,7 +9,7 @@
 #ifndef _MOS_SHELL_
 #define _MOS_SHELL_
 
-#include "kernel/util.hpp"
+#include "kernel/utils.hpp"
 #include "kernel/task.hpp"
 
 namespace MOS::Shell

@@ -12,7 +12,7 @@
 // MOS Kernel Components
 #include "config.h"
 #include "kernel/macro.hpp"
-#include "kernel/util.hpp"
+#include "kernel/utils.hpp"
 #include "kernel/data_type.hpp"
 #include "kernel/global.hpp"
 #include "kernel/task.hpp"

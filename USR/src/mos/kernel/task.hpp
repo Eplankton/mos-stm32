@@ -2,7 +2,7 @@
 #define _MOS_TASK_
 
 #include "concepts.hpp"
-#include "util.hpp"
+#include "utils.hpp"
 #include "global.hpp"
 #include "alloc.hpp"
 
@@ -120,7 +120,11 @@ namespace MOS::Task
 		return tcb;
 	}
 
-	inline TcbPtr_t create(Fn_t fn, Argv_t argv = nullptr, Prior_t pr = 15, Name_t name = "")
+	inline TcbPtr_t create(
+	        Fn_t fn,
+	        Argv_t argv = nullptr,
+	        Prior_t pr  = 15,
+	        Name_t name = "")
 	{
 		if (num() >= Macro::MAX_TASK_NUM) {
 			return nullptr;
@@ -130,7 +134,7 @@ namespace MOS::Task
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		MOS_ASSERT(fn != nullptr, "fn ptr can't be null");
 
-		TcbPtr_t tcb = nullptr, cur = current();
+		TcbPtr_t cur = current(), tcb = nullptr;
 
 		{ // Disable interrupt to enter critical section
 			DisIntrGuard guard;
@@ -181,7 +185,11 @@ namespace MOS::Task
 	}
 
 	// Not recommended
-	inline TcbPtr_t create_fromISR(Fn_t fn, Argv_t argv = nullptr, Prior_t pr = 15, Name_t name = "")
+	inline TcbPtr_t create_fromISR(
+	        Fn_t fn,
+	        Argv_t argv = nullptr,
+	        Prior_t pr  = 15,
+	        Name_t name = "")
 	{
 		if (num() >= Macro::MAX_TASK_NUM) {
 			return nullptr;
@@ -189,7 +197,7 @@ namespace MOS::Task
 
 		MOS_ASSERT(fn != nullptr, "fn can't be null");
 
-		TcbPtr_t tcb = nullptr, cur = current();
+		TcbPtr_t cur = current(), tcb = nullptr;
 
 		{
 			DisIntrGuard guard;
@@ -277,7 +285,10 @@ namespace MOS::Task
 
 		DisIntrGuard guard;
 		tcb->set_status(Status::READY);
-		blocked_list.send_to_in_order(tcb->node, ready_list, Tcb_t::priority_cmp);
+		blocked_list.send_to_in_order(
+		        tcb->node,
+		        ready_list,
+		        Tcb_t::priority_cmp);
 
 		if (current() != (TcbPtr_t) ready_list.begin()) {
 			// if cur_tcb isn't the highest priority
@@ -293,7 +304,10 @@ namespace MOS::Task
 
 		DisIntrGuard guard;
 		tcb->set_status(Status::READY);
-		blocked_list.send_to_in_order(tcb->node, ready_list, Tcb_t::priority_cmp);
+		blocked_list.send_to_in_order(
+		        tcb->node,
+		        ready_list,
+		        Tcb_t::priority_cmp);
 	}
 
 	MOS_INLINE inline void

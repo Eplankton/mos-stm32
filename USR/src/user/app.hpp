@@ -50,8 +50,7 @@ namespace MOS::App
 
 	void LCD(void* argv)
 	{
-		using namespace Driver;
-		using Color = Device::ST7735S::Color;
+		using Color = Driver::Device::ST7735S::Color;
 		using UserGlobal::lcd;
 		using Sync::Mutex_t;
 

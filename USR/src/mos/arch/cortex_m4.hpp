@@ -9,8 +9,9 @@
 #define MOS_PENDSV_HANDLER        PendSV_Handler
 #define MOS_SYSTICK_HANDLER       SysTick_Handler
 #define MOS_TEST_IRQ()            __get_PRIMASK() == 0
-#define MOS_DISABLE_IRQ()         asm volatile("CPSID    I");
-#define MOS_ENABLE_IRQ()          asm volatile("CPSIE    I");
+#define MOS_DISABLE_IRQ()         asm volatile("CPSID    I")
+#define MOS_ENABLE_IRQ()          asm volatile("CPSIE    I")
+#define MOS_NOP()                 asm volatile("")
 
 #define ARCH_INIT_ASM                                                               \
 	"CPSID   I\n"            /* Disable irq to enter critical section */            \

@@ -2,7 +2,7 @@
 #define _MOS_DATA_TYPE_
 
 #include "concepts.hpp"
-#include "util.hpp"
+#include "utils.hpp"
 #include "macro.hpp"
 
 namespace MOS::DataType
@@ -27,7 +27,6 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		add(char ch) volatile { raw[index++] = ch; }
 
-		// If now empty
 		MOS_INLINE inline char
 		back() const volatile { return empty() ? '\0' : raw[index - 1]; }
 
@@ -42,9 +41,7 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		clear() volatile
 		{
-			while (--index >= 0) {
-				raw[index] = '\0';
-			}
+			Util::memset((void*) raw, 0, sizeof(raw));
 			index = 0;
 		}
 	};
@@ -487,9 +484,9 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		set_argv(const uint32_t argv_val) volatile
+		set_argv(const uint32_t argv_ref) volatile
 		{
-			page->raw[Macro::PAGE_SIZE - 8U] = argv_val;
+			page->raw[Macro::PAGE_SIZE - 8U] = argv_ref;
 		}
 
 		MOS_INLINE inline void

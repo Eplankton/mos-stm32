@@ -95,6 +95,16 @@ namespace MOS::Util
 		return dest;
 	}
 
+	inline void*
+	memset(void* ptr, int32_t value, size_t n)
+	{
+		uint8_t* raw = reinterpret_cast<uint8_t*>(ptr);
+		for (size_t i = 0; i < n; i++) {
+			raw[i] = static_cast<uint8_t>(value);
+		}
+		return ptr;
+	}
+
 	// Create critical section
 	struct DisIntrGuard
 	{
