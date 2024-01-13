@@ -95,10 +95,14 @@ namespace MOS::Shell
 			}
 		}
 
-		static inline void reboot_cmd(Argv_t argv)
+		static inline void date_cmd(Argv_t argv)
 		{
-			MOS_MSG("Reboot!\n\n\n");
-			MOS_REBOOT();
+			if (auto tcb = Task::find("Calendar")) {
+				Task::resume(tcb);
+			}
+			else {
+				MOS_MSG("No Calendar found\n");
+			}
 		}
 
 		static inline void uname_cmd(Argv_t argv)
@@ -110,20 +114,27 @@ namespace MOS::Shell
 			        MOS_VERSION, __TIME__, __DATE__,
 			        MOS_MCU, MOS_ARCH);
 		}
+
+		static inline void reboot_cmd(Argv_t argv)
+		{
+			MOS_MSG("Reboot!\n\n\n");
+			MOS_REBOOT();
+		}
 	}
 
 	// Add more commands with {"text", CmdCall::callback}
 	static constexpr Command_t cmds[] = {
 	        {    "ls",     CmdCall::ls_cmd},
 	        {  "kill",   CmdCall::kill_cmd},
+	        {  "date",   CmdCall::date_cmd},
 	        { "uname",  CmdCall::uname_cmd},
 	        {"reboot", CmdCall::reboot_cmd},
 	};
 
-	inline void launch(void* argv)
+	inline void launch(void* input_buf)
 	{
 		using Text_t     = Command_t::Text_t;
-		using RxBufPtr_t = DataType::RxBuffer<Macro::RX_BUF_SIZE>*;
+		using RxBufPtr_t = DataType::RxBuffer_t<Macro::RX_BUF_SIZE>*;
 
 		auto parser = [](Text_t str) {
 			for (const auto& cmd: cmds) {
@@ -137,7 +148,7 @@ namespace MOS::Shell
 		CmdCall::uname_cmd(nullptr);
 		Task::print_all();
 
-		auto& rx_buf = *(RxBufPtr_t) argv;
+		auto& rx_buf = *(RxBufPtr_t) input_buf;
 
 		while (true) {
 			// Valid input should end with '\n'

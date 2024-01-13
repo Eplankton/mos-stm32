@@ -8,19 +8,19 @@ namespace MOS::Sync
 	using KernelGlobal::ready_list;
 	using KernelGlobal::blocked_list;
 	using KernelGlobal::cur_tcb;
-	using Util::DisIntrGuard;
+	using Util::DisIntrGuard_t;
 	using Util::test_irq;
 
-	using Tcb_t       = DataType::Tcb_t;
-	using TcbPtr_t    = Tcb_t::TcbPtr_t;
-	using Prior_t     = Tcb_t::Prior_t;
-	using List_t      = DataType::List_t;
-	using AtomicCnt_t = volatile int32_t;
-	using Status      = Tcb_t::Status;
+	using List_t   = DataType::List_t;
+	using Tcb_t    = DataType::Tcb_t;
+	using TcbPtr_t = Tcb_t::TcbPtr_t;
+	using Prior_t  = Tcb_t::Prior_t;
+	using Cnt_t    = volatile int32_t;
+	using Status   = Tcb_t::Status;
 
 	struct Semaphore_t
 	{
-		AtomicCnt_t cnt;
+		Cnt_t cnt;
 		List_t waiting_list;
 
 		// Must set a original value
@@ -32,7 +32,7 @@ namespace MOS::Sync
 		{
 			// Assert if irq disabled
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
-			DisIntrGuard guard;
+			DisIntrGuard_t guard;
 			cnt -= 1;
 			if (cnt < 0) {
 				cur_tcb->set_status(Status::BLOCKED);
@@ -46,7 +46,7 @@ namespace MOS::Sync
 		{
 			// Assert if irq disabled
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
-			DisIntrGuard guard;
+			DisIntrGuard_t guard;
 			if (cnt < 0) {
 				auto tcb = (TcbPtr_t) waiting_list.begin();
 				tcb->set_status(Status::READY);
@@ -89,7 +89,7 @@ namespace MOS::Sync
 		Semaphore_t sema;
 		TcbPtr_t owner;
 		Prior_t old_pr, ceiling;
-		AtomicCnt_t recursive_cnt;
+		Cnt_t recursive_cnt;
 
 		MutexImpl_t(Prior_t ceiling = Macro::PRI_MAX)
 		    : sema(1), owner(nullptr), old_pr(-1), recursive_cnt(0), ceiling(ceiling) {}
@@ -98,7 +98,7 @@ namespace MOS::Sync
 		{
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
-			DisIntrGuard guard;
+			DisIntrGuard_t guard;
 
 			if (owner == cur_tcb) {
 				// If the current task already owns the lock, just increment the lock count
@@ -130,7 +130,7 @@ namespace MOS::Sync
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 			MOS_ASSERT(owner == cur_tcb, "Lock can only be released by holder");
 
-			DisIntrGuard guard;
+			DisIntrGuard_t guard;
 			recursive_cnt -= 1;
 
 			if (recursive_cnt > 0) {
@@ -183,11 +183,11 @@ namespace MOS::Sync
 		using Raw_t    = T;
 		using RawRef_t = Raw_t&;
 
-		struct MutexGuard
+		struct MutexGuard_t
 		{
 			// Unlock when scope ends
-			MOS_INLINE inline ~MutexGuard() { mutex.unlock(); }
-			MOS_INLINE inline MutexGuard(Mutex_t<T>& mutex)
+			MOS_INLINE inline ~MutexGuard_t() { mutex.unlock(); }
+			MOS_INLINE inline MutexGuard_t(Mutex_t<T>& mutex)
 			    : mutex(mutex) { mutex.MutexImpl_t::lock(); }
 
 			// Raw Accessor
@@ -198,19 +198,19 @@ namespace MOS::Sync
 			Mutex_t<Raw_t>& mutex;
 		};
 
-		Mutex_t(T raw, Prior_t ceiling)
+		MOS_INLINE inline Mutex_t(T raw, Prior_t ceiling)
 		    : MutexImpl_t(ceiling), raw(raw) {}
 
-		MOS_INLINE inline MutexGuard
-		lock() { return MutexGuard {*this}; }
+		MOS_INLINE inline MutexGuard_t
+		lock() { return MutexGuard_t {*this}; }
 
 		MOS_INLINE inline auto
 		exec(auto&& section) // To safely execute
 		{
-			// MutexGuard scope begins
+			// MutexGuard_t scope begins
 			auto guard = lock();
 			return section();
-			// MutexGuard scope ends
+			// MutexGuard_t scope ends
 		}
 
 	private:
@@ -220,11 +220,11 @@ namespace MOS::Sync
 	template <>
 	struct Mutex_t<> : private MutexImpl_t
 	{
-		struct MutexGuard // No Raw Accessor for T=void
+		struct MutexGuard_t // No Raw Accessor for T=void
 		{
 			// Unlock when scope ends
-			MOS_INLINE inline ~MutexGuard() { mutex.unlock(); }
-			MutexGuard(Mutex_t& mutex)
+			MOS_INLINE inline ~MutexGuard_t() { mutex.unlock(); }
+			MOS_INLINE inline MutexGuard_t(Mutex_t& mutex)
 			    : mutex(mutex) { mutex.MutexImpl_t::lock(); }
 
 		private:
@@ -234,16 +234,16 @@ namespace MOS::Sync
 		MOS_INLINE inline Mutex_t(Prior_t ceiling = Macro::PRI_MAX)
 		    : MutexImpl_t(ceiling) {}
 
-		MOS_INLINE inline MutexGuard
-		lock() { return MutexGuard {*this}; }
+		MOS_INLINE inline MutexGuard_t
+		lock() { return MutexGuard_t {*this}; }
 
 		MOS_INLINE inline auto
 		exec(auto&& section) // To safely execute
 		{
-			// MutexGuard scope begins
+			// MutexGuard_t scope begins
 			auto guard = lock();
 			return section();
-			// MutexGuard scope ends
+			// MutexGuard_t scope ends
 		}
 	};
 

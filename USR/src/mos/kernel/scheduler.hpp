@@ -118,7 +118,7 @@ namespace MOS::Scheduler
 
 namespace MOS::ISR
 {
-	using Util::DisIntrGuard;
+	using Util::DisIntrGuard_t;
 
 	extern "C" __attribute__((naked)) void
 	MOS_PENDSV_HANDLER()
@@ -129,7 +129,7 @@ namespace MOS::ISR
 	extern "C" void
 	MOS_SYSTICK_HANDLER()
 	{
-		DisIntrGuard guard;
+		DisIntrGuard_t guard;
 		Task::inc_ticks();
 		if (Task::current() != nullptr) {
 			Task::nop_and_yield();

@@ -13,6 +13,7 @@
 #include "tim.hpp"
 #include "i2c.hpp"
 #include "spi.hpp"
+#include "rtc.hpp"
 
 namespace HAL::STM32F4xx
 {
@@ -98,6 +99,13 @@ namespace HAL::STM32F4xx
 	convert(SPI_TypeDef* SPIx)
 	{
 		return SPI_t::convert(SPIx);
+	}
+
+	template <>
+	__attribute__((always_inline)) inline constexpr auto&
+	convert(RTC_TypeDef* base)
+	{
+		return RTC_t::convert(base);
 	}
 }
 

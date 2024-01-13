@@ -22,6 +22,30 @@ namespace HAL::STM32F4xx
 
 		inline Raw_t get_raw() { return this; }
 
+		static inline void
+		lse_config(const uint8_t lse_status)
+		{
+			RCC_LSEConfig(lse_status);
+		}
+
+		static inline auto
+		get_flag_status(const uint8_t flag)
+		{
+			return RCC_GetFlagStatus(flag);
+		}
+
+		static inline void
+		rtc_clk_config(const uint32_t rtc_clk_src)
+		{
+			RCC_RTCCLKConfig(rtc_clk_src);
+		}
+
+		static inline void
+		rtc_clk_cmd(const State_t new_state)
+		{
+			RCC_RTCCLKCmd(new_state);
+		}
+
 		struct AHB1
 		{
 			static inline void

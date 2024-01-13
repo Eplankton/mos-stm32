@@ -15,13 +15,13 @@ namespace MOS::UserGlobal
 {
 	using namespace HAL::STM32F4xx;
 	using namespace Driver::Device;
-	using DataType::RxBuffer;
+	using Rxbuf_t = DataType::RxBuffer_t<Macro::RX_BUF_SIZE>;
 
 	// Serial Input/Output
 	auto& uart3 = convert(USART3);
 
 	// UART RX Buffer
-	RxBuffer<Macro::RX_BUF_SIZE> rx_buf;
+	Rxbuf_t rx_buf;
 
 	// RGB LEDs
 	LED_t leds[] = {
@@ -31,7 +31,7 @@ namespace MOS::UserGlobal
 	};
 
 	// LCD with ST7735S SPI Driver
-	ST7735S lcd {
+	ST7735S_t lcd {
 	        SPI1,
 	        {GPIOA,  GPIO_Pin_5}, // SCLK(SCL)  -> PA5
 	        {GPIOA,  GPIO_Pin_7}, // MOSI(SDA)  -> PA7

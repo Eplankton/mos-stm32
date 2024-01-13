@@ -84,13 +84,13 @@ namespace MOS::UserGlobal
 {
     using namespace HAL::STM32F4xx;
     using namespace Driver::Device;
-    using DataType::RxBuffer;
+    using RxBuf_t = DataType::RxBuffer<Macro::RX_BUF_SIZE>;
     
     // Serial TX/RX
     auto& uart = convert(USARTx);
 
     // RX Buffer
-    RxBuffer<Macro::RX_BUF_SIZE> rx_buf;
+    RxBuf_t rx_buf;
 
     // LED red, green, blue
     LED_t leds[] = {...};
@@ -112,9 +112,9 @@ namespace MOS::Bsp
     {
         // Simplified
         uart.init(9600-8-1-N)
-            .rx_config(PD9) // RX -> PD9
-            .tx_config(PD8) // TX -> PD8
-            .it_enable(USART_IT_RXNE) // Enable RX interrupt
+            .rx_config(PDx) // RX -> PDx
+            .tx_config(PDy) // TX -> PDy
+            .it_enable(RXNE) // Enable RXNE interrupt
             .enable();
     }
 
@@ -176,13 +176,16 @@ int main(void)
     // Init hardware and clocks
     Bsp::config();
 
+    // Create Calendar with RTC
+    Task::create(App::Calendar, nullptr, 0, "Calendar");
+
     // Create Shell with rx_buf
     Task::create(Shell::launch, &rx_buf, 1, "Shell");
     
     // Create LED task
     Task::create(App::Task0, nullptr, 1, "T0");
 
-    // Test example
+    // Test examples
     // Task::create(Test::MutexTest, nullptr, 1, "T1");
     // Task::create(Test::MutexTest, nullptr, 2, "T2");
     // Task::create(Test::MutexTest, nullptr, 3, "T3");
@@ -191,7 +194,7 @@ int main(void)
     Scheduler::launch();
 
     while (true) {
-        // Never runs to here
+        // Never run to here
     }
 }
 ```
@@ -199,7 +202,7 @@ int main(void)
 ### Boot up ⚡
 ```
  A_A       _
-o'' )_____//   Version @ x.x.x
+o'' )_____//   Version @ x.x.x(...)
  `_/  MOS  )   Build   @ TIME, DATE
  (_(_/--(_/    Chip    @ MCU, ARCH
 
@@ -227,17 +230,18 @@ o'' )_____//   Version @ x.x.x
 ```
 ```
 📦 Version 0.0.2
-1. Sync::{Semaphore_t, Lock_t, Mutex_t<T>, MutexGuard}
+1. Sync::{Semaphore_t, Lock_t, Mutex_t<T>, MutexGuard_t}
 2. Scheduler::Policy::PreemptivePriority, same priority -> RoundRobin
 3. Task::terminate() implicitly be called when task exits
 4. Shell::{Command, CmdCall, launch}
 5. KernelGlobal::os_ticks and Task::delay() for block delay
-6. Driver::{SPI_t, ST7735S} and GuiLite library
+6. Add HAL::STM32F4xx::SPI_t and Driver::ST7735S_t, support GuiLite
 7. Refactor the project into {kernel, arch, drivers}
 8. Support GCC and STM32CubeMX HAL
+9. Add HAL::STM32F4xx::RTC_t, CmdCall::date_cmd and App::Calendar
 
 📌 To do
-1. Mutex_t with priority inheritance mechanism
+1. Sync::{Mutex_t, Cond_t, Barrier_t} with priority inheritance mechanism
 2. IPC::{pipe, message queue}, etc.
 3. Simple dynamic memory allocator
 4. Hardware Timers

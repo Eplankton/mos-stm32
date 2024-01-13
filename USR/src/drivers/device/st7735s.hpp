@@ -105,7 +105,7 @@ namespace Driver::Device
 	        0x00, 0x06, 0x08, 0x08, 0x08, 0x08, 0x08, 0x10, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x06, 0x00,
 	        0x0C, 0x32, 0xC2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-	struct ST7735S
+	struct ST7735S_t
 	{
 		using Port_t    = GPIO_t&;
 		using PortRaw_t = GPIO_t::Raw_t;
@@ -162,7 +162,7 @@ namespace Driver::Device
 		const Pixel_t width = 128, height = 160;
 		const uint8_t direction = 1;
 
-		ST7735S(SPI_t::Raw_t spi, PortPin_t sclk, PortPin_t mosi,
+		ST7735S_t(SPI_t::Raw_t spi, PortPin_t sclk, PortPin_t mosi,
 		        PortPin_t cs, PortPin_t rst, PortPin_t dc)
 		    : spi(SPI_t::convert(spi)),
 		      sclk(sclk),
@@ -448,13 +448,13 @@ namespace Driver::Device
 
 	struct Terminal
 	{
-		using Pixel_t = ST7735S::Pixel_t;
-		using Color   = ST7735S::Color;
+		using Pixel_t = ST7735S_t::Pixel_t;
+		using Color   = ST7735S_t::Color;
 
-		ST7735S& lcd;
+		ST7735S_t& lcd;
 		Pixel_t c_x, c_y;
 
-		Terminal(ST7735S& lcd): lcd(lcd), c_x(0), c_y(0) {}
+		Terminal(ST7735S_t& lcd): lcd(lcd), c_x(0), c_y(0) {}
 
 		inline void print(const char* str, Color color = Color::WHITE)
 		{

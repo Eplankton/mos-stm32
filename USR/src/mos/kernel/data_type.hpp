@@ -8,12 +8,13 @@
 namespace MOS::DataType
 {
 	template <size_t N>
-	struct RxBuffer
+	struct RxBuffer_t
 	{
-		using AtomicCnt_t = volatile int32_t;
+		using Raw_t = char[N];
+		using Cnt_t = volatile int32_t;
 
-		char raw[N];
-		AtomicCnt_t index = 0;
+		Raw_t raw;
+		Cnt_t index = 0;
 
 		MOS_INLINE inline auto
 		c_str() const { return raw; }
@@ -319,7 +320,9 @@ namespace MOS::DataType
 
 	struct Page_t
 	{
-		using PagePtr_t = Page_t*;
+		using Self_t    = Page_t;
+		using SelfPtr_t = Self_t*;
+		using PagePtr_t = SelfPtr_t;
 		using Mark_t    = volatile bool;
 		using Raw_t     = uint32_t[Macro::PAGE_SIZE];
 

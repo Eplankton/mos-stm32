@@ -24,7 +24,7 @@
 
 inline void mos_assert_failed(uint8_t* file, uint32_t line, const char* msg)
 {
-	kprintf("%s, %d: %s\n", file, line, msg);
+	MOS_MSG("%s, %d: %s\n", file, line, msg);
 	while (true) {
 		asm volatile("");
 	}
@@ -105,11 +105,11 @@ namespace MOS::Util
 		return ptr;
 	}
 
-	// Create critical section
-	struct DisIntrGuard
+	// Create global critical section
+	struct DisIntrGuard_t
 	{
-		MOS_INLINE DisIntrGuard() { MOS_DISABLE_IRQ(); }
-		MOS_INLINE ~DisIntrGuard() { MOS_ENABLE_IRQ(); }
+		MOS_INLINE DisIntrGuard_t() { MOS_DISABLE_IRQ(); }
+		MOS_INLINE ~DisIntrGuard_t() { MOS_ENABLE_IRQ(); }
 	};
 }
 

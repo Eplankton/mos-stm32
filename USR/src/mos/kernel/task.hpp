@@ -64,7 +64,7 @@ namespace MOS::Task
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
 		{ // Disable interrupt to enter critical section
-			DisIntrGuard guard;
+			DisIntrGuard_t guard;
 
 			// Remove the task from list
 			if (tcb->is_status(Status::RUNNING) ||
@@ -137,7 +137,7 @@ namespace MOS::Task
 		TcbPtr_t cur = current(), tcb = nullptr;
 
 		{ // Disable interrupt to enter critical section
-			DisIntrGuard guard;
+			DisIntrGuard_t guard;
 
 			// Page Alloc
 			auto page = Alloc::palloc();
@@ -200,7 +200,7 @@ namespace MOS::Task
 		TcbPtr_t cur = current(), tcb = nullptr;
 
 		{
-			DisIntrGuard guard;
+			DisIntrGuard_t guard;
 
 			// Page Alloc
 			auto page = Alloc::palloc();
@@ -243,7 +243,7 @@ namespace MOS::Task
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
-		DisIntrGuard guard;
+		DisIntrGuard_t guard;
 		tcb->set_status(Status::BLOCKED);
 		ready_list.send_to(tcb->node, dest);
 
@@ -260,7 +260,7 @@ namespace MOS::Task
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
-		DisIntrGuard guard;
+		DisIntrGuard_t guard;
 		tcb->set_status(Status::BLOCKED);
 		ready_list.send_to_in_order(tcb->node, dest, cmp);
 
@@ -283,7 +283,7 @@ namespace MOS::Task
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
-		DisIntrGuard guard;
+		DisIntrGuard_t guard;
 		tcb->set_status(Status::READY);
 		blocked_list.send_to_in_order(
 		        tcb->node,
@@ -302,7 +302,7 @@ namespace MOS::Task
 		if (tcb == nullptr || !tcb->is_status(Status::BLOCKED))
 			return;
 
-		DisIntrGuard guard;
+		DisIntrGuard_t guard;
 		tcb->set_status(Status::READY);
 		blocked_list.send_to_in_order(
 		        tcb->node,
@@ -315,7 +315,7 @@ namespace MOS::Task
 	{
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
-		DisIntrGuard guard;
+		DisIntrGuard_t guard;
 		tcb->set_priority(pr);
 		ready_list.re_insert(tcb->node, Tcb_t::priority_cmp);
 
@@ -328,7 +328,7 @@ namespace MOS::Task
 	MOS_INLINE inline TcbPtr_t
 	find(auto info)
 	{
-		DisIntrGuard guard;
+		DisIntrGuard_t guard;
 
 		auto fetch = [info](TcbPtr_t tcb) {
 			if constexpr (Concept::Same<decltype(info), Tid_t>) {
@@ -345,7 +345,7 @@ namespace MOS::Task
 
 	inline void print_name()
 	{
-		DisIntrGuard guard;
+		DisIntrGuard_t guard;
 		kprintf("%s\n", current()->get_name());
 	}
 
@@ -380,7 +380,7 @@ namespace MOS::Task
 	// For debug only
 	inline void print_all()
 	{
-		DisIntrGuard guard;
+		DisIntrGuard_t guard;
 		kprintf("------------------------------------\n");
 		debug_tcbs.iter([](TcbPtr_t tcb) { print_info(tcb); });
 		kprintf("------------------------------------\n");

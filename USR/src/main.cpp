@@ -16,6 +16,9 @@ int main(void)
 	// Init hardware and clocks
 	Bsp::config();
 
+	// Create Calendar with RTC
+	Task::create(App::Calendar, nullptr, 0, "Calendar");
+
 	// Create Shell with rx_buf
 	Task::create(Shell::launch, &rx_buf, 1, "Shell");
 
@@ -24,7 +27,7 @@ int main(void)
 	Task::create(App::GUI, nullptr, 3, "GUI");
 	// Task::create(App::LCD, nullptr, 1, "LCD");
 
-	// Test example
+	// Test examples
 	// Task::create(Test::MutexTest, nullptr, 1, "T1");
 	// Task::create(Test::MutexTest, nullptr, 2, "T2");
 	// Task::create(Test::MutexTest, nullptr, 3, "T3");
@@ -33,6 +36,6 @@ int main(void)
 	Scheduler::launch();
 
 	while (true) {
-		// Never comes here
+		// Never run to here
 	}
 }

@@ -12,7 +12,7 @@ namespace MOS::App
 	namespace Gui
 	{
 		using namespace Driver;
-		using Color = Device::ST7735S::Color;
+		using Color = Device::ST7735S_t::Color;
 		using UserGlobal::lcd;
 
 		extern "C" void gui_delay_ms(uint32_t ms) { Task::delay(ms); }
@@ -50,7 +50,7 @@ namespace MOS::App
 
 	void LCD(void* argv)
 	{
-		using Color = Driver::Device::ST7735S::Color;
+		using Color = Driver::Device::ST7735S_t::Color;
 		using UserGlobal::lcd;
 		using Sync::Mutex_t;
 
@@ -78,6 +78,28 @@ namespace MOS::App
 		}
 	}
 
+	void Calendar(void* argv)
+	{
+		using HAL::STM32F4xx::RTC_t;
+
+		static auto print_date_and_time = [] {
+			Util::DisIntrGuard_t guard;
+
+			const auto date = RTC_t::get_date();
+			const auto time = RTC_t::get_time();
+
+			MOS_MSG("20%0.2d/%0.2d/%0.2d "
+			        "%0.2d:%0.2d:%0.2d\n",
+			        date.RTC_Year, date.RTC_Month, date.RTC_Date,
+			        time.RTC_Hours, time.RTC_Minutes, time.RTC_Seconds);
+		};
+
+		while (true) {
+			Task::block();
+			print_date_and_time();
+		}
+	}
+
 	void Task1(void* argv)
 	{
 		using UserGlobal::leds;
@@ -91,7 +113,7 @@ namespace MOS::App
 	void Task0(void* argv)
 	{
 		using UserGlobal::leds;
-		Task::create(App::Task1, nullptr, 1, "T1");
+		Task::create(Task1, nullptr, 1, "T1");
 		while (true) {
 			leds[0].toggle();
 			Task::delay(200);
