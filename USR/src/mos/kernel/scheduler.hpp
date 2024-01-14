@@ -19,20 +19,23 @@ namespace MOS::Scheduler
 		PreemptivePriority,
 	};
 
+	// This will execute only once for the first task
 	__attribute__((naked)) inline void
-	init() // This will execute only once for the first task
+	init()
 	{
 		asm volatile(ARCH_INIT_ASM);
 	}
 
+	// Don't change this name which used in asm("")
 	extern "C" __attribute__((naked, used)) inline void
-	context_switch(void) // Don't change this name which used in asm("")
+	context_switch(void)
 	{
 		asm volatile(ARCH_CONTEXT_SWITCH_ASM);
 	}
 
 	// Called only once to start scheduling
-	static inline void launch(Fn_t hook = nullptr)
+	static inline void
+	launch(Fn_t hook = nullptr)
 	{
 		// Default idle can be replaced by user-defined hook
 		auto idle = [](void* argv) {
@@ -42,19 +45,29 @@ namespace MOS::Scheduler
 		};
 
 		// Create idle task with hook
-		Task::create((hook == nullptr ? idle : hook), nullptr, Macro::PRI_MIN, "idle");
+		Task::create(
+		        hook == nullptr ? idle : hook,
+		        nullptr,
+		        Macro::PRI_MIN,
+		        "idle");
+
 		cur_tcb = (TcbPtr_t) ready_list.begin();
 		cur_tcb->set_status(Status::RUNNING);
+		ostick_ready = true;
 		init();
 	}
 
 	static inline void try_wake_up()
 	{
+		// Only have to check the first one since they're sorted by delay_ticks
 		auto to_wake = (TcbPtr_t) sleep_list.begin();
 		if (to_wake->delay_ticks <= os_ticks) {
-			to_wake->set_delay_ticks(0);
+			to_wake->set_delay(0);
 			to_wake->set_status(Status::READY);
-			sleep_list.send_to_in_order(to_wake->node, ready_list, Tcb_t::priority_cmp);
+			sleep_list.send_to_in_order(
+			        to_wake->node,
+			        ready_list,
+			        Tcb_t::priority_cmp);
 		}
 	}
 
@@ -109,8 +122,9 @@ namespace MOS::Scheduler
 		}
 	}
 
+	// Don't change this function name used in asm("")
 	extern "C" __attribute__((used, always_inline)) inline void
-	next_tcb() // Don't change this name which used in asm("")
+	next_tcb()
 	{
 		next_tcb<Policy::MOS_CONF_POLICY>();
 	}
@@ -118,7 +132,8 @@ namespace MOS::Scheduler
 
 namespace MOS::ISR
 {
-	using Util::DisIntrGuard_t;
+	using Utils::DisIntrGuard_t;
+	using KernelGlobal::ostick_ready;
 
 	extern "C" __attribute__((naked)) void
 	MOS_PENDSV_HANDLER()
@@ -129,9 +144,9 @@ namespace MOS::ISR
 	extern "C" void
 	MOS_SYSTICK_HANDLER()
 	{
-		DisIntrGuard_t guard;
-		Task::inc_ticks();
-		if (Task::current() != nullptr) {
+		if (ostick_ready) {
+			DisIntrGuard_t guard;
+			Task::inc_ticks();
 			Task::nop_and_yield();
 		}
 	}

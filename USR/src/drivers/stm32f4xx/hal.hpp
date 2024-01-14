@@ -1,5 +1,5 @@
-#ifndef _DRIVER_STM32F4xx_
-#define _DRIVER_STM32F4xx_
+#ifndef _DRIVER_HAL_STM32F4xx_
+#define _DRIVER_HAL_STM32F4xx_
 
 // STM32F4xx Periphs
 #include "gpio.hpp"
@@ -13,6 +13,7 @@
 #include "tim.hpp"
 #include "i2c.hpp"
 #include "spi.hpp"
+#include "pwr.hpp"
 #include "rtc.hpp"
 
 namespace HAL::STM32F4xx
@@ -106,6 +107,13 @@ namespace HAL::STM32F4xx
 	convert(RTC_TypeDef* base)
 	{
 		return RTC_t::convert(base);
+	}
+
+	template <>
+	__attribute__((always_inline)) inline constexpr auto&
+	convert(PWR_TypeDef* base)
+	{
+		return PWR_t::convert(base);
 	}
 }
 

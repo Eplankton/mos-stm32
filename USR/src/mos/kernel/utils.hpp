@@ -34,7 +34,7 @@ inline void mos_assert_failed(uint8_t* file, uint32_t line, const char* msg)
 #define MOS_ASSERT(expr, format, ...) ((void) 0)
 #endif
 
-namespace MOS::Util
+namespace MOS::Utils
 {
 	MOS_INLINE inline void
 	portable_delay(volatile uint32_t n)

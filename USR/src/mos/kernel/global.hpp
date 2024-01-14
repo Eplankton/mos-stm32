@@ -19,6 +19,7 @@ namespace MOS::KernelGlobal
 	using Tick_t   = Tcb_t::Tick_t;
 	using TcbPtr_t = Tcb_t::TcbPtr_t;
 
+	bool ostick_ready = false;
 	Page_t page_pool[MAX_TASK_NUM];
 	List_t ready_list, blocked_list, sleep_list;
 	Tid_t tids = -1;

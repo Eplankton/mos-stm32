@@ -11,7 +11,7 @@ o'' )_____//    [MOS-STM32]
 - Board: Nucleo-144 F429ZI
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
-<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/36903bf6-c33e-47d5-a960-ad52d951295f" width="50%">
+<img src="Pic/cat.gif" width="50%">
 
 ### Repository 🌏
 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
@@ -61,14 +61,14 @@ src
 
 ### Example 🍎
 `Shell`
-![shell_demo](https://github.com/Eplankton/mos-stm32/assets/86543401/c362e744-c132-40c4-8db0-02e15e1b8508)
+![shell_demo](Pic/shell.gif)
 
 `MutexTest`
-![mutex_test](https://github.com/Eplankton/mos-stm32/assets/86543401/3c6c2275-ad2a-4bd2-8eca-573e207927c5)
+![mutex_test](Pic/mutex.gif)
 
 `LCD Driver & GUI Graphic`
 <center>
-<img src="https://github.com/Eplankton/mos-stm32/assets/86543401/93cf5645-2d72-4c52-bad3-aec935a4510f" width="51%"> <img src="https://github.com/Eplankton/mos-stm32/assets/86543401/45069534-88db-448b-8452-b930ad82395e" width="45%">
+<img src="Pic/board.gif" width="51%"> <img src="Pic/guilite.gif" width="45%">
 </center>
 
 ```C++

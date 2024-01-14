@@ -42,7 +42,7 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		clear() volatile
 		{
-			Util::memset((void*) raw, 0, sizeof(raw));
+			Utils::memset((void*) raw, 0, sizeof(raw));
 			index = 0;
 		}
 	};
@@ -68,7 +68,7 @@ namespace MOS::DataType
 		push(void* dest, const void* src, const u32 size, const u32 N) volatile
 		{
 			if (!full()) {
-				Util::memcpy(dest, src, size);
+				Utils::memcpy(dest, src, size);
 				m_tail = (m_tail + 1) % N;
 				m_len++;
 			}
@@ -493,7 +493,7 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		set_delay_ticks(const Tick_t ticks) volatile
+		set_delay(const Tick_t ticks) volatile
 		{
 			delay_ticks = ticks;
 		}

@@ -8,7 +8,7 @@
 
 namespace MOS::Task
 {
-	using namespace Util;
+	using namespace Utils;
 	using namespace KernelGlobal;
 
 	using Tcb_t     = DataType::Tcb_t;
@@ -31,9 +31,9 @@ namespace MOS::Task
 	yield() { MOS_TRIGGER_PENDSV_INTR(); }
 
 	MOS_INLINE inline void
-	nop_and_yield() // This will consume time_slice and yield
+	nop_and_yield()
 	{
-		cur_tcb->time_slice -= 1;
+		current()->time_slice -= 1;
 		yield();
 	}
 
@@ -179,7 +179,11 @@ namespace MOS::Task
 
 	// Experimental
 	MOS_INLINE inline TcbPtr_t
-	create(Fn_t fn, auto& argv = nullptr, Prior_t pr = 15, Name_t name = "")
+	create(
+	        Fn_t fn,
+	        auto& argv  = nullptr,
+	        Prior_t pr  = 15,
+	        Name_t name = "")
 	{
 		return create(fn, (Argv_t) &argv, pr, name);
 	}
@@ -328,14 +332,16 @@ namespace MOS::Task
 	MOS_INLINE inline TcbPtr_t
 	find(auto info)
 	{
+		using Concept::Same;
+
 		DisIntrGuard_t guard;
 
 		auto fetch = [info](TcbPtr_t tcb) {
-			if constexpr (Concept::Same<decltype(info), Tid_t>) {
+			if constexpr (Same<decltype(info), Tid_t>) {
 				return tcb->get_tid() == info;
 			}
 
-			if constexpr (Concept::Same<decltype(info), Name_t>) {
+			if constexpr (Same<decltype(info), Name_t>) {
 				return strcmp(tcb->get_name(), info) == 0;
 			}
 		};
@@ -395,7 +401,7 @@ namespace MOS::Task
 		};
 
 		auto cur = current();
-		cur->set_delay_ticks(os_ticks + ticks);
+		cur->set_delay(os_ticks + ticks);
 		block_to_in_order(cur, sleep_list, delay_ticks_cmp);
 	}
 }

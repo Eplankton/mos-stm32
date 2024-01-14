@@ -8,8 +8,8 @@ namespace MOS::Sync
 	using KernelGlobal::ready_list;
 	using KernelGlobal::blocked_list;
 	using KernelGlobal::cur_tcb;
-	using Util::DisIntrGuard_t;
-	using Util::test_irq;
+	using Utils::DisIntrGuard_t;
+	using Utils::test_irq;
 
 	using List_t   = DataType::List_t;
 	using Tcb_t    = DataType::Tcb_t;

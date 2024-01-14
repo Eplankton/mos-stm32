@@ -80,20 +80,22 @@ namespace MOS::Bsp
 		constexpr auto RTC_BKP_DR   = RTC_BKP_DR0; // 备份寄存器
 		constexpr auto RTC_BKP_DATA = 0x1234;      // 备份标记
 
-		constexpr RTC_t::Init_t rtc_init_cfg {
+		/*=====================同步/异步预分频器的值======================*/
+		/* 驱动日历的时钟 ck_spare = LSE/[(255+1)*(127+1)] = 1HZ */
+		constexpr RTC_t::Init_t init_cfg {
 		        .RTC_HourFormat   = RTC_HourFormat_24,
 		        .RTC_AsynchPrediv = ASYHCHPREDIV,
 		        .RTC_SynchPrediv  = SYHCHPREDIV,
 		};
 
-		constexpr RTC_t::Time_t user_time {
+		constexpr RTC_t::Time_t boot_time {
 		        .RTC_Hours   = 2,
 		        .RTC_Minutes = 15,
 		        .RTC_Seconds = 0,
 		        .RTC_H12     = RTC_H12_AM,
 		};
 
-		constexpr RTC_t::Date_t user_date {
+		constexpr RTC_t::Date_t boot_date {
 		        .RTC_WeekDay = 7,
 		        .RTC_Month   = 1,
 		        .RTC_Date    = 14,
@@ -105,7 +107,7 @@ namespace MOS::Bsp
 			RCC_t::APB1::enable(RCC_APB1Periph_PWR);
 
 			/* PWR_CR:DBF置1，使能RTC、RTC备份寄存器和备份SRAM的访问 */
-			PWR_BackupAccessCmd(ENABLE);
+			PWR_t::backup_access_cmd(ENABLE);
 
 			/* 使能LSE */
 			RCC_t::lse_config(RCC_LSE_ON);
@@ -123,16 +125,13 @@ namespace MOS::Bsp
 			/* 等待 RTC APB 寄存器同步 */
 			RTC_t::wait_for_sync();
 
-			/*=====================初始化同步/异步预分频器的值======================*/
-			/* 驱动日历的时钟 ck_spare = LSE/[(255+1)*(127+1)] = 1HZ */
-
 			/* 用RTC_InitStructure的内容初始化RTC寄存器 */
-			MOS_ASSERT(RTC_t::init(rtc_init_cfg) != ERROR, "RTC Init Failed!\n");
+			MOS_ASSERT(RTC_t::init(init_cfg) != ERROR, "RTC Init Failed!\n");
 		};
 
 		static auto set_time_and_date = [&] {
-			RTC_t::set_date(user_date); // 初始化日期
-			RTC_t::set_time(user_time); // 初始化时间
+			RTC_t::set_date(boot_date); // 初始化日期
+			RTC_t::set_time(boot_time); // 初始化时间
 			RTC_t::write_backup_reg(RTC_BKP_DR, RTC_BKP_DATA);
 		};
 
@@ -140,16 +139,16 @@ namespace MOS::Bsp
 		// 检测备份寄存器的值来判断RTC是否已经配置过，如果配置过那就继续运行，如果没有配置过就初始化RTC。
 
 		if (RTC_t::read_backup_reg(RTC_BKP_DR) != RTC_BKP_DATA) {
-			/* RTC配置：选择时钟源，设置RTC_CLK的分频系数 */
-			clock_config();
-			/* 设置时间和日期 */
-			set_time_and_date();
+			clock_config();      // RTC配置：选择时钟源，设置RTC_CLK的分频系数
+			set_time_and_date(); // 设置时间和日期
 		}
 		else {
 			/* 使能 PWR 时钟 */
 			RCC_t::APB1::enable(RCC_APB1Periph_PWR);
+
 			/* PWR_CR:DBF置1，使能RTC、RTC备份寄存器和备份SRAM的访问 */
-			PWR_BackupAccessCmd(ENABLE);
+			PWR_t::backup_access_cmd(ENABLE);
+
 			/* 等待 RTC APB 寄存器同步 */
 			RTC_t::wait_for_sync();
 		}

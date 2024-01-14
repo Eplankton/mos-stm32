@@ -25,7 +25,7 @@ namespace MOS::Shell
 		Fn_t callback;
 
 		MOS_INLINE inline uint32_t
-		len() const { return Util::strlen(text); }
+		len() const { return Utils::strlen(text); }
 
 		MOS_INLINE inline void
 		run(Argv_t argv) const { callback(argv); }
@@ -43,7 +43,7 @@ namespace MOS::Shell
 			// Check whether match or not
 			auto check = [&](Text_t str) {
 				return (str[xlen] == ' ' || str[xlen] == '\0') &&
-				       Util::strncmp(str, text, xlen) == 0;
+				       Utils::strncmp(str, text, xlen) == 0;
 			};
 
 			str = skip(str);
@@ -136,7 +136,7 @@ namespace MOS::Shell
 		using Text_t     = Command_t::Text_t;
 		using RxBufPtr_t = DataType::RxBuffer_t<Macro::RX_BUF_SIZE>*;
 
-		auto parser = [](Text_t str) {
+		static auto parser = [](Text_t str) {
 			for (const auto& cmd: cmds) {
 				if (auto argv = cmd.match(str)) {
 					return cmd.run(argv);
