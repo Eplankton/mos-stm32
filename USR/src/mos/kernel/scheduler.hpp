@@ -19,6 +19,10 @@ namespace MOS::Scheduler
 		PreemptivePriority,
 	};
 
+	static bool os_ready = false;
+
+	MOS_INLINE inline bool is_ready() { return os_ready; }
+
 	// This will execute only once for the first task
 	__attribute__((naked)) inline void
 	init()
@@ -51,23 +55,23 @@ namespace MOS::Scheduler
 		        Macro::PRI_MIN,
 		        "idle");
 
-		cur_tcb = (TcbPtr_t) ready_list.begin();
+		cur_tcb = ready_list.begin();
 		cur_tcb->set_status(Status::RUNNING);
-		ostick_ready = true;
+		os_ready = true;
 		init();
 	}
 
 	static inline void try_wake_up()
 	{
 		// Only have to check the first one since they're sorted by delay_ticks
-		auto to_wake = (TcbPtr_t) sleep_list.begin();
+		auto to_wake = sleep_list.begin();
 		if (to_wake->delay_ticks <= os_ticks) {
 			to_wake->set_delay(0);
 			to_wake->set_status(Status::READY);
 			sleep_list.send_to_in_order(
-			        to_wake->node,
+			        to_wake,
 			        ready_list,
-			        Tcb_t::priority_cmp);
+			        Tcb_t::pri_cmp);
 		}
 	}
 
@@ -83,36 +87,38 @@ namespace MOS::Scheduler
 			try_wake_up();
 		}
 
-		auto st = (TcbPtr_t) ready_list.begin(),
-		     ed = (TcbPtr_t) ready_list.end(),
-		     nx = (TcbPtr_t) cur_tcb->next();
+		auto st = ready_list.begin(),
+		     ed = ready_list.end(),
+		     cr = Task::current(),
+		     nx = cr->next();
 
-		if (cur_tcb->is_status(Status::TERMINATED) ||
-		    cur_tcb->is_status(Status::BLOCKED)) {
+		if (cr->is_status(Status::TERMINATED) ||
+		    cr->is_status(Status::BLOCKED))
+		{
 			// cur_tcb has been removed from ready_list
 			return switch_to(st);
 		}
 
 		if constexpr (policy == Policy::RoundRobin) {
-			if (cur_tcb->time_slice <= 0) {
-				cur_tcb->set_status(Status::READY);
-				cur_tcb->time_slice = Macro::TIME_SLICE;
+			if (cr->time_slice <= 0) {
+				cr->time_slice = Macro::TIME_SLICE;
+				cr->set_status(Status::READY);
 				return switch_to((nx == ed) ? st : nx);
 			}
 		}
 
 		if constexpr (policy == Policy::PreemptivePriority) {
 			// If there's a task with higher priority
-			if (Tcb_t::priority_cmp(st->node, cur_tcb->node)) {
-				cur_tcb->set_status(Status::READY);
+			if (Tcb_t::pri_cmp(st, cr)) {
+				cr->set_status(Status::READY);
 				return switch_to(st);
 			}
 
-			if (cur_tcb->time_slice <= 0) {
-				cur_tcb->time_slice = Macro::TIME_SLICE;
-				cur_tcb->set_status(Status::READY);
+			if (cr->time_slice <= 0) {
+				cr->time_slice = Macro::TIME_SLICE;
+				cr->set_status(Status::READY);
 				// RoundRobin in same group
-				if (nx != ed && Tcb_t::priority_equal(nx->node, cur_tcb->node)) {
+				if (nx != ed && Tcb_t::pri_equal(nx, cr)) {
 					return switch_to(nx);
 				}
 				else {
@@ -133,7 +139,6 @@ namespace MOS::Scheduler
 namespace MOS::ISR
 {
 	using Utils::DisIntrGuard_t;
-	using KernelGlobal::ostick_ready;
 
 	extern "C" __attribute__((naked)) void
 	MOS_PENDSV_HANDLER()
@@ -144,9 +149,9 @@ namespace MOS::ISR
 	extern "C" void
 	MOS_SYSTICK_HANDLER()
 	{
-		if (ostick_ready) {
-			DisIntrGuard_t guard;
-			Task::inc_ticks();
+		DisIntrGuard_t guard;
+		Task::inc_ticks();
+		if (Scheduler::is_ready()) {
 			Task::nop_and_yield();
 		}
 	}

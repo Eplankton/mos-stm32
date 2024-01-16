@@ -5,7 +5,7 @@
 
 #include "type.hpp"
 
-namespace MOS::Concept
+namespace MOS::Concepts
 {
 	// clang-format off
 

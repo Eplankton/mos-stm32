@@ -70,7 +70,7 @@ namespace MOS::DataType
 			if (!full()) {
 				Utils::memcpy(dest, src, size);
 				m_tail = (m_tail + 1) % N;
-				m_len++;
+				m_len += 1;
 			}
 		}
 
@@ -79,7 +79,7 @@ namespace MOS::DataType
 		{
 			if (!empty()) {
 				m_head = (m_head + 1) % N;
-				m_len--;
+				m_len -= 1;
 			}
 		}
 
@@ -212,13 +212,13 @@ namespace MOS::DataType
 		          next = this;
 	};
 
-	template <typename Fn, typename Ret>
-	concept ListIterFn = Concept::Invocable<Fn, Ret, const ListNode_t&>;
+	template <typename Fn, typename Ret = void>
+	concept ListIterFn = Concepts::Invocable<Fn, Ret, const ListNode_t&>;
 
 	template <typename Fn>
-	concept NodeCmpFn = Concept::Invocable<Fn, bool, const ListNode_t&, const ListNode_t&>;
+	concept NodeCmpFn = Concepts::Invocable<Fn, bool, const ListNode_t&, const ListNode_t&>;
 
-	struct List_t
+	struct ListImpl_t
 	{
 		using Node_t    = ListNode_t;
 		using NodePtr_t = Node_t::SelfPtr_t;
@@ -239,7 +239,7 @@ namespace MOS::DataType
 		end() const { return (NodePtr_t) &head; }
 
 		MOS_INLINE inline void
-		iter(ListIterFn<bool> auto&& fn) const
+		iter(ListIterFn auto&& fn) const
 		{
 			for (auto it = begin(); it != end(); it = it->next) {
 				fn(*it);
@@ -276,28 +276,27 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		add(Node_t& node) { insert(node, &head); }
+		add(Node_t& node) { insert(node, end()); }
 
 		void remove(Node_t& node)
 		{
-			NodePtr_t prev = node.prev;
-			NodePtr_t next = node.next;
-			prev->next     = next;
-			next->prev     = prev;
-			node.next      = &node;
-			node.prev      = &node;
+			NodePtr_t prev = node.prev, next = node.next;
+			prev->next = next;
+			next->prev = prev;
+			node.next  = &node;
+			node.prev  = &node;
 			len -= 1;
 		}
 
 		MOS_INLINE inline void
-		send_to(Node_t& node, List_t& dest)
+		send_to(Node_t& node, ListImpl_t& dest)
 		{
 			remove(node);
 			dest.add(node);
 		}
 
 		MOS_INLINE inline void
-		send_to_in_order(Node_t& node, List_t& dest, NodeCmpFn auto&& cmp)
+		send_to_in_order(Node_t& node, ListImpl_t& dest, NodeCmpFn auto&& cmp)
 		{
 			remove(node);
 			dest.insert_in_order(node, cmp);
@@ -335,20 +334,21 @@ namespace MOS::DataType
 
 	struct __attribute__((packed)) Tcb_t
 	{
-		using Self_t      = Tcb_t;
-		using SelfPtr_t   = Tcb_t*;
-		using TcbPtr_t    = SelfPtr_t;
-		using ParentPtr_t = TcbPtr_t;
-		using StackPtr_t  = uint32_t*;
-		using Node_t      = ListNode_t;
-		using PagePtr_t   = Page_t::PagePtr_t;
-		using Tid_t       = int16_t;
-		using Tick_t      = uint32_t;
-		using Ret_t       = void;
-		using Argv_t      = void*;
-		using Fn_t        = Ret_t (*)(Argv_t);
-		using Prior_t     = int8_t;
-		using Name_t      = const char*;
+		using Self_t        = Tcb_t;
+		using SelfPtr_t     = Tcb_t*;
+		using TcbPtr_t      = SelfPtr_t;
+		using ConstTcbPtr_t = const Tcb_t*;
+		using ParentPtr_t   = TcbPtr_t;
+		using StackPtr_t    = uint32_t*;
+		using Node_t        = ListNode_t;
+		using PagePtr_t     = Page_t::PagePtr_t;
+		using Tid_t         = int16_t;
+		using Tick_t        = uint32_t;
+		using Ret_t         = void;
+		using Argv_t        = void*;
+		using Fn_t          = Ret_t (*)(Argv_t);
+		using Prior_t       = int8_t;
+		using Name_t        = const char*;
 
 		enum class Status
 		{
@@ -370,24 +370,27 @@ namespace MOS::DataType
 		Argv_t argv = nullptr;
 		Name_t name = "";
 
-		Prior_t priority   = 15; // Low->High = 15->0
+		Prior_t priority   = Macro::PRI_MIN; // Low->High = 15->0
 		PagePtr_t page     = nullptr;
-		ParentPtr_t parent = nullptr;
 		Status status      = Status::TERMINATED;
 		Tick_t time_slice  = Macro::TIME_SLICE;
 		Tick_t delay_ticks = 0;
+		ParentPtr_t parent = nullptr;
 
 		Tcb_t() = default;
 		Tcb_t(Fn_t fn,
 		      Argv_t argv = nullptr,
-		      Prior_t pr  = 15,
+		      Prior_t pri = 15,
 		      Name_t name = "")
-		    : fn(fn), argv(argv), priority(pr), name(name) {}
+		    : fn(fn),
+		      argv(argv),
+		      priority(pri),
+		      name(name) {}
 
 		MOS_INLINE inline void
-		set_tid(Tid_t id) volatile
+		set_tid(Tid_t tid_val) volatile
 		{
-			tid = id;
+			tid = tid_val;
 		}
 
 		MOS_INLINE inline Tid_t
@@ -396,10 +399,10 @@ namespace MOS::DataType
 			return tid;
 		}
 
-		MOS_INLINE inline SelfPtr_t
+		MOS_INLINE inline TcbPtr_t
 		next() volatile const
 		{
-			return (SelfPtr_t) node.next;
+			return (TcbPtr_t) node.next;
 		}
 
 		MOS_INLINE inline void
@@ -441,7 +444,8 @@ namespace MOS::DataType
 		MOS_INLINE inline bool
 		is_sleeping() volatile const
 		{
-			return is_status(Status::BLOCKED) && (delay_ticks != 0);
+			return is_status(Status::BLOCKED) &&
+			       delay_ticks != 0;
 		}
 
 		MOS_INLINE inline Name_t
@@ -451,13 +455,13 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		set_priority(Prior_t pr) volatile
+		set_pri(Prior_t pri) volatile
 		{
-			priority = pr;
+			priority = pri;
 		}
 
 		MOS_INLINE inline Prior_t
-		get_priority() volatile const
+		get_pri() volatile const
 		{
 			return priority;
 		}
@@ -529,30 +533,130 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE static inline bool
-		priority_cmp(const Node_t& lhs, const Node_t& rhs)
+		pri_cmp(ConstTcbPtr_t lhs, ConstTcbPtr_t rhs)
 		{
-			return ((const Tcb_t&) lhs).get_priority() <
-			       ((const Tcb_t&) rhs).get_priority();
+			return lhs->get_pri() < rhs->get_pri();
 		}
 
 		MOS_INLINE static inline bool
-		priority_equal(const Node_t& lhs, const Node_t& rhs)
+		pri_equal(ConstTcbPtr_t lhs, ConstTcbPtr_t rhs)
 		{
-			return ((const Tcb_t&) lhs).get_priority() ==
-			       ((const Tcb_t&) rhs).get_priority();
+			return lhs->get_pri() == rhs->get_pri();
 		}
 
 		MOS_INLINE static inline TcbPtr_t
 		build(PagePtr_t page_ptr,
 		      Fn_t fn,
 		      Argv_t argv = nullptr,
-		      Prior_t pr  = 15,
+		      Prior_t pri = 15,
 		      Name_t name = "")
 		{
 			// In-placement new
-			auto tcb = new (page_ptr->raw) Tcb_t {fn, argv, pr, name};
+			auto tcb = new (page_ptr->raw) Tcb_t {fn, argv, pri, name};
 			tcb->attach_page(page_ptr);
 			return tcb;
+		}
+	};
+
+	template <typename Fn, typename Ret = void>
+	concept TcbListIterFn = Concepts::Invocable<Fn, Ret, const Tcb_t&>;
+
+	template <typename Fn>
+	concept TcbCmpFn = Concepts::Invocable<
+	        Fn,
+	        bool,
+	        Tcb_t::TcbPtr_t,
+	        Tcb_t::TcbPtr_t>;
+
+	// A wrapper of ListImpl_t for Tcb_t
+	struct TcbList_t : private ListImpl_t
+	{
+		using TcbPtr_t = Tcb_t::TcbPtr_t;
+		using ListImpl_t::size;
+		using ListImpl_t::empty;
+
+		MOS_INLINE inline TcbPtr_t
+		begin() const { return (TcbPtr_t) ListImpl_t::begin(); }
+
+		MOS_INLINE inline TcbPtr_t
+		end() const { return (TcbPtr_t) ListImpl_t::end(); }
+
+		MOS_INLINE inline void
+		iter(TcbListIterFn auto&& fn) const
+		{
+			auto wrapper = [](auto&& fn) {
+				return [&](const Node_t& node) {
+					fn((const Tcb_t&) node);
+				};
+			};
+
+			ListImpl_t::iter(wrapper(fn));
+		}
+
+		MOS_INLINE inline TcbPtr_t
+		iter_until(TcbListIterFn<bool> auto&& fn) const
+		{
+			for (auto it = begin();
+			     it != end();
+			     it = it->next()) {
+				if (fn(*it)) return it;
+			}
+			return nullptr;
+		}
+
+		void insert(TcbPtr_t tcb, TcbPtr_t pos)
+		{
+			ListImpl_t::insert(tcb->node, (NodePtr_t) pos);
+		}
+
+		void insert_in_order(TcbPtr_t tcb, TcbCmpFn auto&& cmp)
+		{
+			auto wrapper = [](auto&& cmp) {
+				return [&](const Node_t& lhs, const Node_t& rhs) {
+					return cmp((TcbPtr_t) &lhs, (TcbPtr_t) &rhs);
+				};
+			};
+
+			ListImpl_t::insert_in_order(tcb->node, wrapper(cmp));
+		}
+
+		MOS_INLINE inline void
+		add(TcbPtr_t tcb) { insert(tcb, end()); }
+
+		void remove(TcbPtr_t tcb)
+		{
+			ListImpl_t::remove(tcb->node);
+		}
+
+		MOS_INLINE inline void
+		send_to(TcbPtr_t tcb, TcbList_t& dest)
+		{
+			remove(tcb);
+			dest.add(tcb);
+		}
+
+		MOS_INLINE inline void
+		send_to_in_order(
+		        TcbPtr_t tcb,
+		        TcbList_t& dest,
+		        TcbCmpFn auto&& cmp)
+		{
+			remove(tcb);
+			dest.insert_in_order(tcb, cmp);
+		}
+
+		MOS_INLINE inline void
+		re_insert(TcbPtr_t tcb, TcbCmpFn auto&& cmp)
+		{
+			send_to_in_order(tcb, *this, cmp);
+		}
+
+		MOS_INLINE inline bool
+		contains(TcbPtr_t tcb)
+		{
+			return iter_until([tcb](const Tcb_t& x) {
+				       return &x == tcb;
+			       }) != nullptr;
 		}
 	};
 
@@ -594,7 +698,7 @@ namespace MOS::DataType
 
 		MOS_INLINE inline void
 		iter(auto&& fn) volatile
-		    requires Concept::Invocable<decltype(fn), void, TcbPtr_t&>
+		    requires Concepts::Invocable<decltype(fn), void, TcbPtr_t&>
 		{
 			for (auto& pt: raw) {
 				if (pt != nullptr) {
@@ -605,7 +709,7 @@ namespace MOS::DataType
 
 		MOS_INLINE inline TcbPtr_t
 		iter_until(auto&& fn) volatile const
-		    requires Concept::Invocable<decltype(fn), bool, TcbPtr_t&>
+		    requires Concepts::Invocable<decltype(fn), bool, TcbPtr_t&>
 		{
 			for (auto& pt: raw) {
 				if (pt != nullptr) {

@@ -11,7 +11,7 @@ o'' )_____//    [MOS-STM32]
 - Board: Nucleo-144 F429ZI
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
-<img src="Pic/cat.gif" width="50%">
+<img src="Pic/cat.gif" width="20%">
 
 ### Repository 🌏
 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)

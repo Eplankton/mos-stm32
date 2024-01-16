@@ -12,7 +12,7 @@ namespace MOS::Task
 	using namespace KernelGlobal;
 
 	using Tcb_t     = DataType::Tcb_t;
-	using List_t    = DataType::List_t;
+	using TcbList_t = DataType::TcbList_t;
 	using Fn_t      = Tcb_t::Fn_t;
 	using Argv_t    = Tcb_t::Argv_t;
 	using Prior_t   = Tcb_t::Prior_t;
@@ -29,6 +29,13 @@ namespace MOS::Task
 
 	MOS_INLINE inline void
 	yield() { MOS_TRIGGER_PENDSV_INTR(); }
+
+	// Whether any task with higher priority exists
+	MOS_INLINE inline bool
+	any_higher(TcbPtr_t tcb = current())
+	{
+		return tcb != ready_list.begin();
+	}
 
 	MOS_INLINE inline void
 	nop_and_yield()
@@ -69,13 +76,13 @@ namespace MOS::Task
 			// Remove the task from list
 			if (tcb->is_status(Status::RUNNING) ||
 			    tcb->is_status(Status::READY)) {
-				ready_list.remove(tcb->node);
+				ready_list.remove(tcb);
 			}
 			else if (tcb->is_sleeping()) {
-				sleep_list.remove(tcb->node);
+				sleep_list.remove(tcb);
 			}
 			else {
-				blocked_list.remove(tcb->node);
+				blocked_list.remove(tcb);
 			}
 
 			// Mark the page as unused and deinit the page
@@ -123,7 +130,7 @@ namespace MOS::Task
 	inline TcbPtr_t create(
 	        Fn_t fn,
 	        Argv_t argv = nullptr,
-	        Prior_t pr  = 15,
+	        Prior_t pri = 15,
 	        Name_t name = "")
 	{
 		if (num() >= Macro::MAX_TASK_NUM) {
@@ -148,7 +155,7 @@ namespace MOS::Task
 			}
 
 			// Construct a TCB at the head of a page block
-			tcb = Tcb_t::build(page, fn, argv, pr, name);
+			tcb = Tcb_t::build(page, fn, argv, pri, name);
 
 			// Load empty context
 			load_context(tcb);
@@ -163,14 +170,14 @@ namespace MOS::Task
 			tcb->set_status(Status::READY);
 
 			// Add to TCBs list
-			ready_list.insert_in_order(tcb->node, Tcb_t::priority_cmp);
+			ready_list.insert_in_order(tcb, Tcb_t::pri_cmp);
 
 			// For debug only
 			debug_tcbs.add(tcb);
 		} // Enable interrupt, leave critical section
 
-		// If the new task's priority is higher, switch at once
-		if (Tcb_t::priority_cmp(tcb->node, cur->node)) {
+		// If a new task has higher priority, switch at once
+		if (Tcb_t::pri_cmp(tcb, cur)) {
 			yield();
 		}
 
@@ -179,27 +186,26 @@ namespace MOS::Task
 
 	// Experimental
 	MOS_INLINE inline TcbPtr_t
-	create(
-	        Fn_t fn,
-	        auto& argv  = nullptr,
-	        Prior_t pr  = 15,
-	        Name_t name = "")
+	create(Fn_t fn,
+	       auto& argv  = nullptr,
+	       Prior_t pri = 15,
+	       Name_t name = "")
 	{
-		return create(fn, (Argv_t) &argv, pr, name);
+		return create(fn, (Argv_t) &argv, pri, name);
 	}
 
 	// Not recommended
 	inline TcbPtr_t create_fromISR(
 	        Fn_t fn,
 	        Argv_t argv = nullptr,
-	        Prior_t pr  = 15,
+	        Prior_t pri = 15,
 	        Name_t name = "")
 	{
+		MOS_ASSERT(fn != nullptr, "fn can't be null");
+
 		if (num() >= Macro::MAX_TASK_NUM) {
 			return nullptr;
 		}
-
-		MOS_ASSERT(fn != nullptr, "fn can't be null");
 
 		TcbPtr_t cur = current(), tcb = nullptr;
 
@@ -215,7 +221,7 @@ namespace MOS::Task
 			}
 
 			// Construct a TCB at the head of a page block
-			tcb = Tcb_t::build(page, fn, argv, pr, name);
+			tcb = Tcb_t::build(page, fn, argv, pri, name);
 
 			// Load empty context
 			load_context(tcb);
@@ -230,7 +236,7 @@ namespace MOS::Task
 			tcb->set_status(Status::READY);
 
 			// Add to ready_list
-			ready_list.insert_in_order(tcb->node, Tcb_t::priority_cmp);
+			ready_list.insert_in_order(tcb, Tcb_t::pri_cmp);
 
 			// For debug only
 			debug_tcbs.add(tcb);
@@ -239,7 +245,7 @@ namespace MOS::Task
 		return tcb;
 	}
 
-	inline void block_to(TcbPtr_t tcb, List_t& dest)
+	inline void block_to(TcbPtr_t tcb, TcbList_t& dest)
 	{
 		if (tcb == nullptr || tcb->is_status(Status::BLOCKED))
 			return;
@@ -249,14 +255,17 @@ namespace MOS::Task
 
 		DisIntrGuard_t guard;
 		tcb->set_status(Status::BLOCKED);
-		ready_list.send_to(tcb->node, dest);
+		ready_list.send_to(tcb, dest);
 
 		if (tcb == current()) {
 			return yield();
 		}
 	}
 
-	inline void block_to_in_order(TcbPtr_t tcb, List_t& dest, NodeCmpFn auto&& cmp)
+	inline void block_to_in_order(
+	        TcbPtr_t tcb,
+	        TcbList_t& dest,
+	        auto&& cmp)
 	{
 		if (tcb == nullptr || tcb->is_status(Status::BLOCKED))
 			return;
@@ -266,7 +275,7 @@ namespace MOS::Task
 
 		DisIntrGuard_t guard;
 		tcb->set_status(Status::BLOCKED);
-		ready_list.send_to_in_order(tcb->node, dest, cmp);
+		ready_list.send_to_in_order(tcb, dest, cmp);
 
 		if (tcb == current()) {
 			return yield();
@@ -290,12 +299,12 @@ namespace MOS::Task
 		DisIntrGuard_t guard;
 		tcb->set_status(Status::READY);
 		blocked_list.send_to_in_order(
-		        tcb->node,
+		        tcb,
 		        ready_list,
-		        Tcb_t::priority_cmp);
+		        Tcb_t::pri_cmp);
 
-		if (current() != (TcbPtr_t) ready_list.begin()) {
-			// if cur_tcb isn't the highest priority
+		// If tasks with higher priority exist
+		if (any_higher()) {
 			return yield();
 		}
 	}
@@ -309,22 +318,22 @@ namespace MOS::Task
 		DisIntrGuard_t guard;
 		tcb->set_status(Status::READY);
 		blocked_list.send_to_in_order(
-		        tcb->node,
+		        tcb,
 		        ready_list,
-		        Tcb_t::priority_cmp);
+		        Tcb_t::pri_cmp);
 	}
 
 	MOS_INLINE inline void
-	change_priority(TcbPtr_t tcb, Tcb_t::Prior_t pr)
+	change_priority(TcbPtr_t tcb, Tcb_t::Prior_t pri)
 	{
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
 		DisIntrGuard_t guard;
-		tcb->set_priority(pr);
-		ready_list.re_insert(tcb->node, Tcb_t::priority_cmp);
+		tcb->set_pri(pri);
+		ready_list.re_insert(tcb, Tcb_t::pri_cmp);
 
-		if (current() != (TcbPtr_t) ready_list.begin()) {
-			// if cur_tcb isn't the highest priority
+		// If tasks with higher priority exist
+		if (any_higher()) {
 			return yield();
 		}
 	}
@@ -332,7 +341,7 @@ namespace MOS::Task
 	MOS_INLINE inline TcbPtr_t
 	find(auto info)
 	{
-		using Concept::Same;
+		using Concepts::Same;
 
 		DisIntrGuard_t guard;
 
@@ -378,7 +387,7 @@ namespace MOS::Task
 		kprintf(format,
 		        tcb->get_tid(),
 		        tcb->get_name(),
-		        tcb->get_priority(),
+		        tcb->get_pri(),
 		        status_name(tcb->get_status()),
 		        tcb->stack_usage());
 	};
@@ -395,14 +404,13 @@ namespace MOS::Task
 	MOS_INLINE inline void
 	delay(const Tick_t ticks)
 	{
-		static auto delay_ticks_cmp = [](const auto& lhs, const auto& rhs) {
-			return ((const Tcb_t&) lhs).delay_ticks <
-			       ((const Tcb_t&) rhs).delay_ticks;
+		static auto delay_cmp = [](TcbPtr_t lhs, TcbPtr_t rhs) {
+			return lhs->delay_ticks < rhs->delay_ticks;
 		};
 
 		auto cur = current();
 		cur->set_delay(os_ticks + ticks);
-		block_to_in_order(cur, sleep_list, delay_ticks_cmp);
+		block_to_in_order(cur, sleep_list, delay_cmp);
 	}
 }
 

@@ -189,7 +189,7 @@ namespace MOS::ISR
 			Task::create_fromISR(
 			        K1_IRQ,
 			        nullptr,
-			        Task::current()->get_priority(),
+			        Task::current()->get_pri(),
 			        "K1");
 		});
 	}

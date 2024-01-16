@@ -122,7 +122,7 @@ namespace MOS::Shell
 		}
 	}
 
-	// Add more commands with {"text", CmdCall::callback}
+	// Add more commands here with {"text", CmdCall::callback}
 	static constexpr Command_t cmds[] = {
 	        {    "ls",     CmdCall::ls_cmd},
 	        {  "kill",   CmdCall::kill_cmd},

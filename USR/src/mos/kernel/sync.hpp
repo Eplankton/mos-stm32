@@ -11,17 +11,17 @@ namespace MOS::Sync
 	using Utils::DisIntrGuard_t;
 	using Utils::test_irq;
 
-	using List_t   = DataType::List_t;
-	using Tcb_t    = DataType::Tcb_t;
-	using TcbPtr_t = Tcb_t::TcbPtr_t;
-	using Prior_t  = Tcb_t::Prior_t;
-	using Cnt_t    = volatile int32_t;
-	using Status   = Tcb_t::Status;
+	using TcbList_t = DataType::TcbList_t;
+	using Tcb_t     = DataType::Tcb_t;
+	using TcbPtr_t  = Tcb_t::TcbPtr_t;
+	using Prior_t   = Tcb_t::Prior_t;
+	using Cnt_t     = volatile int32_t;
+	using Status    = Tcb_t::Status;
 
 	struct Semaphore_t
 	{
 		Cnt_t cnt;
-		List_t waiting_list;
+		TcbList_t waiting_list;
 
 		// Must set a original value
 		Semaphore_t() = delete;
@@ -36,7 +36,7 @@ namespace MOS::Sync
 			cnt -= 1;
 			if (cnt < 0) {
 				cur_tcb->set_status(Status::BLOCKED);
-				ready_list.send_to(cur_tcb->node, waiting_list);
+				ready_list.send_to(Task::current(), waiting_list);
 				return Task::yield();
 			}
 		}
@@ -48,12 +48,15 @@ namespace MOS::Sync
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 			DisIntrGuard_t guard;
 			if (cnt < 0) {
-				auto tcb = (TcbPtr_t) waiting_list.begin();
+				auto tcb = waiting_list.begin();
 				tcb->set_status(Status::READY);
-				waiting_list.send_to_in_order(tcb->node, ready_list, Tcb_t::priority_cmp);
+				waiting_list.send_to_in_order(
+				        tcb,
+				        ready_list,
+				        Tcb_t::pri_cmp);
 			}
 			cnt += 1;
-			if (cur_tcb != (TcbPtr_t) ready_list.begin()) {
+			if (Task::any_higher()) {
 				return Task::yield();
 			}
 		}
@@ -92,7 +95,11 @@ namespace MOS::Sync
 		Cnt_t recursive_cnt;
 
 		MutexImpl_t(Prior_t ceiling = Macro::PRI_MAX)
-		    : sema(1), owner(nullptr), old_pr(-1), recursive_cnt(0), ceiling(ceiling) {}
+		    : sema(1),
+		      owner(nullptr),
+		      old_pr(-1),
+		      recursive_cnt(0),
+		      ceiling(ceiling) {}
 
 		void lock() // P-opr
 		{
@@ -100,23 +107,28 @@ namespace MOS::Sync
 
 			DisIntrGuard_t guard;
 
-			if (owner == cur_tcb) {
+			auto cur = Task::current();
+
+			if (owner == cur) {
 				// If the current task already owns the lock, just increment the lock count
 				recursive_cnt += 1;
 				return;
 			}
 
 			// Raise the priority of the current task to the ceiling of the mutex
-			old_pr = cur_tcb->get_priority();
-			if (ceiling < cur_tcb->get_priority()) {
-				cur_tcb->set_priority(ceiling);
+			old_pr = cur->get_pri();
+			if (ceiling < cur->get_pri()) {
+				cur->set_pri(ceiling);
 			}
 
 			sema.cnt -= 1;
 
 			if (sema.cnt < 0) {
-				cur_tcb->set_status(Status::BLOCKED);
-				ready_list.send_to_in_order(cur_tcb->node, sema.waiting_list, Tcb_t::priority_cmp);
+				cur->set_status(Status::BLOCKED);
+				ready_list.send_to_in_order(
+				        cur,
+				        sema.waiting_list,
+				        Tcb_t::pri_cmp);
 				return Task::yield();
 			}
 			else {
@@ -143,28 +155,31 @@ namespace MOS::Sync
 				auto ed = sema.waiting_list.end();
 
 				// Starvation Prevention
-				auto tcb = (TcbPtr_t) sema.waiting_list.iter_until(
-				        [&](const auto& node) {
-					        return node.next == ed ||
-					               !Tcb_t::priority_equal(node, *node.next);
+				auto tcb = sema.waiting_list.iter_until(
+				        [&](const Tcb_t& tcb) {
+					        auto tp = (TcbPtr_t) &tcb, nx = tcb.next();
+					        return tp == ed || !Tcb_t::pri_equal(tp, nx);
 				        });
 
 				tcb->set_status(Status::READY);
 
-				sema.waiting_list.send_to_in_order(tcb->node, ready_list, Tcb_t::priority_cmp);
+				sema.waiting_list.send_to_in_order(
+				        tcb,
+				        ready_list,
+				        Tcb_t::pri_cmp);
 
 				// Transfer ownership to the last highest priority task in queue
 				owner = tcb;
 				sema.cnt += 1;
 
-				if (cur_tcb != (TcbPtr_t) ready_list.begin()) {
+				if (Task::any_higher()) {
 					return Task::yield();
 				}
 			}
 			else {
 				// Restore the original priority of the owner
 				if (recursive_cnt == 0 && old_pr != -1) {
-					owner->set_priority(old_pr);
+					owner->set_pri(old_pr);
 					old_pr = -1;
 				}
 
@@ -207,10 +222,8 @@ namespace MOS::Sync
 		MOS_INLINE inline auto
 		exec(auto&& section) // To safely execute
 		{
-			// MutexGuard_t scope begins
-			auto guard = lock();
-			return section();
-			// MutexGuard_t scope ends
+			auto guard = lock(); // scope begins
+			return section();    // scope ends
 		}
 
 	private:
@@ -240,10 +253,8 @@ namespace MOS::Sync
 		MOS_INLINE inline auto
 		exec(auto&& section) // To safely execute
 		{
-			// MutexGuard_t scope begins
-			auto guard = lock();
-			return section();
-			// MutexGuard_t scope ends
+			auto guard = lock(); // scope begins
+			return section();    // scope ends
 		}
 	};
 

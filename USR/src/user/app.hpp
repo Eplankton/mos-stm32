@@ -53,27 +53,44 @@ namespace MOS::App
 		using Sync::Mutex_t;
 		using UserGlobal::lcd;
 
-		static auto lcd_mutex = Mutex_t {lcd, 1};
+		const auto sub_ceiling = Task::current()->get_pri();
+		static auto lcd_mtx    = Mutex_t {lcd, sub_ceiling};
 
 		auto GIF = [](void* argv) {
 			while (true) {
 				for (auto frame: cat_gif) {
-					lcd_mutex.lock().get().draw_img(0, 0, 128, 128, frame);
+					lcd_mtx.lock().get().draw_img(
+					        0, 0,
+					        128, 128,
+					        frame);
 				}
+				Task::delay(1);
 			}
 		};
 
 		auto Slogan = [](void* argv) {
+			constexpr Color rgb[] = {
+			        Color::RED,
+			        Color::GREEN,
+			        Color::GRAYBLUE,
+			};
+
 			while (true) {
-				lcd_mutex.lock().get().show_string(0, 130, "Hello, World!", Color::GREEN);
+				for (auto color: rgb) {
+					lcd_mtx.lock().get().show_string(
+					        0, 130,
+					        "Hello, World!",
+					        color);
+					Task::delay(100);
+				}
 			}
 		};
 
-		Task::create(GIF, nullptr, 1, "GIF");
-		Task::create(Slogan, nullptr, 1, "Slogan");
+		Task::create(GIF, nullptr, sub_ceiling, "GIF");
+		Task::create(Slogan, nullptr, sub_ceiling, "Slogan");
 
 		while (true) {
-			asm volatile("");
+			Task::block();
 		}
 	}
 
@@ -82,7 +99,8 @@ namespace MOS::App
 		using HAL::STM32F4xx::RTC_t;
 		using Utils::DisIntrGuard_t;
 
-		static auto print_date_and_time = [] {
+		while (true) {
+			Task::block();
 			DisIntrGuard_t guard;
 			const auto date = RTC_t::get_date();
 			const auto time = RTC_t::get_time();
@@ -90,11 +108,6 @@ namespace MOS::App
 			        "%0.2d:%0.2d:%0.2d\n",
 			        date.RTC_Year, date.RTC_Month, date.RTC_Date,
 			        time.RTC_Hours, time.RTC_Minutes, time.RTC_Seconds);
-		};
-
-		while (true) {
-			Task::block();
-			print_date_and_time();
 		}
 	}
 
