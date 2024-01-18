@@ -324,7 +324,7 @@
       "custom_dep": {
         "name": "default",
         "incList": [
-          "../../../../../../Keil_v5/ARM/ARMCLANG/include",
+          "c:/Keil_v5/ARM/ARMCLANG/include",
           ".cmsis/include",
           ".eide/deps",
           "../Driver/inc",

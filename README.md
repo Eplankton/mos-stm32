@@ -67,9 +67,8 @@ src
 ![mutex_test](Pic/mutex.gif)
 
 `LCD Driver & GUI Graphic`
-<center>
+
 <img src="Pic/board.gif" width="51%"> <img src="Pic/guilite.gif" width="45%">
-</center>
 
 ```C++
 // MOS Kernel & Shell

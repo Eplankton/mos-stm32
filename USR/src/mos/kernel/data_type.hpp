@@ -176,26 +176,30 @@ namespace MOS::DataType
 	template <size_t N>
 	struct BitMap_t
 	{
-		static constexpr uint32_t NUM = (N + 31) / 32;
-		uint32_t data[NUM]            = {0};
+		using Raw_t = uint32_t[(N + 31) / 32];
 
-		BitMap_t() = default;
+		Raw_t data = {0};
 
-		inline void set(uint32_t pos)
+		MOS_INLINE inline BitMap_t() = default;
+
+		MOS_INLINE inline void
+		set(uint32_t pos)
 		{
 			uint32_t index = pos / 32;
 			uint32_t bit   = pos % 32;
 			data[index] |= (1 << bit);
 		}
 
-		inline void reset(uint32_t pos)
+		MOS_INLINE inline void
+		reset(uint32_t pos)
 		{
 			uint32_t index = pos / 32;
 			uint32_t bit   = pos % 32;
 			data[index] &= ~(1 << bit);
 		}
 
-		inline bool test(uint32_t pos) const
+		MOS_INLINE inline bool
+		test(uint32_t pos) const
 		{
 			uint32_t index = pos / 32;
 			uint32_t bit   = pos % 32;
@@ -205,11 +209,11 @@ namespace MOS::DataType
 
 	struct ListNode_t
 	{
-		using SelfPtr_t = ListNode_t*;
+		using Self_t    = ListNode_t;
+		using SelfPtr_t = Self_t*;
 
-		// Make it self-linked node
-		SelfPtr_t prev = this,
-		          next = this;
+		// Self-linked as default
+		SelfPtr_t prev = this, next = this;
 	};
 
 	template <typename Fn, typename Ret = void>
@@ -241,7 +245,9 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		iter(ListIterFn auto&& fn) const
 		{
-			for (auto it = begin(); it != end(); it = it->next) {
+			for (auto it = begin();
+			     it != end();
+			     it = it->next) {
 				fn(*it);
 			}
 		}
@@ -249,8 +255,11 @@ namespace MOS::DataType
 		MOS_INLINE inline NodePtr_t
 		iter_until(ListIterFn<bool> auto&& fn) const
 		{
-			for (auto it = begin(); it != end(); it = it->next) {
-				if (fn(*it)) return it;
+			for (auto it = begin();
+			     it != end();
+			     it = it->next) {
+				if (fn(*it))
+					return it;
 			}
 			return nullptr;
 		}
@@ -380,7 +389,7 @@ namespace MOS::DataType
 		Tcb_t() = default;
 		Tcb_t(Fn_t fn,
 		      Argv_t argv = nullptr,
-		      Prior_t pri = 15,
+		      Prior_t pri = Macro::PRI_MIN,
 		      Name_t name = "")
 		    : fn(fn),
 		      argv(argv),
@@ -548,7 +557,7 @@ namespace MOS::DataType
 		build(PagePtr_t page_ptr,
 		      Fn_t fn,
 		      Argv_t argv = nullptr,
-		      Prior_t pri = 15,
+		      Prior_t pri = Macro::PRI_MIN,
 		      Name_t name = "")
 		{
 			// In-placement new
@@ -621,7 +630,7 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		add(TcbPtr_t tcb) { insert(tcb, end()); }
+		add(TcbPtr_t tcb) { ListImpl_t::add(tcb->node); }
 
 		void remove(TcbPtr_t tcb)
 		{

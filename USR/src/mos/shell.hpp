@@ -32,7 +32,7 @@ namespace MOS::Shell
 
 		inline Argv_t match(Text_t str) const
 		{
-			const uint32_t xlen = len(); // The length of a command
+			const auto xlen = len(); // The length of a command
 
 			// Skip all blank
 			auto skip = [](Text_t str) {
@@ -101,7 +101,7 @@ namespace MOS::Shell
 				Task::resume(tcb);
 			}
 			else {
-				MOS_MSG("No Calendar found\n");
+				MOS_MSG("No Calendar found!\n");
 			}
 		}
 
@@ -111,7 +111,8 @@ namespace MOS::Shell
 			        "o'' )_____//  Version @ %s\n"
 			        " `_/  MOS  )  Build   @ %s, %s\n"
 			        " (_(_/--(_/   Chip    @ %s, %s\n",
-			        MOS_VERSION, __TIME__, __DATE__,
+			        MOS_VERSION,
+			        __TIME__, __DATE__,
 			        MOS_MCU, MOS_ARCH);
 		}
 
@@ -148,19 +149,19 @@ namespace MOS::Shell
 		CmdCall::uname_cmd(nullptr);
 		Task::print_all();
 
-		auto& rx_buf = *(RxBufPtr_t) input_buf;
+		auto rx_buf = (RxBufPtr_t) input_buf;
 
 		while (true) {
 			// Valid input should end with '\n'
-			if (rx_buf.back() == '\n') {
-				rx_buf.pop();
-				auto rx = rx_buf.c_str();
+			if (rx_buf->back() == '\n') {
+				rx_buf->pop();
+				auto rx = rx_buf->c_str();
 				kprintf("> %s\n", rx);
 				parser(rx);
-				rx_buf.clear();
+				rx_buf->clear();
 			}
 			else {
-				Task::delay(1);
+				Task::delay(5);
 			}
 		}
 	}

@@ -32,7 +32,7 @@ namespace MOS::Task
 
 	// Whether any task with higher priority exists
 	MOS_INLINE inline bool
-	any_higher(TcbPtr_t tcb = current())
+	higher_exists(TcbPtr_t tcb = current())
 	{
 		return tcb != ready_list.begin();
 	}
@@ -130,7 +130,7 @@ namespace MOS::Task
 	inline TcbPtr_t create(
 	        Fn_t fn,
 	        Argv_t argv = nullptr,
-	        Prior_t pri = 15,
+	        Prior_t pri = Macro::PRI_MIN,
 	        Name_t name = "")
 	{
 		if (num() >= Macro::MAX_TASK_NUM) {
@@ -188,7 +188,7 @@ namespace MOS::Task
 	MOS_INLINE inline TcbPtr_t
 	create(Fn_t fn,
 	       auto& argv  = nullptr,
-	       Prior_t pri = 15,
+	       Prior_t pri = Macro::PRI_MIN,
 	       Name_t name = "")
 	{
 		return create(fn, (Argv_t) &argv, pri, name);
@@ -198,7 +198,7 @@ namespace MOS::Task
 	inline TcbPtr_t create_fromISR(
 	        Fn_t fn,
 	        Argv_t argv = nullptr,
-	        Prior_t pri = 15,
+	        Prior_t pri = Macro::PRI_MIN,
 	        Name_t name = "")
 	{
 		MOS_ASSERT(fn != nullptr, "fn can't be null");
@@ -304,7 +304,7 @@ namespace MOS::Task
 		        Tcb_t::pri_cmp);
 
 		// If tasks with higher priority exist
-		if (any_higher()) {
+		if (higher_exists()) {
 			return yield();
 		}
 	}
@@ -324,7 +324,7 @@ namespace MOS::Task
 	}
 
 	MOS_INLINE inline void
-	change_priority(TcbPtr_t tcb, Tcb_t::Prior_t pri)
+	change_priority(TcbPtr_t tcb, Prior_t pri)
 	{
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
@@ -333,7 +333,7 @@ namespace MOS::Task
 		ready_list.re_insert(tcb, Tcb_t::pri_cmp);
 
 		// If tasks with higher priority exist
-		if (any_higher()) {
+		if (higher_exists()) {
 			return yield();
 		}
 	}
@@ -341,11 +341,11 @@ namespace MOS::Task
 	MOS_INLINE inline TcbPtr_t
 	find(auto info)
 	{
-		using Concepts::Same;
-
 		DisIntrGuard_t guard;
 
 		auto fetch = [info](TcbPtr_t tcb) {
+			using Concepts::Same;
+
 			if constexpr (Same<decltype(info), Tid_t>) {
 				return tcb->get_tid() == info;
 			}
@@ -358,7 +358,8 @@ namespace MOS::Task
 		return debug_tcbs.iter_until(fetch);
 	}
 
-	inline void print_name()
+	MOS_INLINE inline void
+	print_name()
 	{
 		DisIntrGuard_t guard;
 		kprintf("%s\n", current()->get_name());
@@ -381,8 +382,8 @@ namespace MOS::Task
 		}
 	};
 
-	inline void
-	print_info(TcbPtr_t tcb, const char* format = " #%-2d %-9s %-5d %-9s %3d%%\n")
+	MOS_INLINE inline void
+	print_info(TcbPtr_t tcb, const char* format = " #%-2d %-9s %-5d %-9s %2d%%\n")
 	{
 		kprintf(format,
 		        tcb->get_tid(),
@@ -396,13 +397,12 @@ namespace MOS::Task
 	inline void print_all()
 	{
 		DisIntrGuard_t guard;
-		kprintf("------------------------------------\n");
+		kprintf("-----------------------------------\n");
 		debug_tcbs.iter([](TcbPtr_t tcb) { print_info(tcb); });
-		kprintf("------------------------------------\n");
+		kprintf("-----------------------------------\n");
 	}
 
-	MOS_INLINE inline void
-	delay(const Tick_t ticks)
+	inline void delay(const Tick_t ticks)
 	{
 		static auto delay_cmp = [](TcbPtr_t lhs, TcbPtr_t rhs) {
 			return lhs->delay_ticks < rhs->delay_ticks;

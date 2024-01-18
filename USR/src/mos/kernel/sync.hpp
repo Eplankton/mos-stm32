@@ -56,7 +56,7 @@ namespace MOS::Sync
 				        Tcb_t::pri_cmp);
 			}
 			cnt += 1;
-			if (Task::any_higher()) {
+			if (Task::higher_exists()) {
 				return Task::yield();
 			}
 		}
@@ -172,7 +172,7 @@ namespace MOS::Sync
 				owner = tcb;
 				sema.cnt += 1;
 
-				if (Task::any_higher()) {
+				if (Task::higher_exists()) {
 					return Task::yield();
 				}
 			}

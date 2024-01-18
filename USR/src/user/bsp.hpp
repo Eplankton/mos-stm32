@@ -182,9 +182,8 @@ namespace MOS::ISR
 			}
 		};
 
-		static uint32_t k1_cnt = 0;
-
 		EXTI_t::handle_line(EXTI_Line13, [] {
+			static uint32_t k1_cnt = 0;
 			MOS_MSG("K1 Cnt = %d\n", ++k1_cnt);
 			Task::create_fromISR(
 			        K1_IRQ,
@@ -201,9 +200,9 @@ namespace MOS::ISR
 		using UserGlobal::rx_buf;
 
 		if (uart3.get_it_status(USART_IT_RXNE) != RESET) {
-			char8_t data = uart3.receive_data();
+			char8_t recv_data = uart3.receive_data();
 			if (!rx_buf.full()) {
-				rx_buf.add(data);
+				rx_buf.add(recv_data);
 			}
 			else {
 				rx_buf.clear();

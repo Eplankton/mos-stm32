@@ -14,19 +14,25 @@ namespace MOS::App
 		using Color = Driver::Device::ST7735S_t::Color;
 		using UserGlobal::lcd;
 
-		extern "C" void gui_delay_ms(uint32_t ms) { Task::delay(ms); }
-		extern "C" void gfx_draw_pixel(int32_t x, int32_t y, uint32_t rgb)
+		extern "C" void gui_delay_ms(uint16_t ms) { Task::delay(ms); }
+
+		extern "C" void gfx_draw_pixel(
+		        int32_t x, int32_t y,
+		        uint32_t rgb)
 		{
 			lcd.draw_point(x, y, (Color) GL_RGB_32_to_16(rgb));
 		}
 
 		struct EXTERNAL_GFX_OP
 		{
-			using DrawPixelFn_t = void (*)(int32_t x, int32_t y, uint32_t rgb);
-			using FillRectFn_t  = void (*)(
-                    int32_t x0, int32_t y0,
-                    int32_t x1, int32_t y1,
-                    uint32_t rgb);
+			using DrawPixelFn_t = void (*)(
+			        int32_t x, int32_t y,
+			        uint32_t rgb);
+
+			using FillRectFn_t = void (*)(
+			        int32_t x0, int32_t y0,
+			        int32_t x1, int32_t y1,
+			        uint32_t rgb);
 
 			DrawPixelFn_t draw_pixel;
 			FillRectFn_t fill_rect;
@@ -76,7 +82,7 @@ namespace MOS::App
 			};
 
 			while (true) {
-				for (auto color: rgb) {
+				for (const auto color: rgb) {
 					lcd_mtx.lock().get().show_string(
 					        0, 130,
 					        "Hello, World!",
@@ -99,8 +105,7 @@ namespace MOS::App
 		using HAL::STM32F4xx::RTC_t;
 		using Utils::DisIntrGuard_t;
 
-		while (true) {
-			Task::block();
+		static auto print_date_and_time = [] {
 			DisIntrGuard_t guard;
 			const auto date = RTC_t::get_date();
 			const auto time = RTC_t::get_time();
@@ -108,6 +113,11 @@ namespace MOS::App
 			        "%0.2d:%0.2d:%0.2d\n",
 			        date.RTC_Year, date.RTC_Month, date.RTC_Date,
 			        time.RTC_Hours, time.RTC_Minutes, time.RTC_Seconds);
+		};
+
+		while (true) {
+			Task::block();
+			print_date_and_time();
 		}
 	}
 
@@ -116,7 +126,7 @@ namespace MOS::App
 		using UserGlobal::leds;
 		for (uint8_t i = 0; i < 20; i++) {
 			leds[1].toggle();
-			Task::delay(100);
+			Task::delay(125);
 		}
 		kprintf("T1 exits...\n");
 	}
@@ -127,7 +137,7 @@ namespace MOS::App
 		Task::create(Task1, nullptr, 1, "T1");
 		while (true) {
 			leds[0].toggle();
-			Task::delay(200);
+			Task::delay(250);
 		}
 	}
 }
