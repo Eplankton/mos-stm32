@@ -252,6 +252,16 @@ namespace MOS::DataType
 			}
 		}
 
+		MOS_INLINE inline void
+		iter(auto&& fn)
+		{
+			for (auto it = begin();
+			     it != end();
+			     it = it->next) {
+				fn(*it);
+			}
+		}
+
 		MOS_INLINE inline NodePtr_t
 		iter_until(ListIterFn<bool> auto&& fn) const
 		{
@@ -339,6 +349,12 @@ namespace MOS::DataType
 
 		MOS_INLINE inline bool
 		is_used() const { return used; }
+
+		MOS_INLINE inline auto
+		first_stk_top() const
+		{
+			return &raw[Macro::PAGE_SIZE - 16];
+		}
 	};
 
 	struct __attribute__((packed)) Tcb_t
@@ -379,7 +395,9 @@ namespace MOS::DataType
 		Argv_t argv = nullptr;
 		Name_t name = "";
 
-		Prior_t priority   = Macro::PRI_MIN; // Low->High = 15->0
+		Prior_t priority = Macro::PRI_MIN, // Low -> High: 15->0, -1 -> Invalid
+		        old_pr   = Macro::PRI_NONE;
+
 		PagePtr_t page     = nullptr;
 		Status status      = Status::TERMINATED;
 		Tick_t time_slice  = Macro::TIME_SLICE;
@@ -412,6 +430,12 @@ namespace MOS::DataType
 		next() volatile const
 		{
 			return (TcbPtr_t) node.next;
+		}
+
+		MOS_INLINE inline TcbPtr_t
+		prev() volatile const
+		{
+			return (TcbPtr_t) node.prev;
 		}
 
 		MOS_INLINE inline void
@@ -476,9 +500,9 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		set_SP(StackPtr_t sp_val) volatile
+		set_SP(const uint32_t* sp_val) volatile
 		{
-			sp = sp_val;
+			sp = (StackPtr_t) sp_val;
 		}
 
 		MOS_INLINE inline void
@@ -596,6 +620,18 @@ namespace MOS::DataType
 			auto wrapper = [](auto&& fn) {
 				return [&](const Node_t& node) {
 					fn((const Tcb_t&) node);
+				};
+			};
+
+			ListImpl_t::iter(wrapper(fn));
+		}
+
+		MOS_INLINE inline void
+		iter(auto&& fn)
+		{
+			auto wrapper = [](auto&& fn) {
+				return [&](Node_t& node) {
+					fn((Tcb_t&) node);
 				};
 			};
 

@@ -11,8 +11,8 @@ namespace MOS::Sync
 	using Utils::DisIntrGuard_t;
 	using Utils::test_irq;
 
-	using TcbList_t = DataType::TcbList_t;
 	using Tcb_t     = DataType::Tcb_t;
+	using TcbList_t = DataType::TcbList_t;
 	using TcbPtr_t  = Tcb_t::TcbPtr_t;
 	using Prior_t   = Tcb_t::Prior_t;
 	using Cnt_t     = volatile int32_t;
@@ -51,9 +51,7 @@ namespace MOS::Sync
 				auto tcb = waiting_list.begin();
 				tcb->set_status(Status::READY);
 				waiting_list.send_to_in_order(
-				        tcb,
-				        ready_list,
-				        Tcb_t::pri_cmp);
+				        tcb, ready_list, Tcb_t::pri_cmp);
 			}
 			cnt += 1;
 			if (Task::higher_exists()) {
@@ -89,17 +87,29 @@ namespace MOS::Sync
 
 	struct MutexImpl_t
 	{
-		Semaphore_t sema;
-		TcbPtr_t owner;
-		Prior_t old_pr, ceiling;
-		Cnt_t recursive_cnt;
+		Semaphore_t sema = 1;
+		Cnt_t recr_cnt   = 0;
+		TcbPtr_t owner   = nullptr;
+		Prior_t ceiling  = Macro::PRI_MIN;
 
-		MutexImpl_t(Prior_t ceiling = Macro::PRI_MAX)
-		    : sema(1),
-		      owner(nullptr),
-		      old_pr(-1),
-		      recursive_cnt(0),
-		      ceiling(ceiling) {}
+		MOS_INLINE inline void
+		raise_all_pri()
+		{
+			sema.waiting_list.iter([&](Tcb_t& tcb) {
+				tcb.set_pri(ceiling);
+			});
+		}
+
+		MOS_INLINE inline void
+		find_new_ceiling()
+		{
+			sema.waiting_list.iter([&](Tcb_t& tcb) {
+				if (tcb.old_pr < ceiling &&
+				    tcb.old_pr != Macro::PRI_NONE) {
+					ceiling = tcb.old_pr;
+				}
+			});
+		}
 
 		void lock() // P-opr
 		{
@@ -111,29 +121,33 @@ namespace MOS::Sync
 
 			if (owner == cur) {
 				// If the current task already owns the lock, just increment the lock count
-				recursive_cnt += 1;
+				recr_cnt += 1;
 				return;
 			}
 
-			// Raise the priority of the current task to the ceiling of the mutex
-			old_pr = cur->get_pri();
+			// Compare priority with ceiling
 			if (ceiling < cur->get_pri()) {
+				// Temporarily raise the priority
+				cur->old_pr = cur->get_pri();
 				cur->set_pri(ceiling);
+			}
+			else {
+				// If current priority is higher, set it as the new ceiling
+				ceiling = cur->get_pri();
+				// Raise the priority of all waiting tasks
+				raise_all_pri();
 			}
 
 			sema.cnt -= 1;
 
 			if (sema.cnt < 0) {
 				cur->set_status(Status::BLOCKED);
-				ready_list.send_to_in_order(
-				        cur,
-				        sema.waiting_list,
-				        Tcb_t::pri_cmp);
+				ready_list.send_to(cur, sema.waiting_list);
 				return Task::yield();
 			}
 			else {
 				owner = cur_tcb;
-				recursive_cnt += 1;
+				recr_cnt += 1;
 			}
 		}
 
@@ -143,26 +157,17 @@ namespace MOS::Sync
 			MOS_ASSERT(owner == cur_tcb, "Lock can only be released by holder");
 
 			DisIntrGuard_t guard;
-			recursive_cnt -= 1;
+			recr_cnt -= 1;
 
-			if (recursive_cnt > 0) {
-				// If the lock is still held by the current task, just return
+			if (recr_cnt > 0) {
+				// If the lock is still held by the owner
 				return;
 			}
 
 			if (!sema.waiting_list.empty()) {
-
-				auto ed = sema.waiting_list.end();
-
 				// Starvation Prevention
-				auto tcb = sema.waiting_list.iter_until(
-				        [&](const Tcb_t& tcb) {
-					        auto tp = (TcbPtr_t) &tcb, nx = tcb.next();
-					        return tp == ed || !Tcb_t::pri_equal(tp, nx);
-				        });
-
+				auto tcb = sema.waiting_list.begin();
 				tcb->set_status(Status::READY);
-
 				sema.waiting_list.send_to_in_order(
 				        tcb,
 				        ready_list,
@@ -172,20 +177,26 @@ namespace MOS::Sync
 				owner = tcb;
 				sema.cnt += 1;
 
+				find_new_ceiling();
+
 				if (Task::higher_exists()) {
 					return Task::yield();
 				}
 			}
 			else {
 				// Restore the original priority of the owner
-				if (recursive_cnt == 0 && old_pr != -1) {
-					owner->set_pri(old_pr);
-					old_pr = -1;
+				if (recr_cnt == 0 && owner->old_pr != Macro::PRI_NONE) {
+					// Restore the original priority
+					owner->set_pri(owner->old_pr);
+					owner->old_pr = Macro::PRI_NONE;
 				}
 
 				// No owner if no tasks are waiting
 				owner = nullptr;
 				sema.cnt += 1;
+
+				// Reset the ceiling to the lowest priority
+				ceiling = Macro::PRI_MIN;
 
 				return;
 			}
@@ -213,8 +224,7 @@ namespace MOS::Sync
 			Mutex_t<Raw_t>& mutex;
 		};
 
-		MOS_INLINE inline Mutex_t(T raw, Prior_t ceiling)
-		    : MutexImpl_t(ceiling), raw(raw) {}
+		MOS_INLINE inline Mutex_t(T raw): raw(raw) {}
 
 		MOS_INLINE inline MutexGuard_t
 		lock() { return MutexGuard_t {*this}; }
@@ -244,9 +254,7 @@ namespace MOS::Sync
 			Mutex_t& mutex;
 		};
 
-		MOS_INLINE inline Mutex_t(Prior_t ceiling = Macro::PRI_MAX)
-		    : MutexImpl_t(ceiling) {}
-
+		MOS_INLINE inline Mutex_t() = default;
 		MOS_INLINE inline MutexGuard_t
 		lock() { return MutexGuard_t {*this}; }
 
@@ -260,13 +268,12 @@ namespace MOS::Sync
 
 	// Template deduction where T = void
 	Mutex_t() -> Mutex_t<void>;
-	Mutex_t(Task::Prior_t) -> Mutex_t<void>;
 
 	template <typename T>
-	Mutex_t(T&&, Task::Prior_t) -> Mutex_t<T>;
+	Mutex_t(T&&) -> Mutex_t<T>;
 
 	template <typename T>
-	Mutex_t(T&, Task::Prior_t) -> Mutex_t<T&>;
+	Mutex_t(T&) -> Mutex_t<T&>;
 }
 
 #endif

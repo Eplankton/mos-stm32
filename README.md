@@ -11,7 +11,7 @@ o'' )_____//    [MOS-STM32]
 - Board: Nucleo-144 F429ZI
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
-<img src="Pic/cat.gif" width="20%">
+<img src="Pic/cat.gif" width="25%">
 
 ### Repository 🌏
 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
@@ -111,8 +111,8 @@ namespace MOS::Bsp
     {
         // Simplified
         uart.init(9600-8-1-N)
-            .rx_config(PDx) // RX -> PDx
-            .tx_config(PDy) // TX -> PDy
+            .rx_config(PXa) // RX -> PXa
+            .tx_config(PYb) // TX -> PYb
             .it_enable(RXNE) // Enable RXNE interrupt
             .enable();
     }
@@ -132,7 +132,7 @@ namespace MOS::App
         using UserGlobal::leds;
         for (uint8_t i = 0; i < 20; i++) {
            leds[1].toggle();
-           Task::delay(100);
+           Task::delay(125);
         }
         kprintf("T1 exits...\n");
     }
@@ -143,14 +143,14 @@ namespace MOS::App
         Task::create(Task1, nullptr, 1, "T1");
         while (true) {
             leds[0].toggle();
-            Task::delay(200);
+            Task::delay(250);
         }
     }
 }
 
 namespace MOS::Test
 {
-    static Sync::Mutex_t mutex; // 1-2-3 order
+    static Sync::Mutex_t mutex;
 
     void MutexTest(void* argv)
     {
@@ -158,6 +158,7 @@ namespace MOS::Test
         while (true) {
             mutex.exec([&] {
                 for (uint8_t i = 0; i < 5; i++) {
+                    // In 1-2-3... order
                     kprintf("%s is working...\n", name);
                     Task::delay(100);
                 }
@@ -174,9 +175,6 @@ int main(void)
 
     // Init hardware and clocks
     Bsp::config();
-
-    // Create Calendar with RTC
-    Task::create(App::Calendar, nullptr, 0, "Calendar");
 
     // Create Shell with rx_buf
     Task::create(Shell::launch, &rx_buf, 1, "Shell");
@@ -240,7 +238,7 @@ o'' )_____//   Version @ x.x.x(...)
 9. Add HAL::STM32F4xx::RTC_t, CmdCall::date_cmd and App::Calendar
 
 📌 To do
-1. Sync::{Mutex_t, Cond_t, Barrier_t} with priority inheritance mechanism
+1. Sync::{Cond_t, Barrier_t}
 2. IPC::{pipe, message queue}, etc.
 3. Simple dynamic memory allocator
 4. Hardware Timers

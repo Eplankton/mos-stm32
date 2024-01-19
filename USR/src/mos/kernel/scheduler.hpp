@@ -117,7 +117,7 @@ namespace MOS::Scheduler
 			if (cr->time_slice <= 0) {
 				cr->time_slice = Macro::TIME_SLICE;
 				cr->set_status(Status::READY);
-				// RoundRobin in same group
+				// RoundRobin under same priority
 				if (nx != ed && Tcb_t::pri_equal(nx, cr)) {
 					return switch_to(nx);
 				}

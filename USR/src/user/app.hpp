@@ -59,8 +59,7 @@ namespace MOS::App
 		using Sync::Mutex_t;
 		using UserGlobal::lcd;
 
-		const auto sub_ceiling = Task::current()->get_pri();
-		static auto lcd_mtx    = Mutex_t {lcd, sub_ceiling};
+		static auto lcd_mtx = Mutex_t {lcd};
 
 		auto GIF = [](void* argv) {
 			while (true) {
@@ -92,8 +91,9 @@ namespace MOS::App
 			}
 		};
 
-		Task::create(GIF, nullptr, sub_ceiling, "GIF");
-		Task::create(Slogan, nullptr, sub_ceiling, "Slogan");
+		const auto sub_pr = Task::current()->get_pri();
+		Task::create(GIF, nullptr, sub_pr, "GIF");
+		Task::create(Slogan, nullptr, sub_pr, "Slogan");
 
 		while (true) {
 			Task::block();

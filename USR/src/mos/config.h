@@ -14,6 +14,7 @@
 #define MOS_CONF_MAX_TASK_NUM 16                 // Max task number
 #define MOS_CONF_PAGE_SIZE    1024               // Page size for each task in bytes
 #define MOS_CONF_SYSTICK      1000               // SystemFrequency / 1000 = every 1ms
+#define MOS_CONF_PRI_NONE     -1                 // None priority
 #define MOS_CONF_PRI_MAX      0                  // Max priority
 #define MOS_CONF_PRI_MIN      15                 // Min priority
 #define MOS_CONF_TIME_SLICE   50                 // Time slice width

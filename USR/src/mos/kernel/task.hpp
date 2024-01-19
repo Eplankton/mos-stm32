@@ -109,7 +109,7 @@ namespace MOS::Task
 		// A descending stack consists of 16 registers as context.
 		// high -> low, descending stack
 		// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
-		tcb->set_SP(&tcb->page->raw[Macro::PAGE_SIZE - 16]);
+		tcb->set_SP(tcb->page->first_stk_top());
 
 		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the Thumb state.
 		// V6-m and V7-m cores can only support Thumb state so it should always be set to '1'.
