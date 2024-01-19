@@ -274,7 +274,8 @@ namespace MOS::DataType
 			return nullptr;
 		}
 
-		void insert(Node_t& node, NodePtr_t pos)
+		MOS_NO_INLINE void // Never inline because of instruction reordering
+		insert(Node_t& node, NodePtr_t pos)
 		{
 			if (pos == nullptr)
 				return;
@@ -285,7 +286,19 @@ namespace MOS::DataType
 			len += 1;
 		}
 
-		void insert_in_order(Node_t& node, NodeCmpFn auto&& cmp)
+		MOS_NO_INLINE void // Never inline because of instruction reordering
+		remove(Node_t& node)
+		{
+			NodePtr_t prev = node.prev, next = node.next;
+			prev->next = next;
+			next->prev = prev;
+			node.next  = &node;
+			node.prev  = &node;
+			len -= 1;
+		}
+
+		MOS_INLINE inline void
+		insert_in_order(Node_t& node, NodeCmpFn auto&& cmp)
 		{
 			auto st = begin();
 			while (st != end() && cmp(*st, node)) {
@@ -296,16 +309,6 @@ namespace MOS::DataType
 
 		MOS_INLINE inline void
 		add(Node_t& node) { insert(node, end()); }
-
-		void remove(Node_t& node)
-		{
-			NodePtr_t prev = node.prev, next = node.next;
-			prev->next = next;
-			next->prev = prev;
-			node.next  = &node;
-			node.prev  = &node;
-			len -= 1;
-		}
 
 		MOS_INLINE inline void
 		send_to(Node_t& node, ListImpl_t& dest)

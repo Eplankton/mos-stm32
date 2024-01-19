@@ -201,6 +201,14 @@ namespace MOS::Sync
 				return;
 			}
 		}
+
+		MOS_INLINE inline auto
+		exec(auto&& section) // To safely execute
+		{
+			lock();
+			section();
+			unlock();
+		}
 	};
 
 	template <typename T = void>
@@ -274,6 +282,74 @@ namespace MOS::Sync
 
 	template <typename T>
 	Mutex_t(T&) -> Mutex_t<T&>;
+
+	struct Cond_t
+	{
+		inline void wait(MutexImpl_t& mtx)
+		{
+			mtx.unlock();
+			auto cur = Task::current();
+			cur->set_status(Status::BLOCKED);
+			ready_list.send_to(cur, wait_queue);
+			Task::yield();
+			mtx.lock();
+		}
+
+		inline void wake_up_front()
+		{
+			auto tcb = wait_queue.begin();
+			tcb->set_status(Status::READY);
+			wait_queue.send_to_in_order(
+			        tcb,
+			        ready_list,
+			        Tcb_t::pri_cmp);
+		}
+
+		inline void signal()
+		{
+			if (!wait_queue.empty()) {
+				wake_up_front();
+			}
+		}
+
+		inline void broadcast() // Notify all
+		{
+			while (!wait_queue.empty()) {
+				wake_up_front();
+			}
+		}
+
+	private:
+		TcbList_t wait_queue;
+	};
+
+	struct Barrier_t
+	{
+		using Cnt_t = volatile uint32_t;
+		using Mtx_t = MutexImpl_t;
+
+		Mtx_t mtx;
+		Cond_t cond;
+		Cnt_t total, cnt = 0;
+
+		Barrier_t(uint32_t num): total(num) {}
+
+		inline void wait()
+		{
+			mtx.exec([&] {
+				cnt += 1;
+				if (cnt == total) {
+					cond.broadcast();
+				}
+				else {
+					while (cnt < total) {
+						cond.wait(mtx);
+					}
+				}
+			});
+		}
+	};
+
 }
 
 #endif

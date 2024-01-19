@@ -178,7 +178,7 @@ namespace MOS::ISR
 			for (uint8_t i = 0; i < 10; i++) {
 				leds[2].toggle();
 				Task::print_name();
-				Task::delay(100);
+				Task::delay(250);
 			}
 		};
 

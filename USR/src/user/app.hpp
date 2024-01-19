@@ -68,6 +68,7 @@ namespace MOS::App
 					        0, 0,
 					        128, 128,
 					        frame);
+					Task::delay(25);
 				}
 				Task::delay(1);
 			}
@@ -86,7 +87,7 @@ namespace MOS::App
 					        0, 130,
 					        "Hello, World!",
 					        color);
-					Task::delay(100);
+					Task::delay(250);
 				}
 			}
 		};
@@ -121,12 +122,15 @@ namespace MOS::App
 		}
 	}
 
+	Sync::Barrier_t barrier {2};
+
 	void Task1(void* argv)
 	{
 		using UserGlobal::leds;
+		barrier.wait();
 		for (uint8_t i = 0; i < 20; i++) {
 			leds[1].toggle();
-			Task::delay(125);
+			Task::delay(250);
 		}
 		kprintf("T1 exits...\n");
 	}
@@ -135,9 +139,10 @@ namespace MOS::App
 	{
 		using UserGlobal::leds;
 		Task::create(Task1, nullptr, 1, "T1");
+		barrier.wait();
 		while (true) {
 			leds[0].toggle();
-			Task::delay(250);
+			Task::delay(500);
 		}
 	}
 }

@@ -66,9 +66,12 @@ src
 `MutexTest`
 ![mutex_test](Pic/mutex.gif)
 
-`LCD Driver & GUI Graphic`
+`LCD Driver & GUI Demo`
 
 <img src="Pic/board.gif" width="51%"> <img src="Pic/guilite.gif" width="45%">
+
+`T0/T1 Periods`
+<img src="Pic/T0-T1.png" width="100%">
 
 ```C++
 // MOS Kernel & Shell
@@ -127,12 +130,15 @@ namespace MOS::Bsp
 
 namespace MOS::App
 {
+    Sync::Barrier_t bar {2};
+
     void Task1(void* argv)
     {
         using UserGlobal::leds;
+        bar.wait();
         for (uint8_t i = 0; i < 20; i++) {
            leds[1].toggle();
-           Task::delay(125);
+           Task::delay(250);
         }
         kprintf("T1 exits...\n");
     }
@@ -141,9 +147,10 @@ namespace MOS::App
     {
         using UserGlobal::leds;
         Task::create(Task1, nullptr, 1, "T1");
+        bar.wait();
         while (true) {
             leds[0].toggle();
-            Task::delay(250);
+            Task::delay(500);
         }
     }
 }
@@ -206,7 +213,7 @@ o'' )_____//   Version @ x.x.x(...)
  Tid   Name   Priority   Status   Stack%
 -----------------------------------------
  #0    idle      15      READY       10%
- #1    Shell      1      READY       21%
+ #1    Shell      1      BLOCKED     21%
  #2    T0         2      RUNNING      9%
 -----------------------------------------
 ```
@@ -227,8 +234,8 @@ o'' )_____//   Version @ x.x.x(...)
 ```
 ```
 📦 Version 0.0.2
-1. Sync::{Semaphore_t, Lock_t, Mutex_t<T>, MutexGuard_t}
-2. Scheduler::Policy::PreemptivePriority, same priority -> RoundRobin
+1. 1. Sync::{Semaphore_t, Lock_t, Mutex_t<T>, Cond_t, Barrier_t}, where Mutex_t adopts Priority Ceiling Protocol
+2. Scheduler::Policy::PreemptivePriority, under same priority -> RoundRobin
 3. Task::terminate() implicitly be called when task exits
 4. Shell::{Command, CmdCall, launch}
 5. KernelGlobal::os_ticks and Task::delay() for block delay
@@ -238,12 +245,11 @@ o'' )_____//   Version @ x.x.x(...)
 9. Add HAL::STM32F4xx::RTC_t, CmdCall::date_cmd and App::Calendar
 
 📌 To do
-1. Sync::{Cond_t, Barrier_t}
-2. IPC::{pipe, message queue}, etc.
-3. Simple dynamic memory allocator
-4. Hardware Timers
-5. BitMap for faster Page Allocation
-6. Basic formal verification on Scheduler
+1. IPC::{pipe, message queue}, etc.
+2. Simple dynamic memory allocator
+3. Hardware Timers
+4. BitMap for faster Page Allocation
+5. Basic formal verification on Scheduler
 ```
 
 ### References 🛸

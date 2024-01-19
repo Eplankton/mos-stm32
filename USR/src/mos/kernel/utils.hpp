@@ -7,7 +7,8 @@
 #include "../config.h"
 #include "../arch/cpu.hpp"
 
-#define MOS_INLINE __attribute__((always_inline))
+#define MOS_NO_INLINE __attribute__((noinline))
+#define MOS_INLINE    __attribute__((always_inline))
 
 #ifdef MOS_CONF_PRINTF
 #include "printf.h"
