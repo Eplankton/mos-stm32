@@ -6,8 +6,6 @@
 namespace MOS::Sync
 {
 	using KernelGlobal::ready_list;
-	using KernelGlobal::blocked_list;
-	using KernelGlobal::cur_tcb;
 	using Utils::DisIntrGuard_t;
 	using Utils::test_irq;
 
@@ -21,11 +19,11 @@ namespace MOS::Sync
 	struct Semaphore_t
 	{
 		Cnt_t cnt;
-		TcbList_t waiting_list;
+		TcbList_t wait_queue;
 
 		// Must set a original value
-		Semaphore_t() = delete;
-		Semaphore_t(int32_t val): cnt(val) {}
+		MOS_INLINE inline Semaphore_t() = delete;
+		MOS_INLINE inline Semaphore_t(int32_t val): cnt(val) {}
 
 		// P
 		void down()
@@ -35,8 +33,8 @@ namespace MOS::Sync
 			DisIntrGuard_t guard;
 			cnt -= 1;
 			if (cnt < 0) {
-				cur_tcb->set_status(Status::BLOCKED);
-				ready_list.send_to(Task::current(), waiting_list);
+				Task::current()->set_status(Status::BLOCKED);
+				ready_list.send_to(Task::current(), wait_queue);
 				return Task::yield();
 			}
 		}
@@ -48,9 +46,9 @@ namespace MOS::Sync
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 			DisIntrGuard_t guard;
 			if (cnt < 0) {
-				auto tcb = waiting_list.begin();
+				auto tcb = wait_queue.begin();
 				tcb->set_status(Status::READY);
-				waiting_list.send_to_in_order(
+				wait_queue.send_to_in_order(
 				        tcb, ready_list, Tcb_t::pri_cmp);
 			}
 			cnt += 1;
@@ -65,7 +63,7 @@ namespace MOS::Sync
 		Semaphore_t sema;
 		TcbPtr_t owner;
 
-		Lock_t(): owner(nullptr), sema(1) {}
+		MOS_INLINE inline Lock_t(): owner(nullptr), sema(1) {}
 
 		MOS_INLINE inline void
 		acquire()
@@ -95,7 +93,7 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		raise_all_pri()
 		{
-			sema.waiting_list.iter([&](Tcb_t& tcb) {
+			sema.wait_queue.iter_mut([&](Tcb_t& tcb) {
 				tcb.set_pri(ceiling);
 			});
 		}
@@ -103,9 +101,9 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		find_new_ceiling()
 		{
-			sema.waiting_list.iter([&](Tcb_t& tcb) {
-				if (tcb.old_pr < ceiling &&
-				    tcb.old_pr != Macro::PRI_NONE) {
+			sema.wait_queue.iter_mut([&](const Tcb_t& tcb) {
+				if (tcb.old_pr != Macro::PRI_NONE &&
+				    tcb.old_pr < ceiling) {
 					ceiling = tcb.old_pr;
 				}
 			});
@@ -120,7 +118,7 @@ namespace MOS::Sync
 			auto cur = Task::current();
 
 			if (owner == cur) {
-				// If the current task already owns the lock, just increment the lock count
+				// If task already owns the lock, just increment the recursive count
 				recr_cnt += 1;
 				return;
 			}
@@ -142,11 +140,11 @@ namespace MOS::Sync
 
 			if (sema.cnt < 0) {
 				cur->set_status(Status::BLOCKED);
-				ready_list.send_to(cur, sema.waiting_list);
+				ready_list.send_to(cur, sema.wait_queue);
 				return Task::yield();
 			}
 			else {
-				owner = cur_tcb;
+				owner = Task::current();
 				recr_cnt += 1;
 			}
 		}
@@ -154,7 +152,8 @@ namespace MOS::Sync
 		void unlock() // V-opr
 		{
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
-			MOS_ASSERT(owner == cur_tcb, "Lock can only be released by holder");
+			MOS_ASSERT(owner == Task::current(),
+			           "Lock can only be released by holder");
 
 			DisIntrGuard_t guard;
 			recr_cnt -= 1;
@@ -164,11 +163,11 @@ namespace MOS::Sync
 				return;
 			}
 
-			if (!sema.waiting_list.empty()) {
+			if (!sema.wait_queue.empty()) {
 				// Starvation Prevention
-				auto tcb = sema.waiting_list.begin();
+				auto tcb = sema.wait_queue.begin();
 				tcb->set_status(Status::READY);
-				sema.waiting_list.send_to_in_order(
+				sema.wait_queue.send_to_in_order(
 				        tcb,
 				        ready_list,
 				        Tcb_t::pri_cmp);
@@ -234,14 +233,14 @@ namespace MOS::Sync
 
 		MOS_INLINE inline Mutex_t(T raw): raw(raw) {}
 
-		MOS_INLINE inline MutexGuard_t
+		MOS_INLINE inline auto
 		lock() { return MutexGuard_t {*this}; }
 
 		MOS_INLINE inline auto
 		exec(auto&& section) // To safely execute
 		{
-			auto guard = lock(); // scope begins
-			return section();    // scope ends
+			auto guard = lock();
+			return section();
 		}
 
 	private:
@@ -263,7 +262,7 @@ namespace MOS::Sync
 		};
 
 		MOS_INLINE inline Mutex_t() = default;
-		MOS_INLINE inline MutexGuard_t
+		MOS_INLINE inline auto
 		lock() { return MutexGuard_t {*this}; }
 
 		MOS_INLINE inline auto
@@ -285,7 +284,9 @@ namespace MOS::Sync
 
 	struct Cond_t
 	{
-		inline void wait(MutexImpl_t& mtx)
+		using Mtx_t = MutexImpl_t;
+
+		inline void wait(Mtx_t& mtx)
 		{
 			mtx.unlock();
 			auto cur = Task::current();
@@ -295,7 +296,7 @@ namespace MOS::Sync
 			mtx.lock();
 		}
 
-		inline void wake_up_front()
+		inline void wake_up_one()
 		{
 			auto tcb = wait_queue.begin();
 			tcb->set_status(Status::READY);
@@ -308,14 +309,14 @@ namespace MOS::Sync
 		inline void signal()
 		{
 			if (!wait_queue.empty()) {
-				wake_up_front();
+				wake_up_one();
 			}
 		}
 
 		inline void broadcast() // Notify all
 		{
 			while (!wait_queue.empty()) {
-				wake_up_front();
+				wake_up_one();
 			}
 		}
 
@@ -332,7 +333,8 @@ namespace MOS::Sync
 		Cond_t cond;
 		Cnt_t total, cnt = 0;
 
-		Barrier_t(uint32_t num): total(num) {}
+		MOS_INLINE inline Barrier_t(uint32_t num)
+		    : total(num) {}
 
 		inline void wait()
 		{
@@ -342,7 +344,7 @@ namespace MOS::Sync
 					cond.broadcast();
 				}
 				else {
-					while (cnt < total) {
+					while (cnt != total) {
 						cond.wait(mtx);
 					}
 				}

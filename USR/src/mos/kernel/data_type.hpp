@@ -253,7 +253,7 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		iter(auto&& fn)
+		iter_mut(auto&& fn)
 		{
 			for (auto it = begin();
 			     it != end();
@@ -626,11 +626,11 @@ namespace MOS::DataType
 				};
 			};
 
-			ListImpl_t::iter(wrapper(fn));
+			ListImpl_t::iter_mut(wrapper(fn));
 		}
 
 		MOS_INLINE inline void
-		iter(auto&& fn)
+		iter_mut(auto&& fn)
 		{
 			auto wrapper = [](auto&& fn) {
 				return [&](Node_t& node) {
@@ -638,7 +638,7 @@ namespace MOS::DataType
 				};
 			};
 
-			ListImpl_t::iter(wrapper(fn));
+			ListImpl_t::iter_mut(wrapper(fn));
 		}
 
 		MOS_INLINE inline TcbPtr_t
@@ -745,7 +745,18 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		iter(auto&& fn) volatile
+		iter(auto&& fn) const volatile
+		    requires Concepts::Invocable<decltype(fn), void, const TcbPtr_t&>
+		{
+			for (auto& pt: raw) {
+				if (pt != nullptr) {
+					fn(pt);
+				}
+			}
+		}
+
+		MOS_INLINE inline void
+		iter_mut(auto&& fn) volatile
 		    requires Concepts::Invocable<decltype(fn), void, TcbPtr_t&>
 		{
 			for (auto& pt: raw) {

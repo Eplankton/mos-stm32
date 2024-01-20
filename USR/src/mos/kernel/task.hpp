@@ -398,7 +398,7 @@ namespace MOS::Task
 	{
 		DisIntrGuard_t guard;
 		kprintf("-----------------------------------\n");
-		debug_tcbs.iter([](TcbPtr_t tcb) { print_info(tcb); });
+		debug_tcbs.iter_mut([](TcbPtr_t tcb) { print_info(tcb); });
 		kprintf("-----------------------------------\n");
 	}
 
