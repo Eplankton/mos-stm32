@@ -19,14 +19,14 @@ namespace MOS::Scheduler
 		PreemptivePriority,
 	};
 
-	enum class SchedStatus
+	enum class OpStatus
 	{
-		READY,
-		ERROR,
-	} static os_status = SchedStatus::ERROR;
+		READY = true,
+		ERROR = !READY,
+	} static os_status = OpStatus::ERROR;
 
 	MOS_INLINE inline bool
-	is_ready() { return os_status == SchedStatus::READY; }
+	is_ready() { return os_status == OpStatus::READY; }
 
 	// This will execute only once for the first task
 	__attribute__((naked)) inline void
@@ -62,7 +62,7 @@ namespace MOS::Scheduler
 
 		cur_tcb = ready_list.begin();
 		cur_tcb->set_status(Status::RUNNING);
-		os_status = SchedStatus::READY;
+		os_status = OpStatus::READY;
 		init();
 	}
 

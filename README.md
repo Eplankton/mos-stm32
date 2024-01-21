@@ -11,7 +11,7 @@ o'' )_____//    [MOS-STM32]
 - Board: Nucleo-144 F429ZI
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
-<img src="Pic/cat.gif" width="25%">
+<img src="Pic/cat.gif" width="20%">
 
 ### Repository 🌏
 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
@@ -27,12 +27,12 @@ src
 ├── mos
 │   ├── config.h             System Configuration
 │   ├── arch                 Arch-related
-│   │   └── cpu.hpp          ASM of ContextSwitch
+│   │   └── cpu.hpp          asm for context_switch
 │   │
 │   ├── kernel               Kernel(Arch-independent)
 │   │   ├── macro.hpp        Configured Macros
 │   │   ├── type.hpp         Basic Types
-│   │   ├── concepts.hpp     C++20 Concepts(Optional)
+│   │   ├── concepts.hpp     Type Constraints(Optional)
 │   │   ├── data_type.hpp    Basic Data Structures
 │   │   ├── alloc.hpp        Static/Dynamic Allocator
 │   │   ├── global.hpp       Kernel Globals
@@ -45,7 +45,7 @@ src
 │   ├── kernel.hpp           Import Kernel Modules
 │   └── shell.hpp            Simple Shell
 │
-├── user
+├── user                     User program
 │   ├── gui                  GUI-related
 │   │   ├── GuiLite.h        GuiLite Framework
 │   │   └── UICode.cpp       Animation
@@ -71,10 +71,10 @@ src
 <img src="Pic/board.gif" width="51%"> <img src="Pic/guilite.gif" width="45%">
 
 `T0/T1 Periods`
-<img src="Pic/T0-T1.png" width="100%">
+<img src="Pic/T0-T1.png" width="90%">
 
 `Monitor by cur_tcb`
-<img src="Pic/tids.png" width="100%">
+<img src="Pic/tids.png" width="90%">
 
 ```C++
 // MOS Kernel & Shell
@@ -258,6 +258,8 @@ o'' )_____//   Version @ x.x.x(...)
 3. Hardware Timers
 4. BitMap for faster Page Allocation
 5. Basic formal verification on Scheduler
+6. DMA_t Driver
+7. More scheduler algorithms
 ```
 
 ### References 🛸

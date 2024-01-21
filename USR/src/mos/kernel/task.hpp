@@ -245,6 +245,23 @@ namespace MOS::Task
 		return tcb;
 	}
 
+	static inline void
+	block_to_raw(TcbPtr_t tcb, TcbList_t& dest)
+	{
+		tcb->set_status(Status::BLOCKED);
+		ready_list.send_to(tcb, dest);
+	}
+
+	static inline void
+	block_to_in_order_raw(
+	        TcbPtr_t tcb,
+	        TcbList_t& dest,
+	        auto&& cmp)
+	{
+		tcb->set_status(Status::BLOCKED);
+		ready_list.send_to_in_order(tcb, dest, cmp);
+	}
+
 	inline void block_to(TcbPtr_t tcb, TcbList_t& dest)
 	{
 		if (tcb == nullptr || tcb->is_status(Status::BLOCKED))
@@ -252,11 +269,8 @@ namespace MOS::Task
 
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
-
 		DisIntrGuard_t guard;
-		tcb->set_status(Status::BLOCKED);
-		ready_list.send_to(tcb, dest);
-
+		block_to_raw(tcb, dest);
 		if (tcb == current()) {
 			return yield();
 		}
@@ -272,11 +286,8 @@ namespace MOS::Task
 
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
-
 		DisIntrGuard_t guard;
-		tcb->set_status(Status::BLOCKED);
-		ready_list.send_to_in_order(tcb, dest, cmp);
-
+		block_to_in_order_raw(tcb, dest, cmp);
 		if (tcb == current()) {
 			return yield();
 		}
@@ -288,6 +299,16 @@ namespace MOS::Task
 		block_to(tcb, blocked_list);
 	}
 
+	static inline void
+	resume_raw(TcbPtr_t tcb, TcbList_t& src)
+	{
+		tcb->set_status(Status::READY);
+		src.send_to_in_order(
+		        tcb,
+		        ready_list,
+		        Tcb_t::pri_cmp);
+	}
+
 	inline void resume(TcbPtr_t tcb)
 	{
 		if (tcb == nullptr || !tcb->is_status(Status::BLOCKED))
@@ -295,13 +316,8 @@ namespace MOS::Task
 
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
-
 		DisIntrGuard_t guard;
-		tcb->set_status(Status::READY);
-		blocked_list.send_to_in_order(
-		        tcb,
-		        ready_list,
-		        Tcb_t::pri_cmp);
+		resume_raw(tcb, blocked_list);
 
 		// If tasks with higher priority exist
 		if (higher_exists()) {
@@ -316,18 +332,14 @@ namespace MOS::Task
 			return;
 
 		DisIntrGuard_t guard;
-		tcb->set_status(Status::READY);
-		blocked_list.send_to_in_order(
-		        tcb,
-		        ready_list,
-		        Tcb_t::pri_cmp);
+		resume_raw(tcb, blocked_list);
 	}
 
 	MOS_INLINE inline void
 	change_priority(TcbPtr_t tcb, Prior_t pri)
 	{
+		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
-
 		DisIntrGuard_t guard;
 		tcb->set_pri(pri);
 		ready_list.re_insert(tcb, Tcb_t::pri_cmp);
@@ -383,7 +395,9 @@ namespace MOS::Task
 	};
 
 	MOS_INLINE inline void
-	print_info(TcbPtr_t tcb, const char* format = " #%-2d %-9s %-5d %-9s %2d%%\n")
+	print_info(
+	        TcbPtr_t tcb,
+	        const char* format = " #%-2d %-9s %-5d %-9s %2d%%\n")
 	{
 		kprintf(format,
 		        tcb->get_tid(),

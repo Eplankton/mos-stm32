@@ -92,7 +92,7 @@ namespace MOS::App
 			}
 		};
 
-		const auto sub_pr = Task::current()->get_pri();
+		const auto sub_pr = Task::current()->get_pri() + 1;
 		Task::create(GIF, nullptr, sub_pr, "GIF");
 		Task::create(Slogan, nullptr, sub_pr, "Slogan");
 
@@ -122,12 +122,12 @@ namespace MOS::App
 		}
 	}
 
-	Sync::Barrier_t barrier {2};
+	Sync::Barrier_t bar {2};
 
 	void Task1(void* argv)
 	{
 		using UserGlobal::leds;
-		barrier.wait();
+		bar.wait();
 		for (uint8_t i = 0; i < 20; i++) {
 			leds[1].toggle();
 			Task::delay(250);
@@ -139,7 +139,7 @@ namespace MOS::App
 	{
 		using UserGlobal::leds;
 		Task::create(Task1, nullptr, 1, "T1");
-		barrier.wait();
+		bar.wait();
 		while (true) {
 			leds[0].toggle();
 			Task::delay(500);

@@ -18,8 +18,8 @@ namespace MOS::Sync
 
 	struct Semaphore_t
 	{
+		TcbList_t waiting_queue;
 		Cnt_t cnt;
-		TcbList_t wait_queue;
 
 		// Must set a original value
 		MOS_INLINE inline Semaphore_t() = delete;
@@ -33,8 +33,7 @@ namespace MOS::Sync
 			DisIntrGuard_t guard;
 			cnt -= 1;
 			if (cnt < 0) {
-				Task::current()->set_status(Status::BLOCKED);
-				ready_list.send_to(Task::current(), wait_queue);
+				Task::block_to_raw(Task::current(), waiting_queue);
 				return Task::yield();
 			}
 		}
@@ -46,10 +45,7 @@ namespace MOS::Sync
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 			DisIntrGuard_t guard;
 			if (cnt < 0) {
-				auto tcb = wait_queue.begin();
-				tcb->set_status(Status::READY);
-				wait_queue.send_to_in_order(
-				        tcb, ready_list, Tcb_t::pri_cmp);
+				Task::resume_raw(waiting_queue.begin(), waiting_queue);
 			}
 			cnt += 1;
 			if (Task::higher_exists()) {
@@ -93,7 +89,7 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		raise_all_pri()
 		{
-			sema.wait_queue.iter_mut([&](Tcb_t& tcb) {
+			sema.waiting_queue.iter_mut([&](Tcb_t& tcb) {
 				tcb.set_pri(ceiling);
 			});
 		}
@@ -101,7 +97,7 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		find_new_ceiling()
 		{
-			sema.wait_queue.iter_mut([&](const Tcb_t& tcb) {
+			sema.waiting_queue.iter_mut([&](const Tcb_t& tcb) {
 				if (tcb.old_pr != Macro::PRI_NONE &&
 				    tcb.old_pr < ceiling) {
 					ceiling = tcb.old_pr;
@@ -139,8 +135,7 @@ namespace MOS::Sync
 			sema.cnt -= 1;
 
 			if (sema.cnt < 0) {
-				cur->set_status(Status::BLOCKED);
-				ready_list.send_to(cur, sema.wait_queue);
+				Task::block_to_raw(cur, sema.waiting_queue);
 				return Task::yield();
 			}
 			else {
@@ -163,14 +158,10 @@ namespace MOS::Sync
 				return;
 			}
 
-			if (!sema.wait_queue.empty()) {
+			if (!sema.waiting_queue.empty()) {
 				// Starvation Prevention
-				auto tcb = sema.wait_queue.begin();
-				tcb->set_status(Status::READY);
-				sema.wait_queue.send_to_in_order(
-				        tcb,
-				        ready_list,
-				        Tcb_t::pri_cmp);
+				auto tcb = sema.waiting_queue.begin();
+				Task::resume_raw(tcb, sema.waiting_queue);
 
 				// Transfer ownership to the last highest priority task in queue
 				owner = tcb;
@@ -284,52 +275,48 @@ namespace MOS::Sync
 
 	struct Cond_t
 	{
-		using Mtx_t = MutexImpl_t;
-
-		inline void wait(Mtx_t& mtx)
+		inline void wait(MutexImpl_t& mtx)
 		{
 			mtx.unlock();
-			auto cur = Task::current();
-			cur->set_status(Status::BLOCKED);
-			ready_list.send_to(cur, wait_queue);
-			Task::yield();
+			block_current();
 			mtx.lock();
-		}
-
-		inline void wake_up_one()
-		{
-			auto tcb = wait_queue.begin();
-			tcb->set_status(Status::READY);
-			wait_queue.send_to_in_order(
-			        tcb,
-			        ready_list,
-			        Tcb_t::pri_cmp);
 		}
 
 		inline void signal()
 		{
-			if (!wait_queue.empty()) {
+			if (!waiting_queue.empty()) {
 				wake_up_one();
 			}
 		}
 
 		inline void broadcast() // Notify all
 		{
-			while (!wait_queue.empty()) {
+			while (!waiting_queue.empty()) {
 				wake_up_one();
 			}
 		}
 
 	private:
-		TcbList_t wait_queue;
+		TcbList_t waiting_queue;
+
+		MOS_INLINE inline void
+		block_current()
+		{
+			Task::block_to_raw(Task::current(), waiting_queue);
+			Task::yield();
+		}
+
+		MOS_INLINE inline void
+		wake_up_one()
+		{
+			auto& wtq = waiting_queue;
+			Task::resume_raw(wtq.begin(), wtq);
+		}
 	};
 
 	struct Barrier_t
 	{
-		using Cnt_t = volatile uint32_t;
-		using Mtx_t = MutexImpl_t;
-
-		Mtx_t mtx;
+		MutexImpl_t mtx;
 		Cond_t cond;
 		Cnt_t total, cnt = 0;
 
@@ -347,6 +334,7 @@ namespace MOS::Sync
 					while (cnt != total) {
 						cond.wait(mtx);
 					}
+					cnt = 0;
 				}
 			});
 		}

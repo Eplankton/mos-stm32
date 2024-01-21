@@ -14,6 +14,10 @@
 
 namespace MOS::Shell
 {
+	using Utils::DisIntrGuard_t;
+	using Utils::strlen;
+	using Utils::strncmp;
+
 	struct Command_t
 	{
 		using Ret_t  = void;
@@ -25,7 +29,7 @@ namespace MOS::Shell
 		Fn_t callback;
 
 		MOS_INLINE inline uint32_t
-		len() const { return Utils::strlen(text); }
+		len() const { return strlen(text); }
 
 		MOS_INLINE inline void
 		run(Argv_t argv) const { callback(argv); }
@@ -43,7 +47,7 @@ namespace MOS::Shell
 			// Check whether match or not
 			auto check = [&](Text_t str) {
 				return (str[xlen] == ' ' || str[xlen] == '\0') &&
-				       Utils::strncmp(str, text, xlen) == 0;
+				       strncmp(str, text, xlen) == 0;
 			};
 
 			str = skip(str);
@@ -107,6 +111,7 @@ namespace MOS::Shell
 
 		static inline void uname_cmd(Argv_t argv)
 		{
+			DisIntrGuard_t guard;
 			kprintf(" A_A       _\n"
 			        "o'' )_____//  Version @ %s\n"
 			        " `_/  MOS  )  Build   @ %s, %s\n"

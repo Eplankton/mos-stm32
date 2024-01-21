@@ -174,6 +174,7 @@ namespace MOS::ISR
 		using HAL::STM32F4xx::EXTI_t;
 		using UserGlobal::leds;
 
+		// To simulate a burst task
 		static auto K1_IRQ = [](void* argv) {
 			for (uint8_t i = 0; i < 10; i++) {
 				leds[2].toggle();
@@ -200,9 +201,9 @@ namespace MOS::ISR
 		using UserGlobal::rx_buf;
 
 		if (uart3.get_it_status(USART_IT_RXNE) != RESET) {
-			char8_t recv_data = uart3.receive_data();
+			char8_t data = uart3.receive_data();
 			if (!rx_buf.full()) {
-				rx_buf.add(recv_data);
+				rx_buf.add(data);
 			}
 			else {
 				rx_buf.clear();
