@@ -25,8 +25,11 @@ namespace MOS::Scheduler
 		ERROR = !READY,
 	} static os_status = OpStatus::ERROR;
 
+	using enum Policy;
+	using enum OpStatus;
+
 	MOS_INLINE inline bool
-	is_ready() { return os_status == OpStatus::READY; }
+	is_ready() { return os_status == READY; }
 
 	// This will execute only once for the first task
 	__attribute__((naked)) inline void
@@ -49,7 +52,7 @@ namespace MOS::Scheduler
 		// Default idle can be replaced by user-defined hook
 		auto idle = [](void* argv) {
 			while (true) {
-				asm volatile("");
+				Task::recycle();
 			}
 		};
 
@@ -57,23 +60,23 @@ namespace MOS::Scheduler
 		Task::create(
 		        hook == nullptr ? idle : hook,
 		        nullptr,
-		        Macro::PRI_MIN,
+		        PRI_MIN,
 		        "idle");
 
 		cur_tcb = ready_list.begin();
 		cur_tcb->set_status(Status::RUNNING);
-		os_status = OpStatus::READY;
+		os_status = READY;
 		init();
 	}
 
 	static inline void try_wake_up()
 	{
 		// Only have to check the first one since they're sorted by delay_ticks
-		auto to_wake = sleep_list.begin();
+		auto to_wake = sleeping_list.begin();
 		if (to_wake->delay_ticks <= os_ticks) {
 			to_wake->set_delay(0);
 			to_wake->set_status(Status::READY);
-			sleep_list.send_to_in_order(
+			sleeping_list.send_to_in_order(
 			        to_wake,
 			        ready_list,
 			        Tcb_t::pri_cmp);
@@ -88,7 +91,7 @@ namespace MOS::Scheduler
 			cur_tcb = tcb;
 		};
 
-		if (!sleep_list.empty()) {
+		if (!sleeping_list.empty()) {
 			try_wake_up();
 		}
 
@@ -104,15 +107,15 @@ namespace MOS::Scheduler
 			return switch_to(st);
 		}
 
-		if constexpr (policy == Policy::RoundRobin) {
+		if constexpr (policy == RoundRobin) {
 			if (cr->time_slice <= 0) {
-				cr->time_slice = Macro::TIME_SLICE;
+				cr->time_slice = TIME_SLICE;
 				cr->set_status(Status::READY);
 				return switch_to((nx == ed) ? st : nx);
 			}
 		}
 
-		if constexpr (policy == Policy::PreemptivePriority) {
+		if constexpr (policy == PreemptivePriority) {
 			// If there's a task with higher priority
 			if (Tcb_t::pri_cmp(st, cr)) {
 				cr->set_status(Status::READY);
@@ -120,7 +123,7 @@ namespace MOS::Scheduler
 			}
 
 			if (cr->time_slice <= 0) {
-				cr->time_slice = Macro::TIME_SLICE;
+				cr->time_slice = TIME_SLICE;
 				cr->set_status(Status::READY);
 				// RoundRobin under same priority
 				if (nx != ed && Tcb_t::pri_equal(nx, cr)) {

@@ -6,20 +6,34 @@
 
 namespace MOS::Alloc
 {
-	using PagePtr_t = DataType::Page_t::PagePtr_t;
+	using Page_t     = DataType::Page_t;
+	using PagePolicy = Page_t::Policy;
+	using PageRaw_t  = Page_t::Raw_t;
+	using PageSz_t   = Page_t::Sz_t;
 
-	// Page allocator with fixed size, could be replaced by a dynamic allocator
-	inline PagePtr_t palloc()
+	template <PagePolicy policy>
+	inline PageRaw_t palloc(PageSz_t pg_sz = 0xFF)
 	{
-		using KernelGlobal::page_pool;
+		if constexpr (policy == PagePolicy::POOL) {
+			using KernelGlobal::page_pool;
 
-		for (auto& page: page_pool) {
-			if (!page.is_used()) {
-				return &page;
+			static auto is_used = [](PageRaw_t raw) {
+				const auto tst = (uint32_t*) raw[0];
+				return tst != nullptr && tst != raw;
+			};
+
+			for (auto raw: page_pool) {
+				if (!is_used(raw)) {
+					return raw;
+				}
 			}
+
+			return nullptr;
 		}
 
-		return nullptr;
+		if constexpr (policy == PagePolicy::DYNAMIC) {
+			return new uint32_t[pg_sz];
+		}
 	}
 }
 

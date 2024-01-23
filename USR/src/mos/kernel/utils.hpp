@@ -10,7 +10,7 @@
 #define MOS_NO_INLINE __attribute__((noinline))
 #define MOS_INLINE    __attribute__((always_inline))
 
-#ifdef MOS_CONF_PRINTF
+#if (MOS_CONF_PRINTF)
 #include "printf.h"
 #define kprintf(format, ...) printf_(format, ##__VA_ARGS__)
 #define MOS_MSG(format, ...) kprintf("[MOS]: " format, ##__VA_ARGS__)
@@ -19,7 +19,7 @@
 #define MOS_MSG(format, ...) ((void) 0)
 #endif
 
-#ifdef MOS_CONF_ASSERT
+#if (MOS_CONF_ASSERT)
 #define MOS_ASSERT(expr, format, ...) \
 	((expr) ? ((void) 0) : mos_assert_failed((uint8_t*) __FILE__, __LINE__, format))
 
@@ -115,7 +115,7 @@ namespace MOS::Utils
 	};
 }
 
-// placement new
+// Inplace new
 MOS_INLINE inline void*
 operator new(size_t, void* addr) noexcept { return addr; }
 

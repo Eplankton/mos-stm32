@@ -186,7 +186,7 @@ namespace MOS::ISR
 		EXTI_t::handle_line(EXTI_Line13, [] {
 			static uint32_t k1_cnt = 0;
 			MOS_MSG("K1 Cnt = %d\n", ++k1_cnt);
-			Task::create_fromISR(
+			Task::create_isr(
 			        K1_IRQ,
 			        nullptr,
 			        Task::current()->get_pri(),

@@ -48,7 +48,7 @@ src
 ├── user                     User program
 │   ├── gui                  GUI-related
 │   │   ├── GuiLite.h        GuiLite Framework
-│   │   └── UICode.cpp       Animation
+│   │   └── UICode.cpp       User Interface
 │   │
 │   ├── global.hpp           User Globals
 │   ├── bsp.hpp              Board Support Package
@@ -70,11 +70,9 @@ src
 
 <img src="Pic/board.gif" width="51%"> <img src="Pic/guilite.gif" width="45%">
 
-`T0/T1 Periods`
+`Task period and time sequence`
 <img src="Pic/T0-T1.png" width="90%">
-
-`Monitor by cur_tcb`
-<img src="Pic/tids.png" width="90%">
+<img src="Pic/tids.png" width="70%">
 
 ```C++
 // MOS Kernel & Shell
@@ -242,24 +240,27 @@ o'' )_____//   Version @ x.x.x(...)
 ```
 ```
 📦 Version 0.0.2
-1. 1. Sync::{Semaphore_t, Lock_t, Mutex_t<T>, Cond_t, Barrier_t}, where Mutex_t adopts Priority Ceiling Protocol
+1. Sync::{Semaphore_t, Lock_t, Mutex_t<T>, Cond_t, Barrier_t}, where Mutex_t adopts Priority Ceiling Protocol
 2. Scheduler::Policy::PreemptivePriority, under same priority -> RoundRobin
 3. Task::terminate() implicitly be called when task exits
 4. Shell::{Command, CmdCall, launch}
-5. KernelGlobal::os_ticks and Task::delay() for block delay
-6. Add HAL::STM32F4xx::SPI_t and Driver::ST7735S_t, support GuiLite
+5. Add HAL::STM32F4xx::SPI_t and Driver::ST7735S_t, support GuiLite
+6. KernelGlobal::os_ticks and Task::delay() for blocking delay
 7. Refactor the project into {kernel, arch, drivers}
 8. Support GCC and STM32CubeMX HAL
 9. Add HAL::STM32F4xx::RTC_t, CmdCall::date_cmd and App::Calendar
-
+10. idle uses KernelGlobal::zombie_list to recycle inactive pages
+11. Three basic page-allocation policies, Page_t::Policy::{POOL, DYNAMIC, STATIC}
+```
+```
+📦 Version 0.0.3
 📌 To do
 1. IPC::{pipe, message queue}, etc.
-2. Simple dynamic memory allocator
-3. Hardware Timers
-4. BitMap for faster Page Allocation
-5. Basic formal verification on Scheduler
-6. DMA_t Driver
-7. More scheduler algorithms
+2. Soft/Hardware Timers
+3. BitMap for faster Page Allocation
+4. Basic formal verification on Scheduler
+5. DMA_t Driver
+6. More scheduler algorithms
 ```
 
 ### References 🛸

@@ -5,6 +5,7 @@
 
 namespace MOS::Sync
 {
+	using namespace Macro;
 	using KernelGlobal::ready_list;
 	using Utils::DisIntrGuard_t;
 	using Utils::test_irq;
@@ -84,7 +85,7 @@ namespace MOS::Sync
 		Semaphore_t sema = 1;
 		Cnt_t recr_cnt   = 0;
 		TcbPtr_t owner   = nullptr;
-		Prior_t ceiling  = Macro::PRI_MIN;
+		Prior_t ceiling  = PRI_MIN;
 
 		MOS_INLINE inline void
 		raise_all_pri()
@@ -98,7 +99,7 @@ namespace MOS::Sync
 		find_new_ceiling()
 		{
 			sema.waiting_queue.iter_mut([&](const Tcb_t& tcb) {
-				if (tcb.old_pr != Macro::PRI_NONE &&
+				if (tcb.old_pr != PRI_NONE &&
 				    tcb.old_pr < ceiling) {
 					ceiling = tcb.old_pr;
 				}
@@ -175,10 +176,10 @@ namespace MOS::Sync
 			}
 			else {
 				// Restore the original priority of the owner
-				if (recr_cnt == 0 && owner->old_pr != Macro::PRI_NONE) {
+				if (recr_cnt == 0 && owner->old_pr != PRI_NONE) {
 					// Restore the original priority
 					owner->set_pri(owner->old_pr);
-					owner->old_pr = Macro::PRI_NONE;
+					owner->old_pr = PRI_NONE;
 				}
 
 				// No owner if no tasks are waiting
@@ -186,7 +187,7 @@ namespace MOS::Sync
 				sema.cnt += 1;
 
 				// Reset the ceiling to the lowest priority
-				ceiling = Macro::PRI_MIN;
+				ceiling = PRI_MIN;
 
 				return;
 			}
@@ -287,6 +288,7 @@ namespace MOS::Sync
 			if (!waiting_queue.empty()) {
 				wake_up_one();
 			}
+			Task::yield();
 		}
 
 		inline void broadcast() // Notify all
@@ -294,6 +296,7 @@ namespace MOS::Sync
 			while (!waiting_queue.empty()) {
 				wake_up_one();
 			}
+			Task::yield();
 		}
 
 	private:
@@ -320,8 +323,8 @@ namespace MOS::Sync
 		Cond_t cond;
 		Cnt_t total, cnt = 0;
 
-		MOS_INLINE inline Barrier_t(uint32_t num)
-		    : total(num) {}
+		MOS_INLINE inline Barrier_t(uint32_t total)
+		    : total(total) {}
 
 		inline void wait()
 		{

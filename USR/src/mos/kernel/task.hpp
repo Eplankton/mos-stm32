@@ -11,18 +11,19 @@ namespace MOS::Task
 	using namespace Utils;
 	using namespace KernelGlobal;
 
-	using Tcb_t     = DataType::Tcb_t;
-	using TcbList_t = DataType::TcbList_t;
-	using Fn_t      = Tcb_t::Fn_t;
-	using Argv_t    = Tcb_t::Argv_t;
-	using Prior_t   = Tcb_t::Prior_t;
-	using Node_t    = Tcb_t::Node_t;
-	using Name_t    = Tcb_t::Name_t;
-	using Tid_t     = Tcb_t::Tid_t;
-	using Tick_t    = Tcb_t::Tick_t;
-	using TcbPtr_t  = Tcb_t::TcbPtr_t;
-	using PagePtr_t = Tcb_t::PagePtr_t;
-	using Status    = Tcb_t::Status;
+	using PageSz_t   = Page_t::Sz_t;
+	using Tcb_t      = DataType::Tcb_t;
+	using TcbList_t  = DataType::TcbList_t;
+	using Fn_t       = Tcb_t::Fn_t;
+	using Argv_t     = Tcb_t::Argv_t;
+	using Prior_t    = Tcb_t::Prior_t;
+	using Node_t     = Tcb_t::Node_t;
+	using Name_t     = Tcb_t::Name_t;
+	using Tid_t      = Tcb_t::Tid_t;
+	using Tick_t     = Tcb_t::Tick_t;
+	using TcbPtr_t   = Tcb_t::TcbPtr_t;
+	using PagePolicy = Page_t::Policy;
+	using Status     = Tcb_t::Status;
 
 	MOS_INLINE inline TcbPtr_t
 	current() { return cur_tcb; }
@@ -58,6 +59,23 @@ namespace MOS::Task
 		return tids;
 	}
 
+	// Used in idle task
+	inline void recycle()
+	{
+		DisIntrGuard_t guard;
+		while (!zombie_list.empty()) {
+			auto tcb = zombie_list.begin();
+			// For debug only
+			debug_tcbs.remove(tcb);
+
+			// Delete tcb from zombie_list
+			zombie_list.remove(tcb);
+
+			// Reset the TCB to default
+			tcb->deinit();
+		}
+	}
+
 	// For debug only
 	MOS_INLINE inline uint32_t
 	num() { return debug_tcbs.size(); }
@@ -69,34 +87,26 @@ namespace MOS::Task
 
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
+		DisIntrGuard_t guard;
 
-		{ // Disable interrupt to enter critical section
-			DisIntrGuard_t guard;
+		// Remove the task from list
+		if (tcb->is_status(Status::RUNNING) ||
+		    tcb->is_status(Status::READY)) {
+			ready_list.remove(tcb);
+		}
+		else if (tcb->is_sleeping()) {
+			sleeping_list.remove(tcb);
+		}
+		else {
+			blocked_list.remove(tcb);
+		}
 
-			// Remove the task from list
-			if (tcb->is_status(Status::RUNNING) ||
-			    tcb->is_status(Status::READY)) {
-				ready_list.remove(tcb);
-			}
-			else if (tcb->is_sleeping()) {
-				sleep_list.remove(tcb);
-			}
-			else {
-				blocked_list.remove(tcb);
-			}
-
-			// Mark the page as unused and deinit the page
-			tcb->release_page();
-
-			// Reset the TCB to default
-			tcb->deinit();
-
-			// For debug only
-			debug_tcbs.remove(tcb);
-		} // Enable interrupt, leave critical section
+		// Mark tcb as TERMINATED and add to zombie_list
+		tcb->set_status(Status::TERMINATED);
+		zombie_list.add(tcb);
 
 		if (tcb == current()) {
-			yield();
+			return yield();
 		}
 	}
 
@@ -109,7 +119,7 @@ namespace MOS::Task
 		// A descending stack consists of 16 registers as context.
 		// high -> low, descending stack
 		// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
-		tcb->set_SP(tcb->page->first_stk_top());
+		tcb->set_SP(&tcb->page.get_from_bottom(16));
 
 		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the Thumb state.
 		// V6-m and V7-m cores can only support Thumb state so it should always be set to '1'.
@@ -127,122 +137,97 @@ namespace MOS::Task
 		return tcb;
 	}
 
-	inline TcbPtr_t create(
-	        Fn_t fn,
-	        Argv_t argv = nullptr,
-	        Prior_t pri = Macro::PRI_MIN,
-	        Name_t name = "")
+	inline TcbPtr_t
+	create_raw(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
 	{
-		if (num() >= Macro::MAX_TASK_NUM) {
+		MOS_ASSERT(fn != nullptr, "fn can't be null");
+
+		if (num() >= MAX_TASK_NUM) {
 			return nullptr;
 		}
 
-		// Assert if irq disabled
-		MOS_ASSERT(test_irq(), "Disabled Interrupt");
-		MOS_ASSERT(fn != nullptr, "fn ptr can't be null");
+		if (page.get_raw() == nullptr) {
+			MOS_MSG("Page Alloc Failed!");
+			return nullptr;
+		}
 
+		DisIntrGuard_t guard;
 		TcbPtr_t cur = current(), tcb = nullptr;
 
-		{ // Disable interrupt to enter critical section
-			DisIntrGuard_t guard;
+		// Construct a TCB at the head of a page block
+		tcb = Tcb_t::build(fn, argv, pri, name, page);
 
-			// Page Alloc
-			auto page = Alloc::palloc();
+		// Load empty context
+		load_context(tcb);
 
-			if (page == nullptr) {
-				MOS_MSG("Page Alloc Failed!");
-				return nullptr;
-			}
+		// Give TID
+		tcb->set_tid(inc_tids());
 
-			// Construct a TCB at the head of a page block
-			tcb = Tcb_t::build(page, fn, argv, pri, name);
+		// Set parent
+		tcb->set_parent(cur);
 
-			// Load empty context
-			load_context(tcb);
+		// Set TCB to be READY
+		tcb->set_status(Status::READY);
 
-			// Give TID
-			tcb->set_tid(inc_tids());
+		// Add to ready_list
+		ready_list.insert_in_order(tcb, Tcb_t::pri_cmp);
 
-			// Set parent
-			tcb->set_parent(cur);
+		// For debug only
+		debug_tcbs.add(tcb);
 
-			// Set TCB to be READY
-			tcb->set_status(Status::READY);
+		return tcb;
+	}
 
-			// Add to TCBs list
-			ready_list.insert_in_order(tcb, Tcb_t::pri_cmp);
-
-			// For debug only
-			debug_tcbs.add(tcb);
-		} // Enable interrupt, leave critical section
+	inline TcbPtr_t
+	create_static(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
+	{
+		auto tcb = create_raw(fn, argv, pri, name, page);
 
 		// If a new task has higher priority, switch at once
-		if (Tcb_t::pri_cmp(tcb, cur)) {
+		if (Tcb_t::pri_cmp(tcb, current())) {
 			yield();
 		}
 
 		return tcb;
 	}
 
-	// Experimental
-	MOS_INLINE inline TcbPtr_t
-	create(Fn_t fn,
-	       auto& argv  = nullptr,
-	       Prior_t pri = Macro::PRI_MIN,
-	       Name_t name = "")
+	// Create from page_pool
+	inline TcbPtr_t
+	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
 	{
-		return create(fn, (Argv_t) &argv, pri, name);
+		Page_t page {
+		        .size   = PAGE_SIZE,
+		        .raw    = Alloc::palloc<PagePolicy::POOL>(0xFF),
+		        .policy = PagePolicy::POOL,
+		};
+
+		return create_static(fn, argv, pri, name, page);
+	}
+
+	// Create from dynamic memory
+	inline TcbPtr_t
+	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, PageSz_t pg_sz)
+	{
+		Page_t page {
+		        .size   = pg_sz,
+		        .raw    = Alloc::palloc<PagePolicy::DYNAMIC>(pg_sz),
+		        .policy = PagePolicy::DYNAMIC,
+		};
+
+		return create_static(fn, argv, pri, name, page);
 	}
 
 	// Not recommended
-	inline TcbPtr_t create_fromISR(
-	        Fn_t fn,
-	        Argv_t argv = nullptr,
-	        Prior_t pri = Macro::PRI_MIN,
-	        Name_t name = "")
+	inline TcbPtr_t
+	create_isr(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
 	{
-		MOS_ASSERT(fn != nullptr, "fn can't be null");
+		Page_t page {
+		        .size   = PAGE_SIZE,
+		        .raw    = Alloc::palloc<PagePolicy::POOL>(0xFF),
+		        .policy = PagePolicy::POOL,
+		};
 
-		if (num() >= Macro::MAX_TASK_NUM) {
-			return nullptr;
-		}
-
-		TcbPtr_t cur = current(), tcb = nullptr;
-
-		{
-			DisIntrGuard_t guard;
-
-			// Page Alloc
-			auto page = Alloc::palloc();
-
-			if (page == nullptr) {
-				MOS_MSG("Page Alloc Failed!");
-				return nullptr;
-			}
-
-			// Construct a TCB at the head of a page block
-			tcb = Tcb_t::build(page, fn, argv, pri, name);
-
-			// Load empty context
-			load_context(tcb);
-
-			// Give TID
-			tcb->set_tid(inc_tids());
-
-			// Set parent
-			tcb->set_parent(cur);
-
-			// Set TCB to be READY
-			tcb->set_status(Status::READY);
-
-			// Add to ready_list
-			ready_list.insert_in_order(tcb, Tcb_t::pri_cmp);
-
-			// For debug only
-			debug_tcbs.add(tcb);
-		}
-
-		return tcb;
+		return create_raw(fn, argv, pri, name, page);
 	}
 
 	static inline void
@@ -335,8 +320,8 @@ namespace MOS::Task
 		resume_raw(tcb, blocked_list);
 	}
 
-	MOS_INLINE inline void
-	change_priority(TcbPtr_t tcb, Prior_t pri)
+	inline void
+	change_pri(TcbPtr_t tcb, Prior_t pri)
 	{
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
@@ -350,7 +335,7 @@ namespace MOS::Task
 		}
 	}
 
-	MOS_INLINE inline TcbPtr_t
+	inline TcbPtr_t
 	find(auto info)
 	{
 		DisIntrGuard_t guard;
@@ -394,10 +379,8 @@ namespace MOS::Task
 		}
 	};
 
-	MOS_INLINE inline void
-	print_info(
-	        TcbPtr_t tcb,
-	        const char* format = " #%-2d %-9s %-5d %-9s %2d%%\n")
+	inline void
+	print_info(TcbPtr_t tcb, const char* format = " #%-2d %-9s %-5d %-9s %2d%%\n")
 	{
 		kprintf(format,
 		        tcb->get_tid(),
@@ -424,7 +407,7 @@ namespace MOS::Task
 
 		auto cur = current();
 		cur->set_delay(os_ticks + ticks);
-		block_to_in_order(cur, sleep_list, delay_cmp);
+		block_to_in_order(cur, sleeping_list, delay_cmp);
 	}
 }
 
