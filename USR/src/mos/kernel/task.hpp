@@ -40,11 +40,10 @@ namespace MOS::Task
 	MOS_INLINE inline void
 	dec_tslc()
 	{
-		volatile auto& tslc = current()->time_slice;
-		if (tslc <= TIME_SLICE) // Avoid underflow
-			tslc -= 1;
+		if (current()->time_slice <= TIME_SLICE) // Avoid underflow
+			current()->time_slice -= 1;
 		else
-			tslc = 0;
+			current()->time_slice = 0;
 	}
 
 	MOS_INLINE inline void
@@ -203,7 +202,7 @@ namespace MOS::Task
 		return create_static(fn, argv, pri, name, page);
 	}
 
-	// Create from pre-allocated page_pool
+	// Create from pre-allocated `page_pool`
 	MOS_INLINE inline TcbPtr_t
 	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
 	{
@@ -229,7 +228,7 @@ namespace MOS::Task
 		return create_static(fn, argv, pri, name, page);
 	}
 
-	// Not recommended
+	// Not recommended to use
 	MOS_INLINE inline TcbPtr_t
 	create_isr(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
 	{

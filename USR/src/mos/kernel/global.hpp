@@ -20,9 +20,13 @@ namespace MOS::KernelGlobal
 	using TcbPtr_t   = Tcb_t::TcbPtr_t;
 	using PagePool_t = uint32_t[POOL_NUM][PAGE_SIZE];
 
-	TcbList_t ready_list, blocked_list, sleeping_list, zombie_list;
 	PagePool_t page_pool;
 	Tid_t tids = -1;
+
+	TcbList_t ready_list,  // Tasks that are `READY` to be scheduled
+	        blocked_list,  // Tasks that are `BLOCKED` and waiting for a certain condition
+	        sleeping_list, // Tasks that are sleeping(`BLOCKED`) for a certain amount of time to pass
+	        zombie_list;   // Tasks that have been `TERMINATED` but their resources are not recycled yet
 
 	// Put it in `extern "C"` because the name is referred in `asm("")` and don't change it.
 	// At anytime, the `cur_tcb` should point to the task running currently.

@@ -223,11 +223,7 @@ namespace MOS::DataType
 		}
 
 		static inline TcbPtr_t
-		build(Fn_t fn,
-		      Argv_t argv = nullptr,
-		      Prior_t pri = PRI_MIN,
-		      Name_t name = "",
-		      Page_t page = {0, nullptr, ERROR})
+		build(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
 		{
 			// Use inplace new
 			return new (page.get_raw()) Tcb_t {
@@ -268,7 +264,7 @@ namespace MOS::DataType
 				};
 			};
 
-			ListImpl_t::iter_mut(wrapper(fn));
+			ListImpl_t::iter(wrapper(fn));
 		}
 
 		MOS_INLINE inline void
