@@ -18,11 +18,11 @@ namespace MOS::DataType
 		using StackPtr_t    = uint32_t*;
 		using Node_t        = ListNode_t;
 		using Tid_t         = int16_t;
+		using Prior_t       = int8_t;
 		using Tick_t        = uint32_t;
 		using Ret_t         = void;
 		using Argv_t        = void*;
 		using Fn_t          = Ret_t (*)(Argv_t);
-		using Prior_t       = int8_t;
 		using Name_t        = const char*;
 
 		enum class Status
@@ -48,7 +48,8 @@ namespace MOS::DataType
 		Argv_t argv = nullptr;
 		Name_t name = "";
 
-		Prior_t priority = PRI_MIN, // Low -> High: 15->0, -1 -> Invalid
+		// Low -> High: 15->0, -1 -> Invalid
+		Prior_t priority = PRI_MIN,
 		        old_pr   = PRI_NONE;
 
 		Page_t page        = {0, nullptr, ERROR};
@@ -57,9 +58,15 @@ namespace MOS::DataType
 		Tick_t delay_ticks = 0;
 		TcbPtr_t parent    = nullptr;
 
-		Tcb_t() = default;
-		Tcb_t(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
-		    : fn(fn), argv(argv), priority(pri), name(name), page(page) {}
+		MOS_INLINE Tcb_t() = default;
+		MOS_INLINE Tcb_t(
+		        Fn_t fn,
+		        Argv_t argv,
+		        Prior_t pri,
+		        Name_t name,
+		        Page_t page)
+		    : fn(fn), argv(argv), priority(pri),
+		      name(name), page(page) {}
 
 		MOS_INLINE inline void
 		set_tid(Tid_t tid_val) volatile
@@ -88,13 +95,13 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		deinit() volatile
 		{
-			Page_t waste {
+			Page_t inactive {
 			        .size   = 0xFF, // Anyway
 			        .raw    = page.get_raw(),
 			        .policy = page.get_policy()};
 
 			new ((void*) this) Tcb_t {};
-			waste.recycle();
+			inactive.recycle();
 		}
 
 		MOS_INLINE inline void
@@ -384,7 +391,7 @@ namespace MOS::DataType
 
 		MOS_INLINE inline void
 		iter(auto&& fn) const volatile
-		    requires Concepts::Invocable<decltype(fn), void, const TcbPtr_t&>
+		    requires Invocable<decltype(fn), void, const TcbPtr_t&>
 		{
 			for (auto& pt: raw) {
 				if (pt != nullptr) {
@@ -395,7 +402,7 @@ namespace MOS::DataType
 
 		MOS_INLINE inline void
 		iter_mut(auto&& fn) volatile
-		    requires Concepts::Invocable<decltype(fn), void, TcbPtr_t&>
+		    requires Invocable<decltype(fn), void, TcbPtr_t&>
 		{
 			for (auto& pt: raw) {
 				if (pt != nullptr) {
@@ -406,7 +413,7 @@ namespace MOS::DataType
 
 		MOS_INLINE inline TcbPtr_t
 		iter_until(auto&& fn) volatile const
-		    requires Concepts::Invocable<decltype(fn), bool, TcbPtr_t&>
+		    requires Invocable<decltype(fn), bool, TcbPtr_t&>
 		{
 			for (auto& pt: raw) {
 				if (pt != nullptr) {

@@ -193,7 +193,7 @@ int main(void)
     Task::create(Shell::launch, &rx_buf, 1, "Shell");
     
     // Create LED task
-    Task::create(App::Task0, nullptr, 1, "T0");
+    Task::create(App::Task0, nullptr, 2, "T0");
 
     // Test examples
     // Task::create(Test::MutexTest, nullptr, 1, "T1");
@@ -250,7 +250,7 @@ o'' )_____//   Version @ x.x.x(...)
 8. Support GCC and STM32CubeMX HAL
 9. Add HAL::STM32F4xx::RTC_t, CmdCall::date_cmd and App::Calendar
 10. idle uses KernelGlobal::zombie_list to recycle inactive pages
-11. Three basic page-allocation policies, Page_t::Policy::{POOL, DYNAMIC, STATIC}
+11. Three basic page allocator policies, Page_t::Policy::{POOL, DYNAMIC, STATIC}
 ```
 ```
 📦 Version 0.0.3

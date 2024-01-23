@@ -8,22 +8,21 @@
 
 namespace MOS::Task
 {
-	using namespace Utils;
 	using namespace KernelGlobal;
+	using namespace Utils;
+	using namespace Alloc;
 
-	using PageSz_t   = Page_t::Sz_t;
-	using Tcb_t      = DataType::Tcb_t;
-	using TcbList_t  = DataType::TcbList_t;
-	using Fn_t       = Tcb_t::Fn_t;
-	using Argv_t     = Tcb_t::Argv_t;
-	using Prior_t    = Tcb_t::Prior_t;
-	using Node_t     = Tcb_t::Node_t;
-	using Name_t     = Tcb_t::Name_t;
-	using Tid_t      = Tcb_t::Tid_t;
-	using Tick_t     = Tcb_t::Tick_t;
-	using TcbPtr_t   = Tcb_t::TcbPtr_t;
-	using PagePolicy = Page_t::Policy;
-	using Status     = Tcb_t::Status;
+	using Tcb_t     = DataType::Tcb_t;
+	using TcbList_t = DataType::TcbList_t;
+	using Fn_t      = Tcb_t::Fn_t;
+	using Argv_t    = Tcb_t::Argv_t;
+	using Prior_t   = Tcb_t::Prior_t;
+	using Node_t    = Tcb_t::Node_t;
+	using Name_t    = Tcb_t::Name_t;
+	using Tid_t     = Tcb_t::Tid_t;
+	using Tick_t    = Tcb_t::Tick_t;
+	using TcbPtr_t  = Tcb_t::TcbPtr_t;
+	using Status    = Tcb_t::Status;
 
 	MOS_INLINE inline TcbPtr_t
 	current() { return cur_tcb; }
@@ -39,9 +38,19 @@ namespace MOS::Task
 	}
 
 	MOS_INLINE inline void
+	dec_tslc()
+	{
+		volatile auto& tslc = current()->time_slice;
+		if (tslc <= TIME_SLICE) // Avoid underflow
+			tslc -= 1;
+		else
+			tslc = 0;
+	}
+
+	MOS_INLINE inline void
 	nop_and_yield()
 	{
-		current()->time_slice -= 1;
+		dec_tslc();
 		yield();
 	}
 
@@ -142,10 +151,6 @@ namespace MOS::Task
 	{
 		MOS_ASSERT(fn != nullptr, "fn can't be null");
 
-		if (num() >= MAX_TASK_NUM) {
-			return nullptr;
-		}
-
 		if (page.get_raw() == nullptr) {
 			MOS_MSG("Page Alloc Failed!");
 			return nullptr;
@@ -191,26 +196,33 @@ namespace MOS::Task
 		return tcb;
 	}
 
-	// Create from page_pool
-	inline TcbPtr_t
+	// Create from static memory
+	MOS_INLINE inline TcbPtr_t
+	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
+	{
+		return create_static(fn, argv, pri, name, page);
+	}
+
+	// Create from pre-allocated page_pool
+	MOS_INLINE inline TcbPtr_t
 	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
 	{
 		Page_t page {
 		        .size   = PAGE_SIZE,
-		        .raw    = Alloc::palloc<PagePolicy::POOL>(0xFF),
+		        .raw    = palloc<PagePolicy::POOL>(0xFF),
 		        .policy = PagePolicy::POOL,
 		};
 
 		return create_static(fn, argv, pri, name, page);
 	}
 
-	// Create from dynamic memory
-	inline TcbPtr_t
-	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, PageSz_t pg_sz)
+	// Create from dynamic-allocated memory
+	MOS_INLINE inline TcbPtr_t
+	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, PageLen_t pg_sz)
 	{
 		Page_t page {
 		        .size   = pg_sz,
-		        .raw    = Alloc::palloc<PagePolicy::DYNAMIC>(pg_sz),
+		        .raw    = palloc<PagePolicy::DYNAMIC>(pg_sz),
 		        .policy = PagePolicy::DYNAMIC,
 		};
 
@@ -218,12 +230,12 @@ namespace MOS::Task
 	}
 
 	// Not recommended
-	inline TcbPtr_t
+	MOS_INLINE inline TcbPtr_t
 	create_isr(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
 	{
 		Page_t page {
 		        .size   = PAGE_SIZE,
-		        .raw    = Alloc::palloc<PagePolicy::POOL>(0xFF),
+		        .raw    = palloc<PagePolicy::POOL>(0xFF),
 		        .policy = PagePolicy::POOL,
 		};
 
@@ -238,10 +250,7 @@ namespace MOS::Task
 	}
 
 	static inline void
-	block_to_in_order_raw(
-	        TcbPtr_t tcb,
-	        TcbList_t& dest,
-	        auto&& cmp)
+	block_to_in_order_raw(TcbPtr_t tcb, TcbList_t& dest, auto&& cmp)
 	{
 		tcb->set_status(Status::BLOCKED);
 		ready_list.send_to_in_order(tcb, dest, cmp);
@@ -261,10 +270,8 @@ namespace MOS::Task
 		}
 	}
 
-	inline void block_to_in_order(
-	        TcbPtr_t tcb,
-	        TcbList_t& dest,
-	        auto&& cmp)
+	inline void
+	block_to_in_order(TcbPtr_t tcb, TcbList_t& dest, auto&& cmp)
 	{
 		if (tcb == nullptr || tcb->is_status(Status::BLOCKED))
 			return;
@@ -311,7 +318,7 @@ namespace MOS::Task
 	}
 
 	// Not recommended
-	inline void resume_fromISR(TcbPtr_t tcb)
+	inline void resume_isr(TcbPtr_t tcb)
 	{
 		if (tcb == nullptr || !tcb->is_status(Status::BLOCKED))
 			return;

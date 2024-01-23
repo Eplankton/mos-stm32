@@ -9,10 +9,11 @@ namespace MOS::Alloc
 	using Page_t     = DataType::Page_t;
 	using PagePolicy = Page_t::Policy;
 	using PageRaw_t  = Page_t::Raw_t;
-	using PageSz_t   = Page_t::Sz_t;
+	using PageLen_t  = Page_t::Len_t;
 
+	// Page Allocator
 	template <PagePolicy policy>
-	inline PageRaw_t palloc(PageSz_t pg_sz = 0xFF)
+	inline PageRaw_t palloc(PageLen_t pg_sz = 0xFF)
 	{
 		if constexpr (policy == PagePolicy::POOL) {
 			using KernelGlobal::page_pool;

@@ -8,10 +8,10 @@ namespace MOS::DataType
 	struct Page_t
 	{
 		using Raw_t = uint32_t*;
-		using Sz_t  = uint32_t;
+		using Len_t = uint32_t;
 
-		Sz_t size = 0;
-		Raw_t raw = nullptr;
+		Len_t size = 0;
+		Raw_t raw  = nullptr;
 
 		enum class Policy
 		{
@@ -28,10 +28,9 @@ namespace MOS::DataType
 			if (policy == DYNAMIC) {
 				delete[] raw;
 			}
-			// ...
 		}
 
-		MOS_INLINE inline Sz_t
+		MOS_INLINE inline Len_t
 		get_size() const volatile { return size; }
 
 		MOS_INLINE inline Raw_t
@@ -41,7 +40,8 @@ namespace MOS::DataType
 		get_policy() const volatile { return policy; }
 
 		MOS_INLINE inline auto&
-		get_from_bottom(uint32_t n = 0) const volatile { return raw[size - n]; }
+		get_from_bottom(uint32_t n = 0)
+		        const volatile { return raw[size - n]; }
 	};
 }
 

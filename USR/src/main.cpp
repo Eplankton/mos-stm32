@@ -8,6 +8,8 @@
 #include "user/app.hpp"
 #include "user/test.hpp"
 
+uint32_t stp[256];
+
 int main(void)
 {
 	using namespace MOS;
@@ -22,8 +24,14 @@ int main(void)
 	// Create Shell with rx_buf
 	Task::create(Shell::launch, &rx_buf, 1, "Shell");
 
+	DataType::Page_t page {
+	        .size   = sizeof(stp) / sizeof(uint32_t),
+	        .raw    = stp,
+	        .policy = DataType::Page_t::Policy::STATIC,
+	};
+
 	// Create user tasks
-	Task::create(App::Task0, nullptr, 2, "T0");
+	Task::create(App::Task0, nullptr, 2, "T0", page);
 	// Task::create(App::GUI, nullptr, 3, "GUI");
 	Task::create(App::LCD, nullptr, 3, "LCD");
 

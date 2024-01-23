@@ -18,7 +18,7 @@ namespace MOS::KernelGlobal
 	using Tid_t      = Tcb_t::Tid_t;
 	using Tick_t     = Tcb_t::Tick_t;
 	using TcbPtr_t   = Tcb_t::TcbPtr_t;
-	using PagePool_t = uint32_t[MAX_TASK_NUM][PAGE_SIZE];
+	using PagePool_t = uint32_t[POOL_NUM][PAGE_SIZE];
 
 	TcbList_t ready_list, blocked_list, sleeping_list, zombie_list;
 	PagePool_t page_pool;
