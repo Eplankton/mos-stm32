@@ -42,10 +42,17 @@ namespace MOS::DataType
 		}
 
 	public:
-		MOS_INLINE inline uint32_t size() const volatile { return m_len; }
-		MOS_INLINE inline bool full() const volatile { return m_len != 0 && m_head == m_tail; }
-		MOS_INLINE inline bool empty() const volatile { return m_len == 0; }
-		MOS_INLINE inline void clear() volatile { m_head = m_tail = m_len = 0; }
+		MOS_INLINE inline uint32_t
+		size() const volatile { return m_len; }
+
+		MOS_INLINE inline bool
+		full() const volatile { return m_len != 0 && m_head == m_tail; }
+
+		MOS_INLINE inline bool
+		empty() const volatile { return m_len == 0; }
+
+		MOS_INLINE inline void
+		clear() volatile { m_head = m_tail = m_len = 0; }
 	};
 
 	template <typename T, uint32_t N, typename Base = QueueImpl_t>
@@ -96,7 +103,10 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		push(const T& val) volatile
 		{
-			push((void*) (m_data + m_tail), (void*) &val, sizeof(T), N);
+			push((void*) (m_data + m_tail),
+			     (void*) &val,
+			     sizeof(T),
+			     N);
 		}
 
 		inline value_ref serve() volatile

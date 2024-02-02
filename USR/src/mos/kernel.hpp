@@ -1,9 +1,9 @@
 //////////////////////////////////////////////////////////////////////////
-//                          The MOS Kernel
-//                  Eplankton (wikechao@gmail.com)
-//                   https://github.com/Eplankton
-//               East China Normal University, Shanghai
-//                  The Apache License, Version 2.0
+//                          The MOS Kernel                              //
+//                  Eplankton (wikechao@gmail.com)                      //
+//                   https://github.com/Eplankton                       //
+//               East China Normal University, Shanghai                 //
+//                  The Apache License, Version 2.0                     //
 //////////////////////////////////////////////////////////////////////////
 
 #ifndef _MOS_KERNEL_

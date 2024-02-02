@@ -93,8 +93,8 @@ namespace MOS::App
 		};
 
 		const auto sub_pr = Task::current()->get_pri() + 1;
-		Task::create(GIF, nullptr, sub_pr, "GIF");
-		Task::create(Slogan, nullptr, sub_pr, "Slogan");
+		Task::create(GIF, nullptr, sub_pr, "GIF", 128);
+		Task::create(Slogan, nullptr, sub_pr, "Slogan", 128);
 
 		while (true) {
 			Task::block();

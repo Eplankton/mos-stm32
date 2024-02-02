@@ -25,15 +25,15 @@ int main(void)
 	Task::create(Shell::launch, &rx_buf, 1, "Shell");
 
 	DataType::Page_t page {
-	        .size   = sizeof(stp) / sizeof(uint32_t),
-	        .raw    = stp,
 	        .policy = DataType::Page_t::Policy::STATIC,
+	        .raw    = stp,
+	        .size   = sizeof(stp) / sizeof(uint32_t),
 	};
 
 	// Create user tasks
 	Task::create(App::Task0, nullptr, 2, "T0", page);
-	// Task::create(App::GUI, nullptr, 3, "GUI");
-	Task::create(App::LCD, nullptr, 3, "LCD");
+	Task::create(App::GUI, nullptr, 3, "GUI");
+	// Task::create(App::LCD, nullptr, 3, "LCD", 48);
 
 	// Test examples
 	// Task::create(Test::MutexTest, nullptr, 1, "T1");

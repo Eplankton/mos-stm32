@@ -48,11 +48,11 @@ namespace MOS::DataType
 		Argv_t argv = nullptr;
 		Name_t name = "";
 
-		// Low -> High: 15->0, -1 -> Invalid
+		// Low -> High: 15->0, Invalid: -1
 		Prior_t priority = PRI_MIN,
 		        old_pr   = PRI_NONE;
 
-		Page_t page        = {0, nullptr, ERROR};
+		Page_t page        = {ERROR, nullptr, 0};
 		Status status      = TERMINATED;
 		Tick_t time_slice  = TIME_SLICE;
 		Tick_t delay_ticks = 0;
@@ -96,9 +96,10 @@ namespace MOS::DataType
 		deinit() volatile
 		{
 			Page_t inactive {
-			        .size   = 0xFF, // Anyway
+			        .policy = page.get_policy(),
 			        .raw    = page.get_raw(),
-			        .policy = page.get_policy()};
+			        .size   = 0xFF, // Anyway
+			};
 
 			new ((void*) this) Tcb_t {};
 			inactive.recycle();
@@ -137,7 +138,7 @@ namespace MOS::DataType
 		MOS_INLINE inline bool
 		is_sleeping() volatile const
 		{
-			return is_status(BLOCKED) && delay_ticks != 0;
+			return delay_ticks != 0 && is_status(BLOCKED);
 		}
 
 		MOS_INLINE inline Name_t
@@ -167,25 +168,25 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		set_xPSR(const uint32_t xpsr_val) volatile
 		{
-			page.get_from_bottom(1) = xpsr_val;
+			page.from_bottom(1) = xpsr_val;
 		}
 
 		MOS_INLINE inline void
 		set_PC(const uint32_t pc_val) volatile
 		{
-			page.get_from_bottom(2) = pc_val;
+			page.from_bottom(2) = pc_val;
 		}
 
 		MOS_INLINE inline void
 		set_LR(const uint32_t lr_val) volatile
 		{
-			page.get_from_bottom(3) = lr_val;
+			page.from_bottom(3) = lr_val;
 		}
 
 		MOS_INLINE inline void
 		set_argv(const uint32_t argv_val) volatile
 		{
-			page.get_from_bottom(8) = argv_val;
+			page.from_bottom(8) = argv_val;
 		}
 
 		MOS_INLINE inline void
@@ -197,7 +198,7 @@ namespace MOS::DataType
 		MOS_INLINE inline uint32_t
 		page_usage() volatile const
 		{
-			const uint32_t stk_top = (uint32_t) &page.get_from_bottom();
+			const uint32_t stk_top = (uint32_t) &page.from_bottom();
 			const uint32_t atu     = (stk_top - (uint32_t) sp + sizeof(Tcb_t));
 			return atu * 25 / page.get_size();
 		}
@@ -205,7 +206,7 @@ namespace MOS::DataType
 		MOS_INLINE inline uint32_t
 		stack_usage() volatile const
 		{
-			const uint32_t stk_top = (uint32_t) &page.get_from_bottom();
+			const uint32_t stk_top = (uint32_t) &page.from_bottom();
 			const uint32_t atu     = (stk_top - (uint32_t) sp);
 			return atu * 25 / (page.get_size() - sizeof(Tcb_t) / sizeof(void*));
 		}
@@ -339,14 +340,6 @@ namespace MOS::DataType
 		{
 			send_to_in_order(tcb, *this, cmp);
 		}
-
-		MOS_INLINE inline bool
-		contains(TcbPtr_t tcb)
-		{
-			return iter_until([tcb](const Tcb_t& x) {
-				       return &x == tcb;
-			       }) != nullptr;
-		}
 	};
 
 	struct DebugTcbs_t
@@ -354,9 +347,11 @@ namespace MOS::DataType
 		using TcbPtr_t = volatile Tcb_t::TcbPtr_t;
 		using Raw_t    = volatile TcbPtr_t[MAX_TASK_NUM];
 		using Len_t    = volatile uint32_t;
+		using Tid_t    = volatile Tcb_t::Tid_t;
 
-		Raw_t raw = {nullptr};
-		Len_t len = 0;
+		Raw_t raw    = {nullptr};
+		Len_t len    = 0;
+		Tid_t cr_tid = -1;
 
 		MOS_INLINE inline Len_t
 		size() const volatile { return len; }
@@ -387,7 +382,7 @@ namespace MOS::DataType
 
 		MOS_INLINE inline void
 		iter(auto&& fn) const volatile
-		    requires Invocable<decltype(fn), void, const TcbPtr_t&>
+		    requires Invocable<decltype(fn), void, TcbPtr_t>
 		{
 			for (auto& pt: raw) {
 				if (pt != nullptr) {
@@ -398,7 +393,7 @@ namespace MOS::DataType
 
 		MOS_INLINE inline void
 		iter_mut(auto&& fn) volatile
-		    requires Invocable<decltype(fn), void, TcbPtr_t&>
+		    requires Invocable<decltype(fn), void, TcbPtr_t>
 		{
 			for (auto& pt: raw) {
 				if (pt != nullptr) {
@@ -409,7 +404,7 @@ namespace MOS::DataType
 
 		MOS_INLINE inline TcbPtr_t
 		iter_until(auto&& fn) volatile const
-		    requires Invocable<decltype(fn), bool, TcbPtr_t&>
+		    requires Invocable<decltype(fn), bool, TcbPtr_t>
 		{
 			for (auto& pt: raw) {
 				if (pt != nullptr) {

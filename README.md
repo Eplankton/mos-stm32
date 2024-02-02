@@ -70,7 +70,7 @@ src
 
 <img src="Pic/board.gif" width="51%"> <img src="Pic/guilite.gif" width="45%">
 
-`Task period and time sequence`
+`Parallel Tasks Period & Time Sequence`
 <img src="Pic/T0-T1.png" width="90%">
 <img src="Pic/tids.png" width="70%">
 
@@ -227,9 +227,11 @@ o'' )_____//   Version @ x.x.x(...)
 ### Version 🧾
 ```
 📦 The initial version 0.0.1
+
+✅ Done
 1. Basic Scheduler and Task control
 
-📌 To do
+📌 Plan
 1. Timers, RoundRobin
 2. Inter-process communication(IPC), pipes, message queues
 3. Sync, semaphore, mutex, lock
@@ -240,6 +242,8 @@ o'' )_____//   Version @ x.x.x(...)
 ```
 ```
 📦 Version 0.0.2
+
+✅ Done
 1. Sync::{Semaphore_t, Lock_t, Mutex_t<T>, Cond_t, Barrier_t}, where Mutex_t adopts Priority Ceiling Protocol
 2. Scheduler::Policy::PreemptivePriority, under same priority -> RoundRobin
 3. Task::terminate() implicitly be called when task exits
@@ -254,13 +258,17 @@ o'' )_____//   Version @ x.x.x(...)
 ```
 ```
 📦 Version 0.0.3
-📌 To do
+
+✅ Done
+1. Tids from BitMap_t
+
+📌 Plan
 1. IPC::{pipe, message queue}, etc.
 2. Soft/Hardware Timers
-3. BitMap for faster Page Allocation
-4. Basic formal verification on Scheduler
-5. DMA_t Driver
-6. More scheduler algorithms
+3. Basic formal verification on Scheduler
+4. DMA_t Driver
+5. More scheduler algorithms
+6. Add FPU support
 ```
 
 ### References 🛸

@@ -1,5 +1,5 @@
-#ifndef _MOS_CPU_CORTEX_M4_
-#define _MOS_CPU_CORTEX_M4_
+#ifndef _MOS_ARCH_CORTEX_M4_
+#define _MOS_ARCH_CORTEX_M4_
 
 #include "stm32f4xx.h"
 #include "core_cm4.h"

@@ -40,7 +40,8 @@ namespace MOS::Task
 	MOS_INLINE inline void
 	dec_tslc()
 	{
-		if (current()->time_slice <= TIME_SLICE) // Avoid underflow
+		// Avoid underflow
+		if (current()->time_slice <= TIME_SLICE)
 			current()->time_slice -= 1;
 		else
 			current()->time_slice = 0;
@@ -61,10 +62,11 @@ namespace MOS::Task
 	}
 
 	MOS_INLINE inline Tid_t
-	inc_tids()
+	alloc_tid()
 	{
-		tids += 1;
-		return tids;
+		auto tid = tids.first_zero();
+		tids.set(tid);
+		return tid;
 	}
 
 	// Used in idle task
@@ -82,6 +84,7 @@ namespace MOS::Task
 			// Reset the TCB to default
 			tcb->deinit();
 		}
+		return yield();
 	}
 
 	// For debug only
@@ -111,7 +114,16 @@ namespace MOS::Task
 
 		// Mark tcb as TERMINATED and add to zombie_list
 		tcb->set_status(Status::TERMINATED);
-		zombie_list.add(tcb);
+		tids.reset(tcb->get_tid());
+
+		// Only dynamic pages need delayed recycling
+		if (tcb->page.is_policy(PagePolicy::DYNAMIC)) {
+			zombie_list.add(tcb);
+		}
+		else { // Otherwise, just remove and deinit
+			debug_tcbs.remove(tcb);
+			tcb->deinit();
+		}
 
 		if (tcb == current()) {
 			return yield();
@@ -127,7 +139,7 @@ namespace MOS::Task
 		// A descending stack consists of 16 registers as context.
 		// high -> low, descending stack
 		// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
-		tcb->set_SP(&tcb->page.get_from_bottom(16));
+		tcb->set_SP(&tcb->page.from_bottom(16));
 
 		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the Thumb state.
 		// V6-m and V7-m cores can only support Thumb state so it should always be set to '1'.
@@ -150,8 +162,13 @@ namespace MOS::Task
 	{
 		MOS_ASSERT(fn != nullptr, "fn can't be null");
 
+		if (debug_tcbs.size() >= MAX_TASK_NUM) {
+			MOS_MSG("Max tasks!\n");
+			return nullptr;
+		}
+
 		if (page.get_raw() == nullptr) {
-			MOS_MSG("Page Alloc Failed!");
+			MOS_MSG("Page Alloc Failed!\n");
 			return nullptr;
 		}
 
@@ -164,8 +181,8 @@ namespace MOS::Task
 		// Load empty context
 		load_context(tcb);
 
-		// Give TID
-		tcb->set_tid(inc_tids());
+		// Give Tid
+		tcb->set_tid(alloc_tid());
 
 		// Set parent
 		tcb->set_parent(cur);
@@ -183,7 +200,7 @@ namespace MOS::Task
 	}
 
 	inline TcbPtr_t
-	create_static(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
+	create_impl(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
 	{
 		auto tcb = create_raw(fn, argv, pri, name, page);
 
@@ -195,37 +212,36 @@ namespace MOS::Task
 		return tcb;
 	}
 
-	// Create from static memory
+	// Create task from static memory
 	MOS_INLINE inline TcbPtr_t
 	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
 	{
-		return create_static(fn, argv, pri, name, page);
+		return create_impl(fn, argv, pri, name, page);
 	}
 
-	// Create from pre-allocated `page_pool`
+	// Create task from pre-allocated `page_pool`
 	MOS_INLINE inline TcbPtr_t
 	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
 	{
 		Page_t page {
-		        .size   = PAGE_SIZE,
-		        .raw    = palloc<PagePolicy::POOL>(0xFF),
 		        .policy = PagePolicy::POOL,
+		        .raw    = palloc<PagePolicy::POOL>(0xFF),
+		        .size   = PAGE_SIZE,
 		};
-
-		return create_static(fn, argv, pri, name, page);
+		return create_impl(fn, argv, pri, name, page);
 	}
 
-	// Create from dynamic-allocated memory
+	// Create task from dynamic allocated memory
 	MOS_INLINE inline TcbPtr_t
 	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, PageLen_t pg_sz)
 	{
 		Page_t page {
-		        .size   = pg_sz,
-		        .raw    = palloc<PagePolicy::DYNAMIC>(pg_sz),
 		        .policy = PagePolicy::DYNAMIC,
+		        .raw    = palloc<PagePolicy::DYNAMIC>(pg_sz),
+		        .size   = pg_sz,
 		};
 
-		return create_static(fn, argv, pri, name, page);
+		return create_impl(fn, argv, pri, name, page);
 	}
 
 	// Not recommended to use
@@ -233,9 +249,9 @@ namespace MOS::Task
 	create_isr(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
 	{
 		Page_t page {
-		        .size   = PAGE_SIZE,
-		        .raw    = palloc<PagePolicy::POOL>(0xFF),
 		        .policy = PagePolicy::POOL,
+		        .raw    = palloc<PagePolicy::POOL>(0xFF),
+		        .size   = PAGE_SIZE,
 		};
 
 		return create_raw(fn, argv, pri, name, page);
@@ -249,7 +265,10 @@ namespace MOS::Task
 	}
 
 	static inline void
-	block_to_in_order_raw(TcbPtr_t tcb, TcbList_t& dest, auto&& cmp)
+	block_to_in_order_raw(
+	        TcbPtr_t tcb,
+	        TcbList_t& dest,
+	        TcbCmpFn auto&& cmp)
 	{
 		tcb->set_status(Status::BLOCKED);
 		ready_list.send_to_in_order(tcb, dest, cmp);
@@ -270,7 +289,10 @@ namespace MOS::Task
 	}
 
 	inline void
-	block_to_in_order(TcbPtr_t tcb, TcbList_t& dest, auto&& cmp)
+	block_to_in_order(
+	        TcbPtr_t tcb,
+	        TcbList_t& dest,
+	        TcbCmpFn auto&& cmp)
 	{
 		if (tcb == nullptr || tcb->is_status(Status::BLOCKED))
 			return;
@@ -401,7 +423,7 @@ namespace MOS::Task
 	{
 		DisIntrGuard_t guard;
 		kprintf("-----------------------------------\n");
-		debug_tcbs.iter_mut([](TcbPtr_t tcb) { print_info(tcb); });
+		debug_tcbs.iter([](TcbPtr_t tcb) { print_info(tcb); });
 		kprintf("-----------------------------------\n");
 	}
 

@@ -1,9 +1,9 @@
 //////////////////////////////////////////////////////////////////////////
-//                          The MOS Shell
-//                  Eplankton (wikechao@gmail.com)
-//                   https://github.com/Eplankton
-//               East China Normal University, Shanghai
-//                  The Apache License, Version 2.0
+//                          The MOS Shell                               //
+//                  Eplankton (wikechao@gmail.com)                      //
+//                   https://github.com/Eplankton                       //
+//               East China Normal University, Shanghai                 //
+//                  The Apache License, Version 2.0                     //
 //////////////////////////////////////////////////////////////////////////
 
 #ifndef _MOS_SHELL_
@@ -105,7 +105,7 @@ namespace MOS::Shell
 				Task::resume(tcb);
 			}
 			else {
-				MOS_MSG("No Calendar found!\n");
+				MOS_MSG("Calendar not found!\n");
 			}
 		}
 

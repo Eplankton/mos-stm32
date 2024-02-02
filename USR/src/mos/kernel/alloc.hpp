@@ -6,6 +6,7 @@
 
 namespace MOS::Alloc
 {
+	using Utils::DisIntrGuard_t;
 	using Page_t     = DataType::Page_t;
 	using PagePolicy = Page_t::Policy;
 	using PageRaw_t  = Page_t::Raw_t;
@@ -13,13 +14,17 @@ namespace MOS::Alloc
 
 	// Page Allocator
 	template <PagePolicy policy>
-	inline PageRaw_t palloc(PageLen_t pg_sz = 0xFF)
+	inline PageRaw_t
+	palloc(PageLen_t pg_sz = 0xFF) // pg_sz == 0xFF as invalid
 	{
+		DisIntrGuard_t guard;
+
 		if constexpr (policy == PagePolicy::POOL) {
 			using KernelGlobal::page_pool;
 
+			// Whether the page is used
 			static auto is_used = [](PageRaw_t raw) {
-				const auto tst = (uint32_t*) raw[0];
+				auto tst = (void*) raw[0];
 				return tst != nullptr && tst != raw;
 			};
 

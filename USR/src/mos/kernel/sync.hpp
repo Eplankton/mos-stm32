@@ -83,7 +83,7 @@ namespace MOS::Sync
 	struct MutexImpl_t
 	{
 		Semaphore_t sema = 1;
-		Cnt_t recr_cnt   = 0;
+		Cnt_t recursive  = 0;
 		TcbPtr_t owner   = nullptr;
 		Prior_t ceiling  = PRI_MIN;
 
@@ -96,7 +96,7 @@ namespace MOS::Sync
 		}
 
 		MOS_INLINE inline void
-		find_new_ceiling()
+		get_new_ceiling()
 		{
 			sema.waiting_queue.iter_mut([&](const Tcb_t& tcb) {
 				const auto old_pr = tcb.old_pr;
@@ -116,7 +116,7 @@ namespace MOS::Sync
 
 			if (owner == cur) {
 				// If task already owns the lock, just increment the recursive count
-				recr_cnt += 1;
+				recursive += 1;
 				return;
 			}
 
@@ -141,7 +141,7 @@ namespace MOS::Sync
 			}
 			else {
 				owner = Task::current();
-				recr_cnt += 1;
+				recursive += 1;
 			}
 		}
 
@@ -152,9 +152,9 @@ namespace MOS::Sync
 			           "Lock can only be released by holder");
 
 			DisIntrGuard_t guard;
-			recr_cnt -= 1;
+			recursive -= 1;
 
-			if (recr_cnt > 0) {
+			if (recursive > 0) {
 				// If the lock is still held by the owner
 				return;
 			}
@@ -168,7 +168,7 @@ namespace MOS::Sync
 				owner = tcb;
 				sema.cnt += 1;
 
-				find_new_ceiling();
+				get_new_ceiling();
 
 				if (Task::higher_exists()) {
 					return Task::yield();
@@ -176,7 +176,7 @@ namespace MOS::Sync
 			}
 			else {
 				// Restore the original priority of the owner
-				if (recr_cnt == 0 && owner->old_pr != PRI_NONE) {
+				if (recursive == 0 && owner->old_pr != PRI_NONE) {
 					// Restore the original priority
 					owner->set_pri(owner->old_pr);
 					owner->old_pr = PRI_NONE;
@@ -216,8 +216,11 @@ namespace MOS::Sync
 			    : mutex(mutex) { mutex.MutexImpl_t::lock(); }
 
 			// Raw Accessor
-			MOS_INLINE inline RawRef_t get() { return mutex.raw; }
-			MOS_INLINE inline RawRef_t operator*() { return get(); }
+			MOS_INLINE inline RawRef_t
+			get() { return mutex.raw; }
+
+			MOS_INLINE inline RawRef_t
+			operator*() { return get(); }
 
 		private:
 			Mutex_t<Raw_t>& mutex;
@@ -342,7 +345,6 @@ namespace MOS::Sync
 			});
 		}
 	};
-
 }
 
 #endif

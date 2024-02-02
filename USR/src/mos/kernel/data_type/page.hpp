@@ -7,11 +7,9 @@ namespace MOS::DataType
 {
 	struct Page_t
 	{
-		using Raw_t = uint32_t*;
-		using Len_t = uint32_t;
-
-		Len_t size = 0;
-		Raw_t raw  = nullptr;
+		using Word_t = uint32_t;
+		using Raw_t  = Word_t*;
+		using Len_t  = const uint32_t;
 
 		enum class Policy
 		{
@@ -21,6 +19,9 @@ namespace MOS::DataType
 			ERROR,
 		} policy = Policy::ERROR;
 
+		Raw_t raw  = nullptr;
+		Len_t size = 0;
+
 		MOS_INLINE inline void
 		recycle()
 		{
@@ -28,6 +29,7 @@ namespace MOS::DataType
 			if (policy == DYNAMIC) {
 				delete[] raw;
 			}
+			raw = nullptr;
 		}
 
 		MOS_INLINE inline Len_t
@@ -39,9 +41,13 @@ namespace MOS::DataType
 		MOS_INLINE inline Policy
 		get_policy() const volatile { return policy; }
 
-		MOS_INLINE inline auto&
-		get_from_bottom(uint32_t n = 0)
-		        const volatile { return raw[size - n]; }
+		MOS_INLINE inline bool
+		is_policy(Policy policy)
+		        const volatile { return get_policy() == policy; }
+
+		MOS_INLINE inline Word_t&
+		from_bottom(uint32_t offset = 0)
+		        const volatile { return raw[size - offset]; }
 	};
 }
 

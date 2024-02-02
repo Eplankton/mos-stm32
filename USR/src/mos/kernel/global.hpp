@@ -18,10 +18,11 @@ namespace MOS::KernelGlobal
 	using Tid_t      = Tcb_t::Tid_t;
 	using Tick_t     = Tcb_t::Tick_t;
 	using TcbPtr_t   = Tcb_t::TcbPtr_t;
-	using PagePool_t = uint32_t[POOL_NUM][PAGE_SIZE];
+	using PagePool_t = Page_t::Word_t[POOL_NUM][PAGE_SIZE];
+	using TidsMap_t  = BitMap_t<MAX_TASK_NUM>;
 
 	PagePool_t page_pool;
-	Tid_t tids = -1;
+	TidsMap_t tids;
 
 	TcbList_t ready_list,  // Tasks that are `READY` to be scheduled
 	        blocked_list,  // Tasks that are `BLOCKED` and waiting for a certain condition

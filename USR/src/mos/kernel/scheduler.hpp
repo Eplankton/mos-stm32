@@ -9,7 +9,6 @@ namespace MOS::Scheduler
 	using namespace KernelGlobal;
 
 	using TcbPtr_t = Tcb_t::TcbPtr_t;
-	using Node_t   = Tcb_t::Node_t;
 	using Fn_t     = Tcb_t::Fn_t;
 	using Status   = Tcb_t::Status;
 
@@ -69,7 +68,8 @@ namespace MOS::Scheduler
 		init();
 	}
 
-	static inline void try_wake_up()
+	static inline void
+	try_wake_up()
 	{
 		// Only have to check the first one since they're sorted by delay_ticks
 		auto to_wake = sleeping_list.begin();
@@ -87,6 +87,7 @@ namespace MOS::Scheduler
 	static inline void next_tcb()
 	{
 		static auto switch_to = [](TcbPtr_t tcb) {
+			debug_tcbs.cr_tid = tcb->get_tid();
 			tcb->set_status(Status::RUNNING);
 			cur_tcb = tcb;
 		};
@@ -101,8 +102,7 @@ namespace MOS::Scheduler
 		     nx = cr->next();
 
 		if (cr->is_status(Status::TERMINATED) ||
-		    cr->is_status(Status::BLOCKED))
-		{
+		    cr->is_status(Status::BLOCKED)) {
 			// cur_tcb has been removed from ready_list
 			return switch_to(st);
 		}
