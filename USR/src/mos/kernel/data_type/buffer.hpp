@@ -1,14 +1,14 @@
-#ifndef _MOS_RX_BUFFER_
-#define _MOS_RX_BUFFER_
+#ifndef _MOS_BUFFER_
+#define _MOS_BUFFER_
 
 #include "../utils.hpp"
 
 namespace MOS::DataType
 {
-	template <size_t N>
-	struct RxBuffer_t
+	template <typename T, size_t N>
+	struct Buffer_t
 	{
-		using Raw_t = char[N];
+		using Raw_t = T[N];
 		using Cnt_t = volatile int32_t;
 
 		Raw_t raw;
@@ -24,7 +24,7 @@ namespace MOS::DataType
 		empty() const volatile { return index == 0; }
 
 		MOS_INLINE inline void
-		add(char ch) volatile { raw[index++] = ch; }
+		add(T data) volatile { raw[index++] = data; }
 
 		MOS_INLINE inline char
 		back() const volatile { return empty() ? '\0' : raw[index - 1]; }
@@ -44,6 +44,9 @@ namespace MOS::DataType
 			index = 0;
 		}
 	};
+
+	template <size_t N>
+	using RxBuffer_t = Buffer_t<char, N>;
 }
 
 #endif

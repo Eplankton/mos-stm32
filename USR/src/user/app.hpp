@@ -3,6 +3,7 @@
 
 #include "src/mos/kernel/task.hpp"
 #include "src/mos/kernel/sync.hpp"
+#include "src/mos/kernel/async.hpp"
 #include "src/user/global.hpp"
 #include "src/user/gui/GuiLite.h"
 #include "src/user/img/cat_gif.h"
@@ -93,8 +94,8 @@ namespace MOS::App
 		};
 
 		const auto sub_pr = Task::current()->get_pri() + 1;
-		Task::create(GIF, nullptr, sub_pr, "GIF", 128);
-		Task::create(Slogan, nullptr, sub_pr, "Slogan", 128);
+		Task::create(GIF, nullptr, sub_pr, "GIF");
+		Task::create(Slogan, nullptr, sub_pr, "Slogan");
 
 		while (true) {
 			Task::block();
@@ -111,7 +112,7 @@ namespace MOS::App
 			const auto date = RTC_t::get_date();
 			const auto time = RTC_t::get_time();
 			MOS_MSG("20%0.2d/%0.2d/%0.2d "
-			        "%0.2d:%0.2d:%0.2d\n",
+			        "%0.2d:%0.2d:%0.2d",
 			        date.RTC_Year, date.RTC_Month, date.RTC_Date,
 			        time.RTC_Hours, time.RTC_Minutes, time.RTC_Seconds);
 		};
@@ -138,7 +139,6 @@ namespace MOS::App
 	void Task0(void* argv)
 	{
 		using UserGlobal::leds;
-		Task::create(Task1, nullptr, 1, "T1");
 		bar.wait();
 		while (true) {
 			leds[0].toggle();

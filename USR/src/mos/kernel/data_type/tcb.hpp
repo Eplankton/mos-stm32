@@ -27,10 +27,10 @@ namespace MOS::DataType
 
 		enum class Status
 		{
+			TERMINATED = -1,
 			READY,
 			RUNNING,
 			BLOCKED,
-			TERMINATED,
 		};
 
 		using enum Status;
@@ -101,6 +101,7 @@ namespace MOS::DataType
 			        .size   = 0xFF, // Anyway
 			};
 
+			// Use inplace new
 			new ((void*) this) Tcb_t {};
 			inactive.recycle();
 		}

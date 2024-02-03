@@ -13,7 +13,7 @@
 #if (MOS_CONF_PRINTF)
 #include "printf.h"
 #define kprintf(format, ...) printf_(format, ##__VA_ARGS__)
-#define MOS_MSG(format, ...) kprintf("[MOS]: " format, ##__VA_ARGS__)
+#define MOS_MSG(format, ...) kprintf("[MOS]: " format "\n", ##__VA_ARGS__)
 #else
 #define kprintf(format, ...) ((void) 0)
 #define MOS_MSG(format, ...) ((void) 0)
@@ -24,9 +24,9 @@
 	((expr) ? ((void) 0) : mos_assert_failed((uint8_t*) __FILE__, __LINE__, format))
 
 static inline void
-mos_assert_failed(uint8_t* file, uint32_t line, const char* msg)
+mos_assert_failed(void* file, uint32_t line, const char* msg)
 {
-	MOS_MSG("%s, %d: %s\n", file, line, msg);
+	MOS_MSG("%s, %d: %s", file, line, msg);
 	while (true) {
 		asm volatile("");
 	}
@@ -68,8 +68,8 @@ namespace MOS::Utils
 	strcmp(const char* str1, const char* str2) noexcept
 	{
 		while (*str1 && (*str1 == *str2)) {
-			str1++;
-			str2++;
+			++str1;
+			++str2;
 		}
 		return *(uint8_t*) str1 - *(uint8_t*) str2;
 	}
@@ -92,7 +92,7 @@ namespace MOS::Utils
 	memcpy(void* dest, const void* src, size_t n)
 	{
 		for (size_t i = 0; i < n; i++) {
-			((char*) dest)[i] = ((const char*) src)[i];
+			((uint8_t*) dest)[i] = ((const uint8_t*) src)[i];
 		}
 		return dest;
 	}
@@ -100,9 +100,9 @@ namespace MOS::Utils
 	inline void*
 	memset(void* ptr, int32_t value, size_t n)
 	{
-		uint8_t* raw = reinterpret_cast<uint8_t*>(ptr);
+		auto raw = (uint8_t*) ptr;
 		for (size_t i = 0; i < n; i++) {
-			raw[i] = static_cast<uint8_t>(value);
+			raw[i] = (uint8_t) value;
 		}
 		return ptr;
 	}

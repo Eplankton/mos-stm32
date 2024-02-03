@@ -5,7 +5,7 @@
 #include "utils.hpp"
 #include "macro.hpp"
 
-#include "data_type/rx_buf.hpp"
+#include "data_type/buffer.hpp"
 #include "data_type/queue.hpp"
 #include "data_type/bitmap.hpp"
 #include "data_type/list.hpp"

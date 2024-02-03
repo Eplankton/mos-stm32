@@ -81,7 +81,7 @@ namespace MOS::Task
 			// Delete tcb from zombie_list
 			zombie_list.remove(tcb);
 
-			// Reset the TCB to default
+			// Reset tcb to default
 			tcb->deinit();
 		}
 		return yield();
@@ -91,15 +91,8 @@ namespace MOS::Task
 	MOS_INLINE inline uint32_t
 	num() { return debug_tcbs.size(); }
 
-	inline void terminate(TcbPtr_t tcb = current())
+	inline void terminate_raw(TcbPtr_t tcb)
 	{
-		if (tcb == nullptr || tcb->is_status(Status::TERMINATED))
-			return;
-
-		// Assert if irq disabled
-		MOS_ASSERT(test_irq(), "Disabled Interrupt");
-		DisIntrGuard_t guard;
-
 		// Remove the task from list
 		if (tcb->is_status(Status::RUNNING) ||
 		    tcb->is_status(Status::READY)) {
@@ -114,17 +107,29 @@ namespace MOS::Task
 
 		// Mark tcb as TERMINATED and add to zombie_list
 		tcb->set_status(Status::TERMINATED);
+
+		// Clear the bit in tids
 		tids.reset(tcb->get_tid());
 
-		// Only dynamic pages need delayed recycling
+		// Only DYNAMIC pages need delayed recycling
 		if (tcb->page.is_policy(PagePolicy::DYNAMIC)) {
 			zombie_list.add(tcb);
 		}
-		else { // Otherwise, just remove and deinit
+		else { // Otherwise POOL or STATIC, just remove and deinit
 			debug_tcbs.remove(tcb);
 			tcb->deinit();
 		}
+	}
 
+	inline void terminate(TcbPtr_t tcb = current())
+	{
+		if (tcb == nullptr || tcb->is_status(Status::TERMINATED))
+			return;
+
+		// Assert if irq disabled
+		MOS_ASSERT(test_irq(), "Disabled Interrupt");
+		DisIntrGuard_t guard;
+		terminate_raw(tcb);
 		if (tcb == current()) {
 			return yield();
 		}
@@ -163,19 +168,19 @@ namespace MOS::Task
 		MOS_ASSERT(fn != nullptr, "fn can't be null");
 
 		if (debug_tcbs.size() >= MAX_TASK_NUM) {
-			MOS_MSG("Max tasks!\n");
+			MOS_MSG("Max tasks!");
 			return nullptr;
 		}
 
 		if (page.get_raw() == nullptr) {
-			MOS_MSG("Page Alloc Failed!\n");
+			MOS_MSG("Page Alloc Failed!");
 			return nullptr;
 		}
 
 		DisIntrGuard_t guard;
 		TcbPtr_t cur = current(), tcb = nullptr;
 
-		// Construct a TCB at the head of a page block
+		// Construct a tcb at the head of a page
 		tcb = Tcb_t::build(fn, argv, pri, name, page);
 
 		// Load empty context
@@ -187,7 +192,7 @@ namespace MOS::Task
 		// Set parent
 		tcb->set_parent(cur);
 
-		// Set TCB to be READY
+		// Set tcb to be READY
 		tcb->set_status(Status::READY);
 
 		// Add to ready_list
@@ -246,7 +251,7 @@ namespace MOS::Task
 
 	// Not recommended to use
 	MOS_INLINE inline TcbPtr_t
-	create_isr(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
+	create_from_isr(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
 	{
 		Page_t page {
 		        .policy = PagePolicy::POOL,
@@ -258,7 +263,7 @@ namespace MOS::Task
 	}
 
 	static inline void
-	block_to_raw(TcbPtr_t tcb, TcbList_t& dest)
+	block_to_raw(TcbPtr_t tcb, TcbList_t& dest = blocked_list)
 	{
 		tcb->set_status(Status::BLOCKED);
 		ready_list.send_to(tcb, dest);
@@ -313,7 +318,7 @@ namespace MOS::Task
 	}
 
 	static inline void
-	resume_raw(TcbPtr_t tcb, TcbList_t& src)
+	resume_raw(TcbPtr_t tcb, TcbList_t& src = blocked_list)
 	{
 		tcb->set_status(Status::READY);
 		src.send_to_in_order(
@@ -339,7 +344,7 @@ namespace MOS::Task
 	}
 
 	// Not recommended
-	inline void resume_isr(TcbPtr_t tcb)
+	inline void resume_from_isr(TcbPtr_t tcb)
 	{
 		if (tcb == nullptr || !tcb->is_status(Status::BLOCKED))
 			return;

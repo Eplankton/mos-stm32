@@ -31,14 +31,13 @@ int main(void)
 	};
 
 	// Create user tasks
-	Task::create(App::Task0, nullptr, 2, "T0", page);
-	Task::create(App::GUI, nullptr, 3, "GUI");
-	// Task::create(App::LCD, nullptr, 3, "LCD", 48);
+	// Task::create(App::Task0, nullptr, 2, "T0", page);
+	// Task::create(App::GUI, nullptr, 3, "GUI");
+	Task::create(App::LCD, nullptr, 3, "LCD");
 
 	// Test examples
-	// Task::create(Test::MutexTest, nullptr, 1, "T1");
-	// Task::create(Test::MutexTest, nullptr, 2, "T2");
-	// Task::create(Test::MutexTest, nullptr, 3, "T3");
+	// Test::MutexTest();
+	Test::AsyncTest();
 
 	// Start scheduling, never return
 	Scheduler::launch();

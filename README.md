@@ -17,6 +17,8 @@ o'' )_____//    [MOS-STM32]
 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
 
 ### Structure 👾
+<img src="Pic/mos-arch.svg">
+
 [USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
 ```    
 src
@@ -39,6 +41,7 @@ src
 │   │   ├── printf.c         Thread-safe printf
 │   │   ├── task.hpp         Task create, yield, terminate, block...
 │   │   ├── sync.hpp         Sync primitives
+│   │   ├── async.hpp        Async executor
 │   │   ├── scheduler.hpp    Scheduler and Policy
 │   │   └── utils.hpp        Utils
 │   │
@@ -73,6 +76,10 @@ src
 `Parallel Tasks Period & Time Sequence`
 <img src="Pic/T0-T1.png" width="90%">
 <img src="Pic/tids.png" width="70%">
+
+
+`Async Executor with Lazy Evaluation`
+<img src="Pic/async.png">
 
 ```C++
 // MOS Kernel & Shell
@@ -160,27 +167,6 @@ namespace MOS::App
 }
 ```
 ```C++
-namespace MOS::Test
-{
-    static Sync::Mutex_t mutex;
-
-    void MutexTest(void* argv)
-    {
-        auto name = Task::current()->get_name();
-        while (true) {
-            mutex.exec([&] {
-                for (uint8_t i = 0; i < 5; i++) {
-                    // In 1-2-3... order
-                    kprintf("%s is working...\n", name);
-                    Task::delay(100);
-                }
-            });
-            Task::delay(5);
-        }
-    }
-}
-```
-```C++
 int main(void)
 {
     using namespace MOS;
@@ -196,10 +182,9 @@ int main(void)
     Task::create(App::Task0, nullptr, 2, "T0");
 
     // Test examples
-    // Task::create(Test::MutexTest, nullptr, 1, "T1");
-    // Task::create(Test::MutexTest, nullptr, 2, "T2");
-    // Task::create(Test::MutexTest, nullptr, 3, "T3");
-    
+    Test::MutexTest();
+    Test::AsyncTest();
+     
     // Start scheduling, never return
     Scheduler::launch();
 
@@ -261,6 +246,7 @@ o'' )_____//   Version @ x.x.x(...)
 
 ✅ Done
 1. Tids from BitMap_t
+2. Async::{Future_t, create}, support lazy evaluation
 
 📌 Plan
 1. IPC::{pipe, message queue}, etc.

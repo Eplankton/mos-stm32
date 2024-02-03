@@ -185,8 +185,8 @@ namespace MOS::ISR
 
 		EXTI_t::handle_line(EXTI_Line13, [] {
 			static uint32_t k1_cnt = 0;
-			MOS_MSG("K1 Cnt = %d\n", ++k1_cnt);
-			Task::create_isr(
+			MOS_MSG("K1 Cnt = %d", ++k1_cnt);
+			Task::create_from_isr(
 			        K1_IRQ,
 			        nullptr,
 			        Task::current()->get_pri(),
@@ -207,7 +207,7 @@ namespace MOS::ISR
 			}
 			else {
 				rx_buf.clear();
-				MOS_MSG("Oops! Command too long!\n");
+				MOS_MSG("Oops! Command too long!");
 			}
 		}
 	}

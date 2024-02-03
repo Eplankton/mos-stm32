@@ -74,7 +74,7 @@ namespace MOS::Shell
 					// todo!()
 				}
 				else {
-					MOS_MSG("Unknown task '%s'\n", name);
+					MOS_MSG("Unknown task '%s'", name);
 				}
 			}
 			else { // No arguments provided
@@ -88,14 +88,14 @@ namespace MOS::Shell
 			if (*name != '\0') {
 				if (auto tcb = Task::find(name)) {
 					Task::terminate(tcb);
-					MOS_MSG("Task '%s' terminated\n", name);
+					MOS_MSG("Task '%s' terminated", name);
 				}
 				else {
-					MOS_MSG("Unknown task '%s'\n", name);
+					MOS_MSG("Unknown task '%s'", name);
 				}
 			}
 			else {
-				MOS_MSG("Invalid Arguments\n");
+				MOS_MSG("Invalid Arguments");
 			}
 		}
 
@@ -105,7 +105,7 @@ namespace MOS::Shell
 				Task::resume(tcb);
 			}
 			else {
-				MOS_MSG("Calendar not found!\n");
+				MOS_MSG("Calendar not found!");
 			}
 		}
 
@@ -123,7 +123,7 @@ namespace MOS::Shell
 
 		static inline void reboot_cmd(Argv_t argv)
 		{
-			MOS_MSG("Reboot!\n\n\n");
+			MOS_MSG("Reboot!\n\n");
 			MOS_REBOOT();
 		}
 	}
@@ -148,7 +148,7 @@ namespace MOS::Shell
 					return cmd.run(argv);
 				}
 			}
-			MOS_MSG("Unknown command '%s'\n", str);
+			MOS_MSG("Unknown command '%s'", str);
 		};
 
 		CmdCall::uname_cmd(nullptr);

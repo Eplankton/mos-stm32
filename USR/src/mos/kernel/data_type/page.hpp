@@ -13,10 +13,10 @@ namespace MOS::DataType
 
 		enum class Policy
 		{
+			ERROR = -1,
+			STATIC,
 			POOL,
 			DYNAMIC,
-			STATIC,
-			ERROR,
 		} policy = Policy::ERROR;
 
 		Raw_t raw  = nullptr;

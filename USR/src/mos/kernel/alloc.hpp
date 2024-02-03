@@ -14,8 +14,8 @@ namespace MOS::Alloc
 
 	// Page Allocator
 	template <PagePolicy policy>
-	inline PageRaw_t
-	palloc(PageLen_t pg_sz = 0xFF) // pg_sz == 0xFF as invalid
+	inline PageRaw_t // pg_sz == 0xFF as invalid
+	palloc(PageLen_t pg_sz = 0xFF)
 	{
 		DisIntrGuard_t guard;
 

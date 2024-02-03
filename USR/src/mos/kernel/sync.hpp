@@ -98,7 +98,7 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		get_new_ceiling()
 		{
-			sema.waiting_queue.iter_mut([&](const Tcb_t& tcb) {
+			sema.waiting_queue.iter([&](const Tcb_t& tcb) {
 				const auto old_pr = tcb.old_pr;
 				if (old_pr != PRI_NONE && old_pr < ceiling) {
 					ceiling = old_pr;
