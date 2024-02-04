@@ -62,7 +62,7 @@ namespace MOS::Task
 	}
 
 	MOS_INLINE inline Tid_t
-	alloc_tid()
+	tid_alloc()
 	{
 		auto tid = tids.first_zero();
 		tids.set(tid);
@@ -139,7 +139,7 @@ namespace MOS::Task
 	exit() { terminate(current()); }
 
 	MOS_INLINE static inline TcbPtr_t
-	load_context(TcbPtr_t tcb)
+	setup_context(TcbPtr_t tcb)
 	{
 		// A descending stack consists of 16 registers as context.
 		// high -> low, descending stack
@@ -184,10 +184,10 @@ namespace MOS::Task
 		tcb = Tcb_t::build(fn, argv, pri, name, page);
 
 		// Load empty context
-		load_context(tcb);
+		setup_context(tcb);
 
 		// Give Tid
-		tcb->set_tid(alloc_tid());
+		tcb->set_tid(tid_alloc());
 
 		// Set parent
 		tcb->set_parent(cur);
@@ -224,15 +224,21 @@ namespace MOS::Task
 		return create_impl(fn, argv, pri, name, page);
 	}
 
+	MOS_INLINE inline Page_t
+	page_alloc(PagePolicy policy, PageLen_t pg_sz)
+	{
+		return Page_t {
+		        .policy = policy,
+		        .raw    = palloc_raw(policy, pg_sz),
+		        .size   = pg_sz,
+		};
+	}
+
 	// Create task from pre-allocated `page_pool`
 	MOS_INLINE inline TcbPtr_t
 	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
 	{
-		Page_t page {
-		        .policy = PagePolicy::POOL,
-		        .raw    = palloc<PagePolicy::POOL>(0xFF),
-		        .size   = PAGE_SIZE,
-		};
+		auto page = page_alloc(PagePolicy::POOL, PAGE_SIZE);
 		return create_impl(fn, argv, pri, name, page);
 	}
 
@@ -240,12 +246,7 @@ namespace MOS::Task
 	MOS_INLINE inline TcbPtr_t
 	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, PageLen_t pg_sz)
 	{
-		Page_t page {
-		        .policy = PagePolicy::DYNAMIC,
-		        .raw    = palloc<PagePolicy::DYNAMIC>(pg_sz),
-		        .size   = pg_sz,
-		};
-
+		auto page = page_alloc(PagePolicy::DYNAMIC, pg_sz);
 		return create_impl(fn, argv, pri, name, page);
 	}
 
@@ -253,12 +254,7 @@ namespace MOS::Task
 	MOS_INLINE inline TcbPtr_t
 	create_from_isr(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
 	{
-		Page_t page {
-		        .policy = PagePolicy::POOL,
-		        .raw    = palloc<PagePolicy::POOL>(0xFF),
-		        .size   = PAGE_SIZE,
-		};
-
+		auto page = page_alloc(PagePolicy::POOL, PAGE_SIZE);
 		return create_raw(fn, argv, pri, name, page);
 	}
 

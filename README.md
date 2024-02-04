@@ -11,7 +11,6 @@ o'' )_____//    [MOS-STM32]
 - Board: Nucleo-144 F429ZI
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
-<img src="Pic/cat.gif" width="20%">
 
 ### Repository 🌏
 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
@@ -71,9 +70,9 @@ src
 
 `LCD Driver & GUI Demo`
 
-<img src="Pic/board.gif" width="51%"> <img src="Pic/guilite.gif" width="45%">
+<img src="Pic/cat.gif" width="20%"> <img src="Pic/board.gif" width="39%"> <img src="Pic/guilite.gif" width="35%">
 
-`Parallel Tasks Period & Time Sequence`
+`Concurrent Task Period & Time Sequence`
 <img src="Pic/T0-T1.png" width="90%">
 <img src="Pic/tids.png" width="70%">
 
@@ -229,9 +228,9 @@ o'' )_____//   Version @ x.x.x(...)
 📦 Version 0.0.2
 
 ✅ Done
-1. Sync::{Semaphore_t, Lock_t, Mutex_t<T>, Cond_t, Barrier_t}, where Mutex_t adopts Priority Ceiling Protocol
+1. Sync::{Semaphore_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}, where Mutex_t adopts Priority Ceiling Protocol
 2. Scheduler::Policy::PreemptivePriority, under same priority -> RoundRobin
-3. Task::terminate() implicitly be called when task exits
+3. Task::terminate() will be implicitly called when task exits
 4. Shell::{Command, CmdCall, launch}
 5. Add HAL::STM32F4xx::SPI_t and Driver::ST7735S_t, support GuiLite
 6. KernelGlobal::os_ticks and Task::delay() for blocking delay
@@ -239,14 +238,14 @@ o'' )_____//   Version @ x.x.x(...)
 8. Support GCC and STM32CubeMX HAL
 9. Add HAL::STM32F4xx::RTC_t, CmdCall::date_cmd and App::Calendar
 10. idle uses KernelGlobal::zombie_list to recycle inactive pages
-11. Three basic page allocator policies, Page_t::Policy::{POOL, DYNAMIC, STATIC}
+11. Three basic page allocation policies, Page_t::Policy::{POOL, DYNAMIC, STATIC}
 ```
 ```
 📦 Version 0.0.3
 
 ✅ Done
 1. Tids from BitMap_t
-2. Async::{Future_t, create}, support lazy evaluation
+2. Async::{Future_t, create} (Experimental)
 
 📌 Plan
 1. IPC::{pipe, message queue}, etc.
@@ -264,3 +263,10 @@ o'' )_____//   Version @ x.x.x(...)
 4. [A printf/sprintf Implementation for Embedded Systems](https://github.com/mpaland/printf)
 5. [GuiLite](https://github.com/idea4good/GuiLite)
 6. [STMViewer](https://github.com/klonyyy/STMViewer)
+
+```
+Wake up, Neo...
+The Matrix has you...
+Follow the white rabbit.
+Knock, knock, Neo.
+```

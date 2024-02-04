@@ -6,28 +6,33 @@
 namespace MOS::Sync
 {
 	using namespace Macro;
+
+	using DataType::Tcb_t;
+	using DataType::TcbList_t;
 	using KernelGlobal::ready_list;
 	using Utils::DisIntrGuard_t;
 	using Utils::test_irq;
+	using Concepts::Invocable;
 
-	using Tcb_t     = DataType::Tcb_t;
-	using TcbList_t = DataType::TcbList_t;
-	using TcbPtr_t  = Tcb_t::TcbPtr_t;
-	using Prior_t   = Tcb_t::Prior_t;
-	using Cnt_t     = volatile int32_t;
-	using Status    = Tcb_t::Status;
+	using TcbPtr_t = Tcb_t::TcbPtr_t;
+	using Prior_t  = Tcb_t::Prior_t;
+	using Cnt_t    = volatile int32_t;
+	using Status   = Tcb_t::Status;
 
 	struct Semaphore_t
 	{
 		TcbList_t waiting_queue;
 		Cnt_t cnt;
 
-		// Must set a original value
-		MOS_INLINE inline Semaphore_t() = delete;
-		MOS_INLINE inline Semaphore_t(int32_t val): cnt(val) {}
+		// Must set an original value
+		MOS_INLINE
+		inline Semaphore_t() = delete;
+
+		MOS_INLINE
+		inline Semaphore_t(int32_t val): cnt(val) {}
 
 		// P
-		void down()
+		inline void down()
 		{
 			// Assert if irq disabled
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
@@ -40,7 +45,7 @@ namespace MOS::Sync
 		}
 
 		// V
-		void up()
+		inline void up()
 		{
 			// Assert if irq disabled
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
@@ -60,7 +65,8 @@ namespace MOS::Sync
 		Semaphore_t sema;
 		TcbPtr_t owner;
 
-		MOS_INLINE inline Lock_t(): owner(nullptr), sema(1) {}
+		MOS_INLINE
+		inline Lock_t(): owner(nullptr), sema(1) {}
 
 		MOS_INLINE inline void
 		acquire()
@@ -82,31 +88,7 @@ namespace MOS::Sync
 
 	struct MutexImpl_t
 	{
-		Semaphore_t sema = 1;
-		Cnt_t recursive  = 0;
-		TcbPtr_t owner   = nullptr;
-		Prior_t ceiling  = PRI_MIN;
-
-		MOS_INLINE inline void
-		raise_all_pri()
-		{
-			sema.waiting_queue.iter_mut([&](Tcb_t& tcb) {
-				tcb.set_pri(ceiling);
-			});
-		}
-
-		MOS_INLINE inline void
-		get_new_ceiling()
-		{
-			sema.waiting_queue.iter([&](const Tcb_t& tcb) {
-				const auto old_pr = tcb.old_pr;
-				if (old_pr != PRI_NONE && old_pr < ceiling) {
-					ceiling = old_pr;
-				}
-			});
-		}
-
-		void lock() // P-opr
+		void lock() // P operation
 		{
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 
@@ -145,7 +127,7 @@ namespace MOS::Sync
 			}
 		}
 
-		void unlock() // V-opr
+		void unlock() // V operation
 		{
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 			MOS_ASSERT(owner == Task::current(),
@@ -159,8 +141,9 @@ namespace MOS::Sync
 				return;
 			}
 
+			// If has waiting tasks
 			if (!sema.waiting_queue.empty()) {
-				// Starvation Prevention
+				// Starvation Prevention by choosing first one
 				auto tcb = sema.waiting_queue.begin();
 				Task::resume_raw(tcb, sema.waiting_queue);
 
@@ -168,7 +151,7 @@ namespace MOS::Sync
 				owner = tcb;
 				sema.cnt += 1;
 
-				get_new_ceiling();
+				set_new_ceiling();
 
 				if (Task::higher_exists()) {
 					return Task::yield();
@@ -200,6 +183,31 @@ namespace MOS::Sync
 			section();
 			unlock();
 		}
+
+	private:
+		Semaphore_t sema = 1;
+		Cnt_t recursive  = 0;
+		TcbPtr_t owner   = nullptr;
+		Prior_t ceiling  = PRI_MIN;
+
+		MOS_INLINE inline void
+		raise_all_pri()
+		{
+			sema.waiting_queue.iter_mut([&](Tcb_t& tcb) {
+				tcb.set_pri(ceiling);
+			});
+		}
+
+		MOS_INLINE inline void
+		set_new_ceiling()
+		{
+			sema.waiting_queue.iter([&](const Tcb_t& tcb) {
+				const auto old_pr = tcb.old_pr;
+				if (old_pr != PRI_NONE && old_pr < ceiling) {
+					ceiling = old_pr;
+				}
+			});
+		}
 	};
 
 	template <typename T = void>
@@ -211,8 +219,11 @@ namespace MOS::Sync
 		struct MutexGuard_t
 		{
 			// Unlock when scope ends
-			MOS_INLINE inline ~MutexGuard_t() { mutex.unlock(); }
-			MOS_INLINE inline MutexGuard_t(Mutex_t<T>& mutex)
+			MOS_INLINE
+			inline ~MutexGuard_t() { mutex.unlock(); }
+
+			MOS_INLINE
+			inline MutexGuard_t(Mutex_t<Raw_t>& mutex)
 			    : mutex(mutex) { mutex.MutexImpl_t::lock(); }
 
 			// Raw Accessor
@@ -226,7 +237,8 @@ namespace MOS::Sync
 			Mutex_t<Raw_t>& mutex;
 		};
 
-		MOS_INLINE inline Mutex_t(T raw): raw(raw) {}
+		MOS_INLINE
+		inline Mutex_t(Raw_t raw): raw(raw) {}
 
 		MOS_INLINE inline auto
 		lock() { return MutexGuard_t {*this}; }
@@ -248,15 +260,20 @@ namespace MOS::Sync
 		struct MutexGuard_t // No Raw Accessor for T=void
 		{
 			// Unlock when scope ends
-			MOS_INLINE inline ~MutexGuard_t() { mutex.unlock(); }
-			MOS_INLINE inline MutexGuard_t(Mutex_t& mutex)
+			MOS_INLINE
+			inline ~MutexGuard_t() { mutex.unlock(); }
+
+			MOS_INLINE
+			inline MutexGuard_t(Mutex_t& mutex)
 			    : mutex(mutex) { mutex.MutexImpl_t::lock(); }
 
 		private:
 			Mutex_t& mutex;
 		};
 
-		MOS_INLINE inline Mutex_t() = default;
+		MOS_INLINE
+		inline Mutex_t() = default;
+
 		MOS_INLINE inline auto
 		lock() { return MutexGuard_t {*this}; }
 
@@ -277,18 +294,28 @@ namespace MOS::Sync
 	template <typename T>
 	Mutex_t(T&) -> Mutex_t<T&>;
 
-	struct Cond_t
+	struct CondVar_t
 	{
-		inline void wait(MutexImpl_t& mtx)
+		MOS_INLINE inline bool
+		has_waiters() const
+		{
+			return !waiting_queue.empty();
+		}
+
+		inline void
+		wait(MutexImpl_t& mtx,
+		     Invocable<bool> auto&& pred)
 		{
 			mtx.unlock();
-			block_current();
+			while (!pred()) {
+				block_current();
+			}
 			mtx.lock();
 		}
 
-		inline void signal()
+		inline void signal() // Notify one
 		{
-			if (!waiting_queue.empty()) {
+			if (has_waiters()) {
 				wake_up_one();
 			}
 			Task::yield();
@@ -296,7 +323,7 @@ namespace MOS::Sync
 
 		inline void broadcast() // Notify all
 		{
-			while (!waiting_queue.empty()) {
+			while (has_waiters()) {
 				wake_up_one();
 			}
 			Task::yield();
@@ -323,26 +350,24 @@ namespace MOS::Sync
 	struct Barrier_t
 	{
 		MutexImpl_t mtx;
-		Cond_t cond;
+		CondVar_t cond;
 		Cnt_t total, cnt = 0;
 
-		MOS_INLINE inline Barrier_t(uint32_t total)
-		    : total(total) {}
+		MOS_INLINE
+		inline Barrier_t(Cnt_t total): total(total) {}
 
 		inline void wait()
 		{
 			mtx.exec([&] {
 				cnt += 1;
-				if (cnt == total) {
-					cond.broadcast();
-				}
-				else {
-					while (cnt != total) {
-						cond.wait(mtx);
-					}
+				cond.wait(mtx, [&] {
+					return cnt == total;
+				});
+				if (!cond.has_waiters()) {
 					cnt = 0;
 				}
 			});
+			cond.broadcast();
 		}
 	};
 }

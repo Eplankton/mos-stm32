@@ -47,11 +47,12 @@
 	"STR     R4, [R1,#8]\n"  /* Store the value of the stack pointer (copied to R4) to cur_tcb.sp */                     \
 	""                       /* The process of saving the context of the current task ends here */                       \
 	""                       /* Step 2: Update cur_tcb, load the new task context from its stack to the CPU registers */ \
-	"PUSH    {R0,LR}\n"      /* Save the context values of R0, LR */                                                     \
-	"BL      next_tcb\n"     /* Custom scheduling function, cur_tcb = next */                                            \
-	"POP     {R0,LR}\n"      /* Restore the values of R0, LR */                                                          \
+	"PUSH    {LR}\n"         /* Save the context values of R0, LR */                                                     \
+	"BL      next_tcb\n"     /* Choose next tcb to schedule */                                                           \
+	"POP     {LR}\n"         /* Restore the values of LR */                                                              \
+	"LDR     R0, =cur_tcb\n" /* Reload cur_tcb */                                                                        \
 	"LDR     R1, [R0]\n"                                                                                                 \
-	"LDR     R4, [R1,#8]\n" /* Load the content of the next task's stack pointer */                                      \
+	"LDR     R4, [R1,#8]\n" /* Load the content of next task's sp */                                      \
 	"MOV     SP, R4\n"      /* Use R4 to load the new task's sp to SP */                                                 \
 	"POP     {R4-R7}\n"     /* Pop registers R8-R11 */                                                                   \
 	"MOV     R8, R4\n"                                                                                                   \

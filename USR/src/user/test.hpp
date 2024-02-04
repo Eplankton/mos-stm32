@@ -48,7 +48,7 @@ namespace MOS::Test
 				Task::delay(500);
 			}
 
-			future.await(); // Lazy Evaluation
+			future.await(); // Lazy
 
 			while (true) {
 				leds[0].toggle();

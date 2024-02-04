@@ -5,6 +5,7 @@
 
 namespace MOS::Async
 {
+	using namespace Macro;
 	using namespace Utils;
 	using namespace Alloc;
 
@@ -18,7 +19,7 @@ namespace MOS::Async
 	using PageLen_t  = Page_t::Len_t;
 	using PagePolicy = Page_t::Policy;
 
-	static inline void exit()
+	static inline void async_exit()
 	{
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
@@ -38,10 +39,11 @@ namespace MOS::Async
 
 		MOS_INLINE ~Future_t() { await(); }
 		MOS_INLINE inline void
-		await() const
+		await()
 		{
 			Task::resume(tcb);
 			Task::block();
+			tcb = nullptr;
 		}
 	};
 
@@ -57,7 +59,7 @@ namespace MOS::Async
 		        page);
 
 		// Set LR to a special exit routine
-		tcb->set_LR((uint32_t) exit);
+		tcb->set_LR((uint32_t) async_exit);
 		Task::block_to_raw(tcb);
 		return Future_t {tcb};
 	}
@@ -71,22 +73,14 @@ namespace MOS::Async
 	MOS_INLINE inline Future_t
 	create(Fn_t fn, Argv_t argv)
 	{
-		Page_t page {
-		        .policy = PagePolicy::POOL,
-		        .raw    = palloc<PagePolicy::POOL>(0xFF),
-		        .size   = Macro::PAGE_SIZE,
-		};
+		auto page = Task::page_alloc(PagePolicy::POOL, PAGE_SIZE);
 		return create_raw(fn, argv, page);
 	}
 
 	MOS_INLINE inline Future_t
 	create(Fn_t fn, Argv_t argv, PageLen_t pg_sz)
 	{
-		Page_t page {
-		        .policy = PagePolicy::DYNAMIC,
-		        .raw    = palloc<PagePolicy::DYNAMIC>(pg_sz),
-		        .size   = pg_sz,
-		};
+		auto page = Task::page_alloc(PagePolicy::DYNAMIC, pg_sz);
 		return create_raw(fn, argv, page);
 	}
 }

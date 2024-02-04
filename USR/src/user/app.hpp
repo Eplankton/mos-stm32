@@ -128,6 +128,7 @@ namespace MOS::App
 	void Task1(void* argv)
 	{
 		using UserGlobal::leds;
+		Task::delay(2000);
 		bar.wait();
 		for (uint8_t i = 0; i < 20; i++) {
 			leds[1].toggle();
@@ -139,6 +140,7 @@ namespace MOS::App
 	void Task0(void* argv)
 	{
 		using UserGlobal::leds;
+		Task::create(Task1, nullptr, 1, "T1");
 		bar.wait();
 		while (true) {
 			leds[0].toggle();

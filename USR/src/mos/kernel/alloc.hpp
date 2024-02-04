@@ -13,32 +13,36 @@ namespace MOS::Alloc
 	using PageLen_t  = Page_t::Len_t;
 
 	// Page Allocator
-	template <PagePolicy policy>
-	inline PageRaw_t // pg_sz == 0xFF as invalid
-	palloc(PageLen_t pg_sz = 0xFF)
+	inline PageRaw_t // -1(0xFFFFFFFF) as invalid
+	palloc_raw(PagePolicy policy, PageLen_t pg_sz = -1)
 	{
 		DisIntrGuard_t guard;
+		switch (policy) {
+			case PagePolicy::POOL: {
+				using KernelGlobal::page_pool;
 
-		if constexpr (policy == PagePolicy::POOL) {
-			using KernelGlobal::page_pool;
+				// Whether a page has been used
+				static auto is_used = [](PageRaw_t raw) {
+					auto tst = (void*) raw[0];
+					return tst != nullptr && tst != raw;
+				};
 
-			// Whether the page is used
-			static auto is_used = [](PageRaw_t raw) {
-				auto tst = (void*) raw[0];
-				return tst != nullptr && tst != raw;
-			};
-
-			for (auto raw: page_pool) {
-				if (!is_used(raw)) {
-					return raw;
+				for (auto raw: page_pool) {
+					if (!is_used(raw)) {
+						return raw;
+					}
 				}
+
+				return nullptr;
 			}
 
-			return nullptr;
-		}
+			case PagePolicy::DYNAMIC: {
+				MOS_ASSERT(pg_sz != -1, "Page Size Error");
+				return new uint32_t[pg_sz];
+			}
 
-		if constexpr (policy == PagePolicy::DYNAMIC) {
-			return new uint32_t[pg_sz];
+			default:
+				return nullptr;
 		}
 	}
 }

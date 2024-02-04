@@ -96,9 +96,9 @@ namespace MOS::DataType
 		deinit() volatile
 		{
 			Page_t inactive {
-			        .policy = page.get_policy(),
-			        .raw    = page.get_raw(),
-			        .size   = 0xFF, // Anyway
+				.policy = page.get_policy(),
+				.raw    = page.get_raw(),
+				// Don't care about the size
 			};
 
 			// Use inplace new
