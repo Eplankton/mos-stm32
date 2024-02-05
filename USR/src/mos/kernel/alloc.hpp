@@ -10,11 +10,11 @@ namespace MOS::Alloc
 	using Page_t     = DataType::Page_t;
 	using PagePolicy = Page_t::Policy;
 	using PageRaw_t  = Page_t::Raw_t;
-	using PageLen_t  = Page_t::Len_t;
+	using PgSz_t     = Page_t::Size_t;
 
 	// Page Allocator
 	inline PageRaw_t // -1(0xFFFFFFFF) as invalid
-	palloc_raw(PagePolicy policy, PageLen_t pg_sz = -1)
+	palloc_raw(PagePolicy policy, PgSz_t pg_sz = -1)
 	{
 		DisIntrGuard_t guard;
 		switch (policy) {

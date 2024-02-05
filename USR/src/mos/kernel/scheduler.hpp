@@ -8,9 +8,9 @@ namespace MOS::Scheduler
 {
 	using namespace KernelGlobal;
 
-	using TcbPtr_t = Tcb_t::TcbPtr_t;
-	using Fn_t     = Tcb_t::Fn_t;
-	using Status   = Tcb_t::Status;
+	using TcbPtr_t = TCB_t::TcbPtr_t;
+	using Fn_t     = TCB_t::Fn_t;
+	using Status   = TCB_t::Status;
 
 	enum class Policy
 	{
@@ -79,7 +79,7 @@ namespace MOS::Scheduler
 			sleeping_list.send_to_in_order(
 			        to_wake,
 			        ready_list,
-			        Tcb_t::pri_cmp);
+			        TCB_t::pri_cmp);
 		}
 	}
 
@@ -117,7 +117,7 @@ namespace MOS::Scheduler
 
 		if constexpr (policy == PreemptivePriority) {
 			// If there's a task with higher priority
-			if (Tcb_t::pri_cmp(st, cr)) {
+			if (TCB_t::pri_cmp(st, cr)) {
 				cr->set_status(Status::READY);
 				return switch_to(st);
 			}
@@ -126,7 +126,7 @@ namespace MOS::Scheduler
 				cr->time_slice = TIME_SLICE;
 				cr->set_status(Status::READY);
 				// RoundRobin under same priority
-				if (nx != ed && Tcb_t::pri_equal(nx, cr)) {
+				if (nx != ed && TCB_t::pri_equal(nx, cr)) {
 					return switch_to(nx);
 				}
 				else {

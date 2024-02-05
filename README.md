@@ -68,6 +68,7 @@ src
 ![mutex_test](Pic/mutex.gif)
 
 `LCD Driver & GUI Demo`
+
 <img src="Pic/cat.gif" width="20%"> <img src="Pic/board.gif" width="39.1%"> <img src="Pic/guilite.gif" width="34.5%">
 
 `Concurrent Task Period & Time Sequence`
@@ -145,7 +146,7 @@ namespace MOS::App
         using UserGlobal::leds;
         bar.wait();
         for (uint8_t i = 0; i < 20; i++) {
-           leds[1].toggle();
+           leds[1].toggle(); // green
            Task::delay(250);
         }
         kprintf("T1 exits...\n");
@@ -157,7 +158,7 @@ namespace MOS::App
         Task::create(Task1, nullptr, 1, "T1");
         bar.wait();
         while (true) {
-            leds[0].toggle();
+            leds[0].toggle(); // red
             Task::delay(500);
         }
     }
@@ -236,7 +237,7 @@ o'' )_____//   Version @ x.x.x(...)
 8. Support GCC and STM32CubeMX HAL
 9. Add HAL::STM32F4xx::RTC_t, CmdCall::date_cmd and App::Calendar
 10. idle uses KernelGlobal::zombie_list to recycle inactive pages
-11. Three basic page allocation policies, Page_t::Policy::{POOL, DYNAMIC, STATIC}
+11. Page allocator policies, Page_t::Policy::{POOL, DYNAMIC, STATIC}
 ```
 ```
 📦 Version 0.0.3

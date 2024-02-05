@@ -7,17 +7,17 @@ namespace MOS::Sync
 {
 	using namespace Macro;
 
-	using DataType::Tcb_t;
+	using DataType::TCB_t;
 	using DataType::TcbList_t;
 	using KernelGlobal::ready_list;
 	using Utils::DisIntrGuard_t;
 	using Utils::test_irq;
 	using Concepts::Invocable;
 
-	using TcbPtr_t = Tcb_t::TcbPtr_t;
-	using Prior_t  = Tcb_t::Prior_t;
+	using TcbPtr_t = TCB_t::TcbPtr_t;
+	using Prior_t  = TCB_t::Prior_t;
 	using Cnt_t    = volatile int32_t;
-	using Status   = Tcb_t::Status;
+	using Status   = TCB_t::Status;
 
 	struct Semaphore_t
 	{
@@ -193,7 +193,7 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		raise_all_pri()
 		{
-			sema.waiting_queue.iter_mut([&](Tcb_t& tcb) {
+			sema.waiting_queue.iter_mut([&](TCB_t& tcb) {
 				tcb.set_pri(ceiling);
 			});
 		}
@@ -201,7 +201,7 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		set_new_ceiling()
 		{
-			sema.waiting_queue.iter([&](const Tcb_t& tcb) {
+			sema.waiting_queue.iter([&](const TCB_t& tcb) {
 				const auto old_pr = tcb.old_pr;
 				if (old_pr != PRI_NONE && old_pr < ceiling) {
 					ceiling = old_pr;

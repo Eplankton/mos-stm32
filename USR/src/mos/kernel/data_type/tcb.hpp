@@ -9,12 +9,13 @@ namespace MOS::DataType
 {
 	using namespace Macro;
 
-	struct __attribute__((packed)) Tcb_t
+	// Task Control Block
+	struct __attribute__((packed)) TCB_t
 	{
-		using Self_t        = Tcb_t;
-		using SelfPtr_t     = Tcb_t*;
+		using Self_t        = TCB_t;
+		using SelfPtr_t     = TCB_t*;
 		using TcbPtr_t      = SelfPtr_t;
-		using ConstTcbPtr_t = const Tcb_t*;
+		using ConstTcbPtr_t = const TCB_t*;
 		using StackPtr_t    = uint32_t*;
 		using Node_t        = ListNode_t;
 		using Tid_t         = int16_t;
@@ -59,8 +60,8 @@ namespace MOS::DataType
 		       stamp       = 0;
 		TcbPtr_t parent    = nullptr;
 
-		MOS_INLINE Tcb_t() = default;
-		MOS_INLINE Tcb_t(
+		MOS_INLINE TCB_t() = default;
+		MOS_INLINE TCB_t(
 		        Fn_t fn,
 		        Argv_t argv,
 		        Prior_t pri,
@@ -103,7 +104,7 @@ namespace MOS::DataType
 			};
 
 			// Use inplace new
-			new ((void*) this) Tcb_t {};
+			new ((void*) this) TCB_t {};
 			inactive.recycle();
 		}
 
@@ -213,7 +214,7 @@ namespace MOS::DataType
 		page_usage() volatile const
 		{
 			const uint32_t stk_top = (uint32_t) &page.from_bottom();
-			const uint32_t atu     = (stk_top - (uint32_t) sp + sizeof(Tcb_t));
+			const uint32_t atu     = (stk_top - (uint32_t) sp + sizeof(TCB_t));
 			return atu * 25 / page.get_size();
 		}
 
@@ -222,7 +223,7 @@ namespace MOS::DataType
 		{
 			const uint32_t stk_top = (uint32_t) &page.from_bottom();
 			const uint32_t atu     = (stk_top - (uint32_t) sp);
-			return atu * 25 / (page.get_size() - sizeof(Tcb_t) / sizeof(void*));
+			return atu * 25 / (page.get_size() - sizeof(TCB_t) / sizeof(void*));
 		}
 
 		MOS_INLINE static inline bool
@@ -241,7 +242,7 @@ namespace MOS::DataType
 		build(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
 		{
 			// Use inplace new
-			return new (page.get_raw()) Tcb_t {
+			return new (page.get_raw()) TCB_t {
 			        fn,
 			        argv,
 			        pri,
@@ -252,15 +253,15 @@ namespace MOS::DataType
 	};
 
 	template <typename Fn, typename Ret = void>
-	concept TcbListIterFn = Invocable<Fn, Ret, const Tcb_t&>;
+	concept TcbListIterFn = Invocable<Fn, Ret, const TCB_t&>;
 
 	template <typename Fn>
-	concept TcbCmpFn = Invocable<Fn, bool, Tcb_t*, Tcb_t*>;
+	concept TcbCmpFn = Invocable<Fn, bool, TCB_t*, TCB_t*>;
 
-	// A wrapper of ListImpl_t for Tcb_t
+	// A wrapper of ListImpl_t for TCB_t
 	struct TcbList_t : private ListImpl_t
 	{
-		using TcbPtr_t = Tcb_t::TcbPtr_t;
+		using TcbPtr_t = TCB_t::TcbPtr_t;
 		using ListImpl_t::size;
 		using ListImpl_t::empty;
 
@@ -275,7 +276,7 @@ namespace MOS::DataType
 		{
 			auto wrapper = [](auto&& fn) {
 				return [&](const Node_t& node) {
-					fn((const Tcb_t&) node);
+					fn((const TCB_t&) node);
 				};
 			};
 
@@ -287,7 +288,7 @@ namespace MOS::DataType
 		{
 			auto wrapper = [](auto&& fn) {
 				return [&](Node_t& node) {
-					fn((Tcb_t&) node);
+					fn((TCB_t&) node);
 				};
 			};
 
@@ -358,10 +359,10 @@ namespace MOS::DataType
 
 	struct DebugTcbs_t
 	{
-		using TcbPtr_t = volatile Tcb_t::TcbPtr_t;
+		using TcbPtr_t = volatile TCB_t::TcbPtr_t;
 		using Raw_t    = volatile TcbPtr_t[MAX_TASK_NUM];
 		using Len_t    = volatile uint32_t;
-		using Tid_t    = volatile Tcb_t::Tid_t;
+		using Tid_t    = volatile TCB_t::Tid_t;
 
 		Raw_t raw    = {nullptr};
 		Len_t len    = 0;

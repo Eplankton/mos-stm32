@@ -27,13 +27,13 @@ int main(void)
 	DataType::Page_t page {
 	        .policy = DataType::Page_t::Policy::STATIC,
 	        .raw    = stp,
-	        .size   = sizeof(stp) / sizeof(uint32_t),
+	        .size   = sizeof(stp) / sizeof(size_t),
 	};
 
 	// Create user tasks
 	// Task::create(App::Task0, nullptr, 2, "T0", page);
 	// Task::create(App::GUI, nullptr, 3, "GUI");
-	Task::create(App::LCD, nullptr, 3, "LCD", 64);
+	Task::create(App::LCD, nullptr, 3, "LCD");
 
 	// Test examples
 	// Test::MutexTest();

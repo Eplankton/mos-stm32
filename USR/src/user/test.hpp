@@ -34,11 +34,11 @@ namespace MOS::Test
 
 		static auto J1 = [](void* argv) {
 			for (uint8_t i = 0; i < 20; i++) {
-				leds[1].toggle();
+				leds[1].toggle(); // green
 				Task::delay(250);
 			}
 			Task::delay(1000);
-			MOS_MSG("%s exits...", Task::current()->get_name());
+			kprintf("Async J1 exits...\n");
 		};
 
 		static auto J0 = [](void* argv) {
@@ -49,7 +49,7 @@ namespace MOS::Test
 				Task::delay(500);
 			}
 
-			future.await(); // green
+			future.await();
 
 			while (true) {
 				leds[0].toggle(); // red
@@ -57,7 +57,7 @@ namespace MOS::Test
 			}
 		};
 
-		Task::create(J0, nullptr, 1, "J0");
+		Task::create(J0, nullptr, 2, "J0");
 	}
 }
 

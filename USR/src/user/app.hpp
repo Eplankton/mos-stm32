@@ -132,7 +132,7 @@ namespace MOS::App
 			leds[1].toggle();
 			Task::delay(250);
 		}
-		MOS_MSG("%s exits...", Task::current()->get_name());
+		kprintf("T1 exits...\n");
 	}
 
 	void Task0(void* argv)

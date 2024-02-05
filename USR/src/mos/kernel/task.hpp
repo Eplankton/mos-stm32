@@ -12,17 +12,15 @@ namespace MOS::Task
 	using namespace Utils;
 	using namespace Alloc;
 
-	using Tcb_t     = DataType::Tcb_t;
-	using TcbList_t = DataType::TcbList_t;
-	using Fn_t      = Tcb_t::Fn_t;
-	using Argv_t    = Tcb_t::Argv_t;
-	using Prior_t   = Tcb_t::Prior_t;
-	using Node_t    = Tcb_t::Node_t;
-	using Name_t    = Tcb_t::Name_t;
-	using Tid_t     = Tcb_t::Tid_t;
-	using Tick_t    = Tcb_t::Tick_t;
-	using TcbPtr_t  = Tcb_t::TcbPtr_t;
-	using Status    = Tcb_t::Status;
+	using Fn_t      = TCB_t::Fn_t;
+	using Argv_t    = TCB_t::Argv_t;
+	using Pri_t     = TCB_t::Prior_t;
+	using Node_t    = TCB_t::Node_t;
+	using Name_t    = TCB_t::Name_t;
+	using Tid_t     = TCB_t::Tid_t;
+	using Tick_t    = TCB_t::Tick_t;
+	using TcbPtr_t  = TCB_t::TcbPtr_t;
+	using Status    = TCB_t::Status;
 
 	MOS_INLINE inline TcbPtr_t
 	current() { return cur_tcb; }
@@ -163,7 +161,7 @@ namespace MOS::Task
 	}
 
 	inline TcbPtr_t
-	create_raw(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
+	create_raw(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name, Page_t page)
 	{
 		MOS_ASSERT(fn != nullptr, "fn can't be null");
 
@@ -181,7 +179,7 @@ namespace MOS::Task
 		TcbPtr_t cur = current(), tcb = nullptr;
 
 		// Construct a tcb at the head of a page
-		tcb = Tcb_t::build(fn, argv, pri, name, page);
+		tcb = TCB_t::build(fn, argv, pri, name, page);
 
 		// Load empty context
 		setup_context(tcb);
@@ -199,7 +197,7 @@ namespace MOS::Task
 		tcb->set_status(Status::READY);
 
 		// Add to ready_list
-		ready_list.insert_in_order(tcb, Tcb_t::pri_cmp);
+		ready_list.insert_in_order(tcb, TCB_t::pri_cmp);
 
 		// For debug only
 		debug_tcbs.add(tcb);
@@ -208,12 +206,12 @@ namespace MOS::Task
 	}
 
 	inline TcbPtr_t
-	create_impl(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
+	create_impl(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name, Page_t page)
 	{
 		auto tcb = create_raw(fn, argv, pri, name, page);
 
 		// If a new task has higher priority, switch at once
-		if (Tcb_t::pri_cmp(tcb, current())) {
+		if (TCB_t::pri_cmp(tcb, current())) {
 			yield();
 		}
 
@@ -222,13 +220,13 @@ namespace MOS::Task
 
 	// Create task from static memory
 	MOS_INLINE inline TcbPtr_t
-	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
+	create(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name, Page_t page)
 	{
 		return create_impl(fn, argv, pri, name, page);
 	}
 
 	MOS_INLINE inline Page_t
-	page_alloc(PagePolicy policy, PageLen_t pg_sz)
+	page_alloc(PagePolicy policy, PgSz_t pg_sz)
 	{
 		return Page_t {
 		        .policy = policy,
@@ -239,7 +237,7 @@ namespace MOS::Task
 
 	// Create task from pre-allocated `page_pool`
 	MOS_INLINE inline TcbPtr_t
-	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
+	create(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name)
 	{
 		auto page = page_alloc(PagePolicy::POOL, PAGE_SIZE);
 		return create_impl(fn, argv, pri, name, page);
@@ -247,7 +245,7 @@ namespace MOS::Task
 
 	// Create task from dynamic allocated memory
 	MOS_INLINE inline TcbPtr_t
-	create(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, PageLen_t pg_sz)
+	create(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name, PgSz_t pg_sz)
 	{
 		auto page = page_alloc(PagePolicy::DYNAMIC, pg_sz);
 		return create_impl(fn, argv, pri, name, page);
@@ -255,7 +253,7 @@ namespace MOS::Task
 
 	// Not recommended to use
 	MOS_INLINE inline TcbPtr_t
-	create_from_isr(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name)
+	create_from_isr(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name)
 	{
 		auto page = page_alloc(PagePolicy::POOL, PAGE_SIZE);
 		return create_raw(fn, argv, pri, name, page);
@@ -323,7 +321,7 @@ namespace MOS::Task
 		src.send_to_in_order(
 		        tcb,
 		        ready_list,
-		        Tcb_t::pri_cmp);
+		        TCB_t::pri_cmp);
 	}
 
 	inline void resume(TcbPtr_t tcb)
@@ -353,13 +351,13 @@ namespace MOS::Task
 	}
 
 	inline void
-	change_pri(TcbPtr_t tcb, Prior_t pri)
+	change_pri(TcbPtr_t tcb, Pri_t pri)
 	{
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		DisIntrGuard_t guard;
 		tcb->set_pri(pri);
-		ready_list.re_insert(tcb, Tcb_t::pri_cmp);
+		ready_list.re_insert(tcb, TCB_t::pri_cmp);
 
 		// If tasks with higher priority exist
 		if (higher_exists()) {
@@ -446,8 +444,6 @@ namespace MOS::Task
 	{
 		struct Future_t
 		{
-			// A distinguishable task can be
-			// marked by tid and stamp(os_ticks)
 			struct Stamp_t
 			{
 				Tick_t stmp = 0;
@@ -457,6 +453,7 @@ namespace MOS::Task
 				    : tid(tcb->get_tid()),
 				      stmp(tcb->get_stamp()) {}
 
+				// A distinguishable task can be marked by tid and stamp(os_ticks)
 				MOS_INLINE inline bool
 				is_valid(TcbPtr_t tcb) const
 				{
@@ -522,7 +519,7 @@ namespace MOS::Task
 		}
 
 		MOS_INLINE inline auto
-		async(Fn_t fn, Argv_t argv, Name_t name, PageLen_t pg_sz)
+		async(Fn_t fn, Argv_t argv, Name_t name, PgSz_t pg_sz)
 		{
 			auto page = page_alloc(PagePolicy::DYNAMIC, pg_sz);
 			return async_raw(fn, argv, name, page);

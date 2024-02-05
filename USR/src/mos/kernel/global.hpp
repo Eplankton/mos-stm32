@@ -15,9 +15,9 @@ namespace MOS::KernelGlobal
 	using namespace Macro;
 	using namespace DataType;
 
-	using Tid_t      = Tcb_t::Tid_t;
-	using Tick_t     = Tcb_t::Tick_t;
-	using TcbPtr_t   = Tcb_t::TcbPtr_t;
+	using Tid_t      = TCB_t::Tid_t;
+	using Tick_t     = TCB_t::Tick_t;
+	using TcbPtr_t   = TCB_t::TcbPtr_t;
 	using PagePool_t = Page_t::Word_t[POOL_NUM][PAGE_SIZE];
 	using TidsMap_t  = BitMap_t<MAX_TASK_NUM>;
 

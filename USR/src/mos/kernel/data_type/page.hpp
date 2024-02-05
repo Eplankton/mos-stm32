@@ -9,7 +9,7 @@ namespace MOS::DataType
 	{
 		using Word_t = uint32_t;
 		using Raw_t  = Word_t*;
-		using Len_t  = const uint32_t;
+		using Size_t = const size_t;
 
 		enum class Policy
 		{
@@ -19,8 +19,8 @@ namespace MOS::DataType
 			DYNAMIC,
 		} policy = Policy::ERROR;
 
-		Raw_t raw  = nullptr;
-		Len_t size = 0;
+		Raw_t raw   = nullptr;
+		Size_t size = 0;
 
 		MOS_INLINE inline void
 		recycle()
@@ -32,7 +32,7 @@ namespace MOS::DataType
 			raw = nullptr;
 		}
 
-		MOS_INLINE inline Len_t
+		MOS_INLINE inline Size_t
 		get_size() const volatile { return size; }
 
 		MOS_INLINE inline Raw_t
