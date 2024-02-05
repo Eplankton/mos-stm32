@@ -17,7 +17,6 @@
 #include "kernel/global.hpp"
 #include "kernel/task.hpp"
 #include "kernel/sync.hpp"
-#include "kernel/async.hpp"
 #include "kernel/scheduler.hpp"
 
 #endif

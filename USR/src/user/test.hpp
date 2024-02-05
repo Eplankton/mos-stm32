@@ -1,8 +1,8 @@
 #ifndef _MOS_USER_TEST_
 #define _MOS_USER_TEST_
 
+#include "src/mos/kernel/task.hpp"
 #include "src/mos/kernel/sync.hpp"
-#include "src/mos/kernel/async.hpp"
 #include "global.hpp"
 
 namespace MOS::Test
@@ -33,25 +33,26 @@ namespace MOS::Test
 		using UserGlobal::leds;
 
 		static auto J1 = [](void* argv) {
-			for (uint8_t i = 0; i < 10; i++) {
+			for (uint8_t i = 0; i < 20; i++) {
 				leds[1].toggle();
 				Task::delay(250);
 			}
-			kprintf("async exits...\n");
+			Task::delay(1000);
+			MOS_MSG("%s exits...", Task::current()->get_name());
 		};
 
 		static auto J0 = [](void* argv) {
-			auto future = Async::create(J1, nullptr);
+			auto future = Task::async(J1, nullptr, "J1");
 
 			for (uint8_t i = 0; i < 10; i++) {
-				leds[2].toggle();
+				leds[2].toggle(); // blue
 				Task::delay(500);
 			}
 
-			future.await(); // Lazy
+			future.await(); // green
 
 			while (true) {
-				leds[0].toggle();
+				leds[0].toggle(); // red
 				Task::delay(500);
 			}
 		};

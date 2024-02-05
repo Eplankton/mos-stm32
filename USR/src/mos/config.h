@@ -11,8 +11,8 @@
 #define MOS_CONF_ASSERT       true               // Whether to use full assert
 #define MOS_CONF_PRINTF       true               // Whether to use printf
 #define MOS_CONF_DEBUG_INFO   true               // Whether to use debug info
-#define MOS_CONF_MAX_TASK_NUM 32                 // Max task num
-#define MOS_CONF_POOL_NUM     32                 // Page pool num
+#define MOS_CONF_MAX_TASK_NUM 16                 // Maximum number of tasks
+#define MOS_CONF_POOL_NUM     16                 // Number of pre-allocated pages
 #define MOS_CONF_PAGE_SIZE    1024               // Page size for each task in bytes
 #define MOS_CONF_SYSTICK      1000               // SystemFrequency / 1000 = every 1ms
 #define MOS_CONF_PRI_NONE     -1                 // None priority

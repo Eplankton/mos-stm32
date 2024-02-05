@@ -54,8 +54,9 @@ namespace MOS::DataType
 
 		Page_t page        = {ERROR, nullptr, 0};
 		Status status      = TERMINATED;
-		Tick_t time_slice  = TIME_SLICE;
-		Tick_t delay_ticks = 0;
+		Tick_t time_slice  = TIME_SLICE,
+		       delay_ticks = 0,
+		       stamp       = 0;
 		TcbPtr_t parent    = nullptr;
 
 		MOS_INLINE Tcb_t() = default;
@@ -96,9 +97,9 @@ namespace MOS::DataType
 		deinit() volatile
 		{
 			Page_t inactive {
-				.policy = page.get_policy(),
-				.raw    = page.get_raw(),
-				// Don't care about the size
+			        .policy = page.get_policy(),
+			        .raw    = page.get_raw(),
+			        // Don't care about the size
 			};
 
 			// Use inplace new
@@ -194,6 +195,18 @@ namespace MOS::DataType
 		set_delay(const Tick_t ticks) volatile
 		{
 			delay_ticks = ticks;
+		}
+
+		MOS_INLINE inline void
+		set_stamp(const Tick_t time) volatile
+		{
+			stamp = time;
+		}
+
+		MOS_INLINE inline Tick_t
+		get_stamp() const volatile
+		{
+			return stamp;
 		}
 
 		MOS_INLINE inline uint32_t

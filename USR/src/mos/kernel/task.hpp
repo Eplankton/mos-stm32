@@ -38,7 +38,7 @@ namespace MOS::Task
 	}
 
 	MOS_INLINE inline void
-	dec_tslc()
+	dec_tmslc()
 	{
 		// Avoid underflow
 		if (current()->time_slice <= TIME_SLICE)
@@ -50,7 +50,7 @@ namespace MOS::Task
 	MOS_INLINE inline void
 	nop_and_yield()
 	{
-		dec_tslc();
+		dec_tmslc();
 		yield();
 	}
 
@@ -188,6 +188,9 @@ namespace MOS::Task
 
 		// Give Tid
 		tcb->set_tid(tid_alloc());
+
+		// Set Time Stamp
+		tcb->set_stamp(os_ticks);
 
 		// Set parent
 		tcb->set_parent(cur);
@@ -437,6 +440,93 @@ namespace MOS::Task
 		auto cur = current();
 		cur->set_delay(os_ticks + ticks);
 		block_to_in_order(cur, sleeping_list, delay_cmp);
+	}
+
+	inline namespace Async
+	{
+		struct Future_t
+		{
+			// A distinguishable task can be
+			// marked by tid and stamp(os_ticks)
+			struct Stamp_t
+			{
+				Tick_t stmp = 0;
+				Tid_t tid   = -1;
+
+				MOS_INLINE Stamp_t(TcbPtr_t tcb)
+				    : tid(tcb->get_tid()),
+				      stmp(tcb->get_stamp()) {}
+
+				MOS_INLINE inline bool
+				is_valid(TcbPtr_t tcb) const
+				{
+					return tid == tcb->get_tid() &&
+					       stmp == tcb->get_stamp();
+				}
+			} stamp;
+
+			TcbPtr_t tcb;
+
+			MOS_INLINE
+			inline Future_t(TcbPtr_t tcb)
+			    : tcb(tcb), stamp(tcb) {}
+
+			MOS_INLINE
+			inline ~Future_t() { await(); }
+
+			MOS_INLINE inline bool
+			is_ready() const
+			{
+				// If tcb is invalid -> task has been deinited -> DONE (mostly)
+				// If tcb is valid, check status, TERMINATED -> DONE (rarely)
+				DisIntrGuard_t guard;
+				return !stamp.is_valid(tcb) ||
+				       tcb->is_status(Status::TERMINATED);
+			}
+
+			MOS_INLINE inline void
+			await()
+			{
+				// Spin Waiting
+				while (!is_ready()) {
+					Task::delay(1);
+				}
+				tcb = nullptr;
+			}
+		};
+
+		MOS_INLINE inline auto
+		async_raw(Fn_t fn, Argv_t argv, Name_t name, Page_t page)
+		{
+			DisIntrGuard_t guard;
+			auto tcb = create_raw(
+			        fn,
+			        argv,
+			        current()->get_pri(),
+			        name,
+			        page);
+			return Future_t {tcb};
+		}
+
+		MOS_INLINE inline auto
+		async(Fn_t fn, Argv_t argv, Name_t name, Page_t page)
+		{
+			return async_raw(fn, argv, name, page);
+		}
+
+		MOS_INLINE inline auto
+		async(Fn_t fn, Argv_t argv, Name_t name)
+		{
+			auto page = page_alloc(PagePolicy::POOL, PAGE_SIZE);
+			return async_raw(fn, argv, name, page);
+		}
+
+		MOS_INLINE inline auto
+		async(Fn_t fn, Argv_t argv, Name_t name, PageLen_t pg_sz)
+		{
+			auto page = page_alloc(PagePolicy::DYNAMIC, pg_sz);
+			return async_raw(fn, argv, name, page);
+		}
 	}
 }
 

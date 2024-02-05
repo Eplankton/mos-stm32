@@ -3,7 +3,6 @@
 
 #include "src/mos/kernel/task.hpp"
 #include "src/mos/kernel/sync.hpp"
-#include "src/mos/kernel/async.hpp"
 #include "src/user/global.hpp"
 #include "src/user/gui/GuiLite.h"
 #include "src/user/img/cat_gif.h"
@@ -111,8 +110,8 @@ namespace MOS::App
 			DisIntrGuard_t guard;
 			const auto date = RTC_t::get_date();
 			const auto time = RTC_t::get_time();
-			MOS_MSG("20%0.2d/%0.2d/%0.2d "
-			        "%0.2d:%0.2d:%0.2d",
+			MOS_MSG("20%0.2d/%0.2d/%0.2d"
+			        " %0.2d:%0.2d:%0.2d",
 			        date.RTC_Year, date.RTC_Month, date.RTC_Date,
 			        time.RTC_Hours, time.RTC_Minutes, time.RTC_Seconds);
 		};
@@ -128,13 +127,12 @@ namespace MOS::App
 	void Task1(void* argv)
 	{
 		using UserGlobal::leds;
-		Task::delay(2000);
 		bar.wait();
 		for (uint8_t i = 0; i < 20; i++) {
 			leds[1].toggle();
 			Task::delay(250);
 		}
-		kprintf("T1 exits...\n");
+		MOS_MSG("%s exits...", Task::current()->get_name());
 	}
 
 	void Task0(void* argv)

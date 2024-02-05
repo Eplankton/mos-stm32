@@ -21,9 +21,9 @@ o'' )_____//    [MOS-STM32]
 [USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
 ```    
 src
-├── drivers                  Hardware Drivers(SPL, HAL...)
-│   ├── stm32f4xx            STM32F4xx on-chip periphs(USART, I2C, SPI...)
-│   └── device               Other components(LED, LCD...)
+├── drivers                  Hardware Drivers(SPL/HAL/LL/...)
+│   ├── stm32f4xx            STM32F4xx on-chip periphs(USART, I2C, SPI, ...)
+│   └── device               Other components(LED, LCD, ...)
 │
 ├── mos
 │   ├── config.h             System Configuration
@@ -38,9 +38,8 @@ src
 │   │   ├── alloc.hpp        Static/Dynamic Allocator
 │   │   ├── global.hpp       Kernel Globals
 │   │   ├── printf.c         Thread-safe printf
-│   │   ├── task.hpp         Task create, yield, terminate, block...
+│   │   ├── task.hpp         Task create, yield, terminate, block, ...
 │   │   ├── sync.hpp         Sync primitives
-│   │   ├── async.hpp        Async executor
 │   │   ├── scheduler.hpp    Scheduler and Policy
 │   │   └── utils.hpp        Utils
 │   │
@@ -69,15 +68,14 @@ src
 ![mutex_test](Pic/mutex.gif)
 
 `LCD Driver & GUI Demo`
-
-<img src="Pic/cat.gif" width="20%"> <img src="Pic/board.gif" width="39%"> <img src="Pic/guilite.gif" width="35%">
+<img src="Pic/cat.gif" width="20%"> <img src="Pic/board.gif" width="39.1%"> <img src="Pic/guilite.gif" width="34.5%">
 
 `Concurrent Task Period & Time Sequence`
 <img src="Pic/T0-T1.png" width="90%">
 <img src="Pic/tids.png" width="70%">
 
 
-`Async Executor with Lazy Evaluation`
+`Async Executor`
 <img src="Pic/async.png">
 
 ```C++
@@ -210,7 +208,7 @@ o'' )_____//   Version @ x.x.x(...)
 
 ### Version 🧾
 ```
-📦 The initial version 0.0.1
+📦 Version 0.0.1
 
 ✅ Done
 1. Basic Scheduler and Task control
@@ -245,7 +243,7 @@ o'' )_____//   Version @ x.x.x(...)
 
 ✅ Done
 1. Tids from BitMap_t
-2. Async::{Future_t, create} (Experimental)
+2. Task::Async::{Future_t, async} (Experimental)
 
 📌 Plan
 1. IPC::{pipe, message queue}, etc.

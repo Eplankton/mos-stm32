@@ -1,8 +1,8 @@
 #ifndef _MOS_MACRO_
 #define _MOS_MACRO_
 
-#include <stdint.h>
 #include "../config.h"
+#include "type.hpp"
 
 namespace MOS::Macro
 {
