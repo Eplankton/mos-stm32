@@ -14,21 +14,22 @@ namespace MOS::Alloc
 
 	// Page Allocator
 	inline PageRaw_t // -1(0xFFFFFFFF) as invalid
-	palloc_raw(PagePolicy policy, PgSz_t pg_sz = -1)
+	palloc(PagePolicy policy, PgSz_t pg_sz = -1)
 	{
 		DisIntrGuard_t guard;
 		switch (policy) {
 			case PagePolicy::POOL: {
 				using KernelGlobal::page_pool;
 
-				// Whether a page has been used
-				static auto is_used = [](PageRaw_t raw) {
-					auto tst = (void*) raw[0];
-					return tst != nullptr && tst != raw;
+				// Whether a page is unused
+				static auto unused = [](PageRaw_t raw) {
+					auto ptr = (void*) raw[0]; // ptr = tcb.node.prev
+					return ptr == nullptr      // Uninitialized -> first alloc
+					       || ptr == raw;      // Deinitialized -> tcb.node is self-linked
 				};
 
 				for (auto raw: page_pool) {
-					if (!is_used(raw)) {
+					if (unused(raw)) {
 						return raw;
 					}
 				}

@@ -12,15 +12,15 @@ namespace MOS::Task
 	using namespace Utils;
 	using namespace Alloc;
 
-	using Fn_t      = TCB_t::Fn_t;
-	using Argv_t    = TCB_t::Argv_t;
-	using Pri_t     = TCB_t::Prior_t;
-	using Node_t    = TCB_t::Node_t;
-	using Name_t    = TCB_t::Name_t;
-	using Tid_t     = TCB_t::Tid_t;
-	using Tick_t    = TCB_t::Tick_t;
-	using TcbPtr_t  = TCB_t::TcbPtr_t;
-	using Status    = TCB_t::Status;
+	using Fn_t     = TCB_t::Fn_t;
+	using Argv_t   = TCB_t::Argv_t;
+	using Pri_t    = TCB_t::Prior_t;
+	using Node_t   = TCB_t::Node_t;
+	using Name_t   = TCB_t::Name_t;
+	using Tid_t    = TCB_t::Tid_t;
+	using Tick_t   = TCB_t::Tick_t;
+	using TcbPtr_t = TCB_t::TcbPtr_t;
+	using Status   = TCB_t::Status;
 
 	MOS_INLINE inline TcbPtr_t
 	current() { return cur_tcb; }
@@ -73,10 +73,8 @@ namespace MOS::Task
 		DisIntrGuard_t guard;
 		while (!zombie_list.empty()) {
 			auto tcb = zombie_list.begin();
-			// For debug only
-			debug_tcbs.remove(tcb);
 
-			// Delete tcb from zombie_list
+			// Remove from zombie_list
 			zombie_list.remove(tcb);
 
 			// Reset tcb to default
@@ -86,12 +84,12 @@ namespace MOS::Task
 	}
 
 	// For debug only
-	MOS_INLINE inline uint32_t
+	MOS_INLINE inline auto
 	num() { return debug_tcbs.size(); }
 
 	inline void terminate_raw(TcbPtr_t tcb)
 	{
-		// Remove the task from list
+		// Remove the task from where it belongs to
 		if (tcb->is_status(Status::RUNNING) ||
 		    tcb->is_status(Status::READY)) {
 			ready_list.remove(tcb);
@@ -109,12 +107,14 @@ namespace MOS::Task
 		// Clear the bit in tids
 		tids.reset(tcb->get_tid());
 
+		// For debug only
+		debug_tcbs.remove(tcb);
+
 		// Only DYNAMIC pages need delayed recycling
 		if (tcb->page.is_policy(PagePolicy::DYNAMIC)) {
 			zombie_list.add(tcb);
 		}
-		else { // Otherwise POOL or STATIC, just remove and deinit
-			debug_tcbs.remove(tcb);
+		else { // Otherwise for POOL or STATIC, just deinit immediately
 			tcb->deinit();
 		}
 	}
@@ -165,13 +165,13 @@ namespace MOS::Task
 	{
 		MOS_ASSERT(fn != nullptr, "fn can't be null");
 
-		if (debug_tcbs.size() >= MAX_TASK_NUM) {
-			MOS_MSG("Max tasks!");
+		if (page.get_raw() == nullptr) {
+			MOS_MSG("Page Alloc Failed!");
 			return nullptr;
 		}
 
-		if (page.get_raw() == nullptr) {
-			MOS_MSG("Page Alloc Failed!");
+		if (debug_tcbs.size() >= MAX_TASK_NUM) {
+			MOS_MSG("Max tasks!");
 			return nullptr;
 		}
 
@@ -230,7 +230,7 @@ namespace MOS::Task
 	{
 		return Page_t {
 		        .policy = policy,
-		        .raw    = palloc_raw(policy, pg_sz),
+		        .raw    = palloc(policy, pg_sz),
 		        .size   = pg_sz,
 		};
 	}

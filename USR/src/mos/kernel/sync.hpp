@@ -332,8 +332,7 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		wake_up_one()
 		{
-			auto& wtq = waiting_queue;
-			Task::resume_raw(wtq.begin(), wtq);
+			Task::resume_raw(waiting_queue.begin(), waiting_queue);
 		}
 	};
 

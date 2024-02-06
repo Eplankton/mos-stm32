@@ -4,7 +4,7 @@
 // MOS Kernel
 #include "src/mos/kernel.hpp"
 
-// User Space
+// User Application
 #include "src/user/global.hpp"
 #include "src/user/gui/GuiLite.h"
 #include "src/user/img/cat_gif.h"

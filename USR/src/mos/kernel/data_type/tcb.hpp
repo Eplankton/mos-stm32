@@ -28,7 +28,7 @@ namespace MOS::DataType
 
 		enum class Status
 		{
-			TERMINATED = -1,
+			TERMINATED,
 			READY,
 			RUNNING,
 			BLOCKED,
@@ -367,6 +367,12 @@ namespace MOS::DataType
 		Raw_t raw    = {nullptr};
 		Len_t len    = 0;
 		Tid_t cr_tid = -1;
+
+		MOS_INLINE inline void
+		set_cr_tid(TcbPtr_t tcb) volatile
+		{
+			cr_tid = tcb->get_tid();
+		}
 
 		MOS_INLINE inline Len_t
 		size() const volatile { return len; }

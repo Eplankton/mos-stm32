@@ -1,7 +1,7 @@
 // MOS Shell
 #include "mos/shell.hpp"
 
-// User Space
+// User Application
 #include "user/global.hpp"
 #include "user/bsp.hpp"
 #include "user/app.hpp"
@@ -30,13 +30,13 @@ int main(void)
 	};
 
 	// Create user tasks
-	// Task::create(App::Task0, nullptr, 2, "T0", page);
+	Task::create(App::Task0, nullptr, 2, "T0", page);
 	// Task::create(App::GUI, nullptr, 3, "GUI");
 	Task::create(App::LCD, nullptr, 3, "LCD");
 
 	// Test examples
 	// Test::MutexTest();
-	Test::AsyncTest();
+	// Test::AsyncTest();
 
 	// Start scheduling, never return
 	Scheduler::launch();

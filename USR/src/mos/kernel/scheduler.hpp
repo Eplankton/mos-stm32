@@ -15,6 +15,18 @@ namespace MOS::Scheduler
 	enum class Policy
 	{
 		RoundRobin,
+
+		// The `PreemptivePriority` scheduling policy is used when tasks in the system have different priority levels,
+		// and it is desirable for tasks with higher priority to run before tasks with lower priority.
+		// In this policy, if a task with a higher priority than the currently running task becomes ready to run,
+		// the scheduler will preempt the current task and switch to the higher priority task, which is known as `preemption`.
+		// `TCB_t::pri_cmp(st, cr)` compares the priority of the new task `st` with the currently running task `cr`.
+		// If `st` has higher priority, the current task `cr` will be set to `READY` status and switched to `st`.
+		// If the `time slice` of the current task `cr` is exhausted (i.e., `cr->time_slice <= 0`), the `time_slice` will be reset to `TIME_SLICE`,
+		// and the status of `cr` is set to `READY`.
+		// If there are other tasks with the same priority as `cr` that are ready to run (i.e., `nx != ed && TCB_t::pri_equal(nx, cr)`),
+		// the scheduler performs `RoundRobin` scheduling among these tasks (so called a `PriGroup`).
+		// Otherwise, the scheduler switches back to the task `st` with the highest priority.
 		PreemptivePriority,
 	};
 
@@ -56,14 +68,16 @@ namespace MOS::Scheduler
 		};
 
 		// Create idle task with hook
-		Task::create(
-		        hook == nullptr ? idle : hook,
-		        nullptr,
-		        PRI_MIN,
-		        "idle");
+		Task::create(hook ? hook : idle,
+		             nullptr,
+		             PRI_MIN,
+		             "idle");
 
 		cur_tcb = ready_list.begin();
+		MOS_ASSERT(cur_tcb != ready_list.end(),
+		           "Scheduler Launch Failed!");
 		cur_tcb->set_status(Status::RUNNING);
+		debug_tcbs.set_cr_tid(cur_tcb); // For debug only
 		os_status = READY;
 		init();
 	}
@@ -71,15 +85,14 @@ namespace MOS::Scheduler
 	static inline void
 	try_wake_up()
 	{
-		// Only have to check the first one since they're sorted by delay_ticks
+		// sleeping_list is sorted
 		auto to_wake = sleeping_list.begin();
-		if (to_wake->delay_ticks <= os_ticks) {
+		while (to_wake != sleeping_list.end()) {
+			if (to_wake->delay_ticks > os_ticks)
+				return;
 			to_wake->set_delay(0);
-			to_wake->set_status(Status::READY);
-			sleeping_list.send_to_in_order(
-			        to_wake,
-			        ready_list,
-			        TCB_t::pri_cmp);
+			Task::resume_raw(to_wake, sleeping_list);
+			to_wake = sleeping_list.begin(); // check next
 		}
 	}
 
@@ -87,14 +100,12 @@ namespace MOS::Scheduler
 	static inline void next_tcb()
 	{
 		static auto switch_to = [](TcbPtr_t tcb) {
-			debug_tcbs.cr_tid = tcb->get_tid();
 			tcb->set_status(Status::RUNNING);
 			cur_tcb = tcb;
+			debug_tcbs.set_cr_tid(cur_tcb); // For debug only
 		};
 
-		if (!sleeping_list.empty()) {
-			try_wake_up();
-		}
+		try_wake_up();
 
 		auto st = ready_list.begin(),
 		     ed = ready_list.end(),

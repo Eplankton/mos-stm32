@@ -72,7 +72,7 @@ src
 
 `Concurrent Task Period & Time Sequence`
 <img src="Pic/T0-T1.png" width="90%">
-<img src="Pic/tids.png" width="70%">
+<img src="Pic/tids.png" width="65%">
 
 
 `Async Executor`

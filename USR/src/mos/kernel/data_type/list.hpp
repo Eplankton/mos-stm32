@@ -90,7 +90,8 @@ namespace MOS::DataType
 		MOS_NO_INLINE void // Never inline because of instruction reordering
 		remove(Node_t& node)
 		{
-			NodePtr_t prev = node.prev, next = node.next;
+			auto prev  = node.prev,
+			     next  = node.next;
 			prev->next = next;
 			next->prev = prev;
 			node.next  = &node;
