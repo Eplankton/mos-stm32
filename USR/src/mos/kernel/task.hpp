@@ -256,7 +256,7 @@ namespace MOS::Task
 	create_from_isr(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name)
 	{
 		auto page = page_alloc(PagePolicy::POOL, PAGE_SIZE);
-		return create_raw(fn, argv, pri, name, page);
+		return create_raw(fn, argv, pri, name, page); // No yield()
 	}
 
 	static inline void

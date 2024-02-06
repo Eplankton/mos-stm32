@@ -177,7 +177,7 @@ namespace MOS::Sync
 		}
 
 		MOS_INLINE inline auto
-		exec(auto&& section) // To safely execute
+		exec(auto&& section) // To protect certain routine
 		{
 			lock();
 			section();
@@ -213,6 +213,7 @@ namespace MOS::Sync
 	template <typename T = void>
 	struct Mutex_t : private MutexImpl_t
 	{
+		using MutexImpl_t::exec;
 		using Raw_t    = T;
 		using RawRef_t = Raw_t&;
 
@@ -243,13 +244,6 @@ namespace MOS::Sync
 		MOS_INLINE inline auto
 		lock() { return MutexGuard_t {*this}; }
 
-		MOS_INLINE inline auto
-		exec(auto&& section) // To safely execute
-		{
-			auto guard = lock();
-			return section();
-		}
-
 	private:
 		Raw_t raw;
 	};
@@ -257,6 +251,8 @@ namespace MOS::Sync
 	template <>
 	struct Mutex_t<> : private MutexImpl_t
 	{
+		using MutexImpl_t::exec;
+
 		struct MutexGuard_t // No Raw Accessor for T=void
 		{
 			// Unlock when scope ends
@@ -271,21 +267,13 @@ namespace MOS::Sync
 			Mutex_t& mutex;
 		};
 
-		MOS_INLINE
-		inline Mutex_t() = default;
+		MOS_INLINE inline Mutex_t() = default;
 
 		MOS_INLINE inline auto
 		lock() { return MutexGuard_t {*this}; }
-
-		MOS_INLINE inline auto
-		exec(auto&& section) // To safely execute
-		{
-			auto guard = lock(); // scope begins
-			return section();    // scope ends
-		}
 	};
 
-	// Template deduction where T = void
+	// Template Deduction for T = void
 	Mutex_t() -> Mutex_t<void>;
 
 	template <typename T>
@@ -315,18 +303,20 @@ namespace MOS::Sync
 
 		inline void signal() // Notify one
 		{
+			DisIntrGuard_t guard;
 			if (has_waiters()) {
 				wake_up_one();
 			}
-			Task::yield();
+			return Task::yield();
 		}
 
 		inline void broadcast() // Notify all
 		{
+			DisIntrGuard_t guard;
 			while (has_waiters()) {
 				wake_up_one();
 			}
-			Task::yield();
+			return Task::yield();
 		}
 
 	private:
@@ -360,9 +350,7 @@ namespace MOS::Sync
 		{
 			mtx.exec([&] {
 				cnt += 1;
-				cond.wait(mtx, [&] {
-					return cnt == total;
-				});
+				cond.wait(mtx, [&] { return cnt == total; });
 				if (!cond.has_waiters()) {
 					cnt = 0;
 				}

@@ -1,8 +1,10 @@
 #ifndef _MOS_USER_APP_
 #define _MOS_USER_APP_
 
-#include "src/mos/kernel/task.hpp"
-#include "src/mos/kernel/sync.hpp"
+// MOS Kernel
+#include "src/mos/kernel.hpp"
+
+// User Space
 #include "src/user/global.hpp"
 #include "src/user/gui/GuiLite.h"
 #include "src/user/img/cat_gif.h"

@@ -107,7 +107,7 @@ namespace MOS::Utils
 		return ptr;
 	}
 
-	// Create global critical section
+	// Create Auto Global Critical Section
 	struct DisIntrGuard_t
 	{
 		MOS_INLINE inline DisIntrGuard_t() { MOS_DISABLE_IRQ(); }

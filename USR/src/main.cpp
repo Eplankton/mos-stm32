@@ -1,8 +1,7 @@
-// MOS Kernel & Shell
-#include "mos/kernel.hpp"
+// MOS Shell
 #include "mos/shell.hpp"
 
-// User modules
+// User Space
 #include "user/global.hpp"
 #include "user/bsp.hpp"
 #include "user/app.hpp"

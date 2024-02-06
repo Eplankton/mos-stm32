@@ -12,10 +12,9 @@ o'' )_____//    [MOS-STM32]
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
 
-### Repository 🌏
-[GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
+### Repository 🌏 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
 
-### Structure 👾
+### Architecture 👾
 <img src="Pic/mos-arch.svg">
 
 [USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
@@ -31,7 +30,7 @@ src
 │   │   └── cpu.hpp          asm for context_switch
 │   │
 │   ├── kernel               Kernel(Arch-independent)
-│   │   ├── macro.hpp        Configured Macros
+│   │   ├── macro.hpp        Kernel Constant Macros
 │   │   ├── type.hpp         Basic Types
 │   │   ├── concepts.hpp     Type Constraints(Optional)
 │   │   ├── data_type.hpp    Basic Data Structures
@@ -102,7 +101,11 @@ namespace MOS::UserGlobal
     RxBuf_t rx_buf;
 
     // LED red, green, blue
-    LED_t leds[] = {...};
+    LED_t leds[] = {
+        {  RED_PORT,   RED_PIN},
+        {GREEN_PORT, GREEN_PIN},
+        { BLUE_PORT,  BLUE_PIN},
+    };
 }
 ```
 ```C++
@@ -132,7 +135,7 @@ namespace MOS::Bsp
     {
         LED_Config();
         USART_Config();
-        SysTick_Config();
+        ...
     }
 }
 ```
@@ -192,7 +195,7 @@ int main(void)
 }
 ```
 
-### Boot up ⚡
+### Boot Up ⚡
 ```
  A_A       _
 o'' )_____//   Version @ x.x.x(...)
@@ -231,13 +234,13 @@ o'' )_____//   Version @ x.x.x(...)
 2. Scheduler::Policy::PreemptivePriority, under same priority -> RoundRobin
 3. Task::terminate() will be implicitly called when task exits
 4. Shell::{Command, CmdCall, launch}
-5. Add HAL::STM32F4xx::SPI_t and Driver::ST7735S_t, support GuiLite
+5. HAL::STM32F4xx::SPI_t and Driver::ST7735S_t, support GuiLite
 6. KernelGlobal::os_ticks and Task::delay() for blocking delay
 7. Refactor the project into {kernel, arch, drivers}
 8. Support GCC and STM32CubeMX HAL
-9. Add HAL::STM32F4xx::RTC_t, CmdCall::date_cmd and App::Calendar
+9. HAL::STM32F4xx::RTC_t, CmdCall::date_cmd and App::Calendar
 10. idle uses KernelGlobal::zombie_list to recycle inactive pages
-11. Page allocator policies, Page_t::Policy::{POOL, DYNAMIC, STATIC}
+11. Three basic page allocator policies, Page_t::Policy::{POOL, DYNAMIC, STATIC}
 ```
 ```
 📦 Version 0.0.3
@@ -252,7 +255,7 @@ o'' )_____//   Version @ x.x.x(...)
 3. Basic formal verification on Scheduler
 4. DMA_t Driver
 5. More scheduler algorithms
-6. Add FPU support
+6. FPU support
 ```
 
 ### References 🛸
