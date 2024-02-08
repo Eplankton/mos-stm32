@@ -6,12 +6,10 @@
 namespace MOS::Sync
 {
 	using namespace Macro;
+	using namespace Utils;
 
 	using DataType::TCB_t;
 	using DataType::TcbList_t;
-	using KernelGlobal::ready_list;
-	using Utils::DisIntrGuard_t;
-	using Utils::test_irq;
 	using Concepts::Invocable;
 
 	using TcbPtr_t = TCB_t::TcbPtr_t;
@@ -21,7 +19,7 @@ namespace MOS::Sync
 
 	struct Semaphore_t
 	{
-		TcbList_t waiting_queue;
+		TcbList_t waiting_list;
 		Cnt_t cnt;
 
 		// Must set an original value
@@ -39,7 +37,7 @@ namespace MOS::Sync
 			DisIntrGuard_t guard;
 			cnt -= 1;
 			if (cnt < 0) {
-				Task::block_to_raw(Task::current(), waiting_queue);
+				Task::block_to_raw(Task::current(), waiting_list);
 				return Task::yield();
 			}
 		}
@@ -51,7 +49,7 @@ namespace MOS::Sync
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 			DisIntrGuard_t guard;
 			if (cnt < 0) {
-				Task::resume_raw(waiting_queue.begin(), waiting_queue);
+				Task::resume_raw(waiting_list.begin(), waiting_list);
 			}
 			cnt += 1;
 			if (Task::higher_exists()) {
@@ -105,7 +103,7 @@ namespace MOS::Sync
 			// Compare priority with ceiling
 			if (ceiling < cur->get_pri()) {
 				// Temporarily raise the priority
-				cur->old_pr = cur->get_pri();
+				cur->old_pri = cur->get_pri();
 				cur->set_pri(ceiling);
 			}
 			else {
@@ -118,7 +116,7 @@ namespace MOS::Sync
 			sema.cnt -= 1;
 
 			if (sema.cnt < 0) {
-				Task::block_to_raw(cur, sema.waiting_queue);
+				Task::block_to_raw(cur, sema.waiting_list);
 				return Task::yield();
 			}
 			else {
@@ -142,10 +140,10 @@ namespace MOS::Sync
 			}
 
 			// If has waiting tasks
-			if (!sema.waiting_queue.empty()) {
+			if (!sema.waiting_list.empty()) {
 				// Starvation Prevention by choosing first one
-				auto tcb = sema.waiting_queue.begin();
-				Task::resume_raw(tcb, sema.waiting_queue);
+				auto tcb = sema.waiting_list.begin();
+				Task::resume_raw(tcb, sema.waiting_list);
 
 				// Transfer ownership to the last highest priority task in queue
 				owner = tcb;
@@ -159,10 +157,10 @@ namespace MOS::Sync
 			}
 			else {
 				// Restore the original priority of the owner
-				if (recursive == 0 && owner->old_pr != PRI_NONE) {
+				if (recursive == 0 && owner->old_pri != PRI_NONE) {
 					// Restore the original priority
-					owner->set_pri(owner->old_pr);
-					owner->old_pr = PRI_NONE;
+					owner->set_pri(owner->old_pri);
+					owner->old_pri = PRI_NONE;
 				}
 
 				// No owner if no tasks are waiting
@@ -193,7 +191,7 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		raise_all_pri()
 		{
-			sema.waiting_queue.iter_mut([&](TCB_t& tcb) {
+			sema.waiting_list.iter_mut([&](TCB_t& tcb) {
 				tcb.set_pri(ceiling);
 			});
 		}
@@ -201,8 +199,8 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		set_new_ceiling()
 		{
-			sema.waiting_queue.iter([&](const TCB_t& tcb) {
-				const auto old_pr = tcb.old_pr;
+			sema.waiting_list.iter([&](const TCB_t& tcb) {
+				const auto old_pr = tcb.old_pri;
 				if (old_pr != PRI_NONE && old_pr < ceiling) {
 					ceiling = old_pr;
 				}
@@ -287,7 +285,7 @@ namespace MOS::Sync
 		MOS_INLINE inline bool
 		has_waiters() const
 		{
-			return !waiting_queue.empty();
+			return !waiting_list.empty();
 		}
 
 		inline void
@@ -320,19 +318,19 @@ namespace MOS::Sync
 		}
 
 	private:
-		TcbList_t waiting_queue;
+		TcbList_t waiting_list;
 
 		MOS_INLINE inline void
 		block_current()
 		{
-			Task::block_to_raw(Task::current(), waiting_queue);
+			Task::block_to_raw(Task::current(), waiting_list);
 			Task::yield();
 		}
 
 		MOS_INLINE inline void
 		wake_up_one()
 		{
-			Task::resume_raw(waiting_queue.begin(), waiting_queue);
+			Task::resume_raw(waiting_list.begin(), waiting_list);
 		}
 	};
 

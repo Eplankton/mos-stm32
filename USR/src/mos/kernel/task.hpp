@@ -324,7 +324,7 @@ namespace MOS::Task
 		        TCB_t::pri_cmp);
 	}
 
-	inline void resume(TcbPtr_t tcb)
+	inline void resume(TcbPtr_t tcb, TcbList_t& src = blocked_list)
 	{
 		if (tcb == nullptr || !tcb->is_status(Status::BLOCKED))
 			return;
@@ -332,7 +332,7 @@ namespace MOS::Task
 		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		DisIntrGuard_t guard;
-		resume_raw(tcb, blocked_list);
+		resume_raw(tcb, src);
 
 		// If tasks with higher priority exist
 		if (higher_exists()) {
@@ -341,13 +341,13 @@ namespace MOS::Task
 	}
 
 	// Not recommended
-	inline void resume_from_isr(TcbPtr_t tcb)
+	inline void resume_from_isr(TcbPtr_t tcb, TcbList_t& src = blocked_list)
 	{
 		if (tcb == nullptr || !tcb->is_status(Status::BLOCKED))
 			return;
 
 		DisIntrGuard_t guard;
-		resume_raw(tcb, blocked_list);
+		resume_raw(tcb, src);
 	}
 
 	inline void
@@ -431,8 +431,15 @@ namespace MOS::Task
 
 	inline void delay(const Tick_t ticks)
 	{
+		// A modified version of TCB_t::pri_cmp that will reverse the order
+		// of tasks under the same priority to prevent starvation
+		//
+		// static auto reverse_pri_cmp = [](TcbPtr_t lhs, TcbPtr_t rhs) {
+		// 	return lhs->get_pri() <= rhs->get_pri();
+		// };
+
 		static auto delay_cmp = [](TcbPtr_t lhs, TcbPtr_t rhs) {
-			return lhs->delay_ticks < rhs->delay_ticks;
+			return lhs->get_delay() < rhs->get_delay();
 		};
 
 		auto cur = current();

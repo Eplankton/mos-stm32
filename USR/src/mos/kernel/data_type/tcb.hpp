@@ -50,8 +50,8 @@ namespace MOS::DataType
 		Name_t name = "";
 
 		// Low -> High: 15->0, Invalid: -1
-		Prior_t priority = PRI_MIN,
-		        old_pr   = PRI_NONE;
+		Prior_t pri     = PRI_MIN,
+		        old_pri = PRI_NONE;
 
 		Page_t page        = {ERROR, nullptr, 0};
 		Status status      = TERMINATED;
@@ -67,7 +67,7 @@ namespace MOS::DataType
 		        Prior_t pri,
 		        Name_t name,
 		        Page_t page)
-		    : fn(fn), argv(argv), priority(pri),
+		    : fn(fn), argv(argv), pri(pri),
 		      name(name), page(page) {}
 
 		MOS_INLINE inline void
@@ -151,45 +151,45 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		set_pri(Prior_t pri) volatile
+		set_pri(Prior_t _pri) volatile
 		{
-			priority = pri;
+			pri = _pri;
 		}
 
 		MOS_INLINE inline Prior_t
 		get_pri() volatile const
 		{
-			return priority;
+			return pri;
 		}
 
 		MOS_INLINE inline void
-		set_SP(const uint32_t* sp_val) volatile
+		set_SP(const uint32_t* _sp) volatile
 		{
-			sp = (StackPtr_t) sp_val;
+			sp = (StackPtr_t) _sp;
 		}
 
 		MOS_INLINE inline void
-		set_xPSR(const uint32_t xpsr_val) volatile
+		set_xPSR(const uint32_t _xpsr) volatile
 		{
-			page.from_bottom(1) = xpsr_val;
+			page.from_bottom(1) = _xpsr;
 		}
 
 		MOS_INLINE inline void
-		set_PC(const uint32_t pc_val) volatile
+		set_PC(const uint32_t _pc) volatile
 		{
-			page.from_bottom(2) = pc_val;
+			page.from_bottom(2) = _pc;
 		}
 
 		MOS_INLINE inline void
-		set_LR(const uint32_t lr_val) volatile
+		set_LR(const uint32_t _lr) volatile
 		{
-			page.from_bottom(3) = lr_val;
+			page.from_bottom(3) = _lr;
 		}
 
 		MOS_INLINE inline void
-		set_argv(const uint32_t argv_val) volatile
+		set_argv(const uint32_t _argv) volatile
 		{
-			page.from_bottom(8) = argv_val;
+			page.from_bottom(8) = _argv;
 		}
 
 		MOS_INLINE inline void
@@ -198,10 +198,16 @@ namespace MOS::DataType
 			delay_ticks = ticks;
 		}
 
-		MOS_INLINE inline void
-		set_stamp(const Tick_t time) volatile
+		MOS_INLINE inline Tick_t
+		get_delay() const volatile
 		{
-			stamp = time;
+			return delay_ticks;
+		}
+
+		MOS_INLINE inline void
+		set_stamp(const Tick_t _stamp) volatile
+		{
+			stamp = _stamp;
 		}
 
 		MOS_INLINE inline Tick_t

@@ -40,6 +40,7 @@ src
 │   │   ├── task.hpp         Task create, yield, terminate, block, ...
 │   │   ├── sync.hpp         Sync primitives
 │   │   ├── scheduler.hpp    Scheduler and Policy
+│   │   ├── ipc.hpp          Inter Process Communication
 │   │   └── utils.hpp        Utils
 │   │
 │   ├── kernel.hpp           Import Kernel Modules
@@ -248,6 +249,7 @@ o'' )_____//   Version @ x.x.x(...)
 ✅ Done
 1. Tids from BitMap_t
 2. Task::Async::{Future_t, async} (Experimental)
+3. IPC::MsgQueue_t, Message Queue
 
 📌 Plan
 1. IPC::{pipe, message queue}, etc.

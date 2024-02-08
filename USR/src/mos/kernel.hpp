@@ -18,6 +18,7 @@
 #include "kernel/task.hpp"
 #include "kernel/sync.hpp"
 #include "kernel/scheduler.hpp"
+#include "kernel/ipc.hpp"
 
 #endif
 

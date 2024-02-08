@@ -3,6 +3,7 @@
 
 #include "src/mos/kernel/task.hpp"
 #include "src/mos/kernel/sync.hpp"
+#include "src/mos/kernel/ipc.hpp"
 #include "global.hpp"
 
 namespace MOS::Test
@@ -58,6 +59,50 @@ namespace MOS::Test
 		};
 
 		Task::create(J0, nullptr, 2, "J0");
+	}
+
+	void MsgQueueTest()
+	{
+		using Utils::DisIntrGuard_t;
+		using MailBox_t = IPC::MsgQueue_t<int, 3>;
+
+		static MailBox_t mailbox;
+
+		static auto send = [](void* argv) {
+			while (true) {
+				auto& val = *(int*) argv;
+				mailbox.send(val, 0);
+				Task::delay(5);
+			}
+		};
+
+		static auto recv = [](void* argv) {
+			while (true) {
+				int val  = -1;
+				auto res = mailbox.recv(val, 100);
+
+				DisIntrGuard_t guard;
+				if (res) {
+					kprintf("%d\n", val);
+				}
+				else {
+					kprintf("Timeout!\n");
+				}
+			}
+		};
+
+		static auto impl = [](void* argv) {
+			static int s1 = 1, s2 = 2, s3 = 3, s4 = 4, s5 = 5;
+
+			Task::create(recv, nullptr, 5, "recv0");
+			Task::create(send, &s1, 6, "send1");
+			Task::create(send, &s2, 6, "send2");
+			Task::create(send, &s3, 6, "send3");
+			Task::create(send, &s4, 6, "send4");
+			Task::create(send, &s5, 6, "send5");
+		};
+
+		Task::create(impl, nullptr, 0, "MsgQueTst");
 	}
 }
 

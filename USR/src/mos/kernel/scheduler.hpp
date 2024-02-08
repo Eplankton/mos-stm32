@@ -16,17 +16,14 @@ namespace MOS::Scheduler
 	{
 		RoundRobin,
 
-		// The `PreemptivePriority` scheduling policy is used when tasks in the system have different priority levels,
-		// and it is desirable for tasks with higher priority to run before tasks with lower priority.
-		// In this policy, if a task with a higher priority than the currently running task becomes ready to run,
-		// the scheduler will preempt the current task and switch to the higher priority task, which is known as `preemption`.
+		// In this policy, a task with a higher priority can preempt currently running task,
 		// `TCB_t::pri_cmp(st, cr)` compares the priority of the new task `st` with the currently running task `cr`.
 		// If `st` has higher priority, the current task `cr` will be set to `READY` status and switched to `st`.
-		// If the `time slice` of the current task `cr` is exhausted (i.e., `cr->time_slice <= 0`), the `time_slice` will be reset to `TIME_SLICE`,
-		// and the status of `cr` is set to `READY`.
+		// If the `time slice` of the current task `cr` is exhausted (i.e., `cr->time_slice <= 0`),
+		// the `time_slice` will be reset to `TIME_SLICE`, and switched to the next.
 		// If there are other tasks with the same priority as `cr` that are ready to run (i.e., `nx != ed && TCB_t::pri_equal(nx, cr)`),
-		// the scheduler performs `RoundRobin` scheduling among these tasks (so called a `PriGroup`).
-		// Otherwise, the scheduler switches back to the task `st` with the highest priority.
+		// the scheduler will perform `RoundRobin` scheduling among these tasks (so called a `PriGroup`).
+		// Otherwise, the scheduler switches back to `st` with the highest priority.
 		PreemptivePriority,
 	};
 
@@ -88,7 +85,7 @@ namespace MOS::Scheduler
 		// sleeping_list is sorted
 		auto to_wake = sleeping_list.begin();
 		while (to_wake != sleeping_list.end()) {
-			if (to_wake->delay_ticks > os_ticks)
+			if (to_wake->get_delay() > os_ticks)
 				return;
 			to_wake->set_delay(0);
 			Task::resume_raw(to_wake, sleeping_list);
