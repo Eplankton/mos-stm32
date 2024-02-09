@@ -126,11 +126,14 @@ namespace MOS::App
 
 	Sync::Barrier_t bar {2};
 
+	// extern "C" bool f0 = 0, f1 = 0;
+
 	void Task1(void* argv)
 	{
 		using UserGlobal::leds;
 		bar.wait();
 		for (uint8_t i = 0; i < 20; i++) {
+			// f1 = !f1;
 			leds[1].toggle();
 			Task::delay(250);
 		}
@@ -143,6 +146,7 @@ namespace MOS::App
 		Task::create(Task1, nullptr, 1, "T1");
 		bar.wait();
 		while (true) {
+			// f0 = !f0;
 			leds[0].toggle();
 			Task::delay(500);
 		}

@@ -82,24 +82,17 @@ namespace MOS::Test
 				auto res = mailbox.recv(val, 100);
 
 				DisIntrGuard_t guard;
-				if (res) {
-					kprintf("%d\n", val);
-				}
-				else {
-					kprintf("Timeout!\n");
-				}
+				// kprintf(res ? "%d\n" : "Timeout!\n", val);
+				kprintf(res ? "" : "Timeout!\n");
 			}
 		};
 
 		static auto impl = [](void* argv) {
-			static int s1 = 1, s2 = 2, s3 = 3, s4 = 4, s5 = 5;
-
-			Task::create(recv, nullptr, 5, "recv0");
-			Task::create(send, &s1, 6, "send1");
-			Task::create(send, &s2, 6, "send2");
-			Task::create(send, &s3, 6, "send3");
-			Task::create(send, &s4, 6, "send4");
-			Task::create(send, &s5, 6, "send5");
+			Task::create(recv, nullptr, 5, "recv");
+			static int s[] = {0, 1, 2, 3, 4};
+			for (auto& i: s) {
+				Task::create(send, &i, 6, "send");
+			}
 		};
 
 		Task::create(impl, nullptr, 0, "MsgQueTst");

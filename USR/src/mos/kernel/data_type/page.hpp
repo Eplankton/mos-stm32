@@ -29,7 +29,6 @@ namespace MOS::DataType
 			if (policy == DYNAMIC) {
 				delete[] raw;
 			}
-			raw = nullptr;
 		}
 
 		MOS_INLINE inline Size_t

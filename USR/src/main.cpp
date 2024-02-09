@@ -7,7 +7,7 @@
 #include "user/app.hpp"
 #include "user/test.hpp"
 
-uint32_t stp[256];
+uint32_t tst_pkb[256];
 
 int main(void)
 {
@@ -25,8 +25,8 @@ int main(void)
 
 	DataType::Page_t page {
 	        .policy = DataType::Page_t::Policy::STATIC,
-	        .raw    = stp,
-	        .size   = sizeof(stp) / sizeof(size_t),
+	        .raw    = tst_pkb,
+	        .size   = sizeof(tst_pkb) / sizeof(size_t),
 	};
 
 	// Create user tasks

@@ -12,7 +12,8 @@ o'' )_____//    [MOS-STM32]
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
 
-### Repository 🌏 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
+### Repository 🌏
+[GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
 
 ### Architecture 👾
 <img src="Pic/mos-arch.svg">
@@ -252,7 +253,7 @@ o'' )_____//   Version @ x.x.x(...)
 3. IPC::MsgQueue_t, Message Queue
 
 📌 Plan
-1. IPC::{pipe, message queue}, etc.
+1. IPC::pipe/channel
 2. Soft/Hardware Timers
 3. Basic formal verification on Scheduler
 4. DMA_t Driver

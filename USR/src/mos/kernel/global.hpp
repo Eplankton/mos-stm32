@@ -15,14 +15,13 @@ namespace MOS::KernelGlobal
 	using namespace Macro;
 	using namespace DataType;
 
-	using Tid_t      = TCB_t::Tid_t;
+	using PagePool_t = Page_t::Word_t[POOL_NUM][PAGE_SIZE];
+	using Tids_t     = BitMap_t<MAX_TASK_NUM>;
 	using Tick_t     = TCB_t::Tick_t;
 	using TcbPtr_t   = TCB_t::TcbPtr_t;
-	using PagePool_t = Page_t::Word_t[POOL_NUM][PAGE_SIZE];
-	using TidsMap_t  = BitMap_t<MAX_TASK_NUM>;
 
 	PagePool_t page_pool;
-	TidsMap_t tids;
+	Tids_t tids;
 
 	TcbList_t ready_list,  // Tasks sorted by `Prior_t` that are `READY` to be scheduled.
 	        blocked_list,  // Tasks that are `BLOCKED` and waiting for a certain condition.
@@ -30,7 +29,7 @@ namespace MOS::KernelGlobal
 	        zombie_list;   // Tasks that have been `TERMINATED` but their resources are not recycled yet.
 
 	// Put it in `extern "C"` because the name is referred in `asm("")` and don't change it.
-	// At anytime, the `cur_tcb` should point to the task running currently.
+	// At anytime, `cur_tcb` should point to the task running currently.
 	MOS_DEBUG_INFO TcbPtr_t cur_tcb = nullptr;
 	MOS_DEBUG_INFO Tick_t os_ticks  = 0;
 
