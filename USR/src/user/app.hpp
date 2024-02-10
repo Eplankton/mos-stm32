@@ -97,10 +97,6 @@ namespace MOS::App
 		const auto sub_pr = Task::current()->get_pri() + 1;
 		Task::create(GIF, nullptr, sub_pr, "GIF");
 		Task::create(Slogan, nullptr, sub_pr, "Slogan");
-
-		while (true) {
-			Task::block();
-		}
 	}
 
 	void Calendar(void* argv)

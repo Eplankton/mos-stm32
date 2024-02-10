@@ -17,7 +17,6 @@ namespace MOS::IPC
 	{
 		using Tick_t    = TCB_t::Tick_t;
 		using TcbPtr_t  = TCB_t::TcbPtr_t;
-		using TcbList_t = TcbList_t;
 		using Raw_t     = Queue_t<T, N>;
 
 		TcbList_t senders, receivers;

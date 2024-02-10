@@ -41,7 +41,7 @@ src
 │   │   ├── task.hpp         Task create, yield, terminate, block, ...
 │   │   ├── sync.hpp         Sync primitives
 │   │   ├── scheduler.hpp    Scheduler and Policy
-│   │   ├── ipc.hpp          Inter Process Communication
+│   │   ├── ipc.hpp          Inter-Process Communication
 │   │   └── utils.hpp        Utils
 │   │
 │   ├── kernel.hpp           Import Kernel Modules
@@ -226,7 +226,7 @@ o'' )_____//   Version @ x.x.x(...)
 4. Porting simple shells
 5. Mutable page size, memory allocator
 6. SPI driver and LVGL library
-7. Port to ESP32-C3(RISC-V)
+7. Port to other platform like ESP32-C3(RISC-V)
 ```
 ```
 📦 Version 0.0.2
@@ -250,7 +250,7 @@ o'' )_____//   Version @ x.x.x(...)
 ✅ Done
 1. Tids from BitMap_t
 2. Task::Async::{Future_t, async} (Experimental)
-3. IPC::MsgQueue_t, Message Queue
+3. IPC::MsgQueue_t, Message Queue (Experimental)
 
 📌 Plan
 1. IPC::pipe/channel

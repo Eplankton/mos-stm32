@@ -71,8 +71,7 @@ namespace MOS::Scheduler
 		             "idle");
 
 		cur_tcb = ready_list.begin();
-		MOS_ASSERT(cur_tcb != ready_list.end(),
-		           "Scheduler Launch Failed!");
+		MOS_ASSERT(cur_tcb != ready_list.end(), "Scheduler Launch Failed!");
 		cur_tcb->set_status(Status::RUNNING);
 		debug_tcbs.set_cr_tid(cur_tcb); // For debug only
 		os_status = READY;
@@ -168,7 +167,7 @@ namespace MOS::ISR
 		DisIntrGuard_t guard;
 		Task::inc_ticks();
 		if (Scheduler::is_ready()) {
-			Task::nop_and_yield();
+			return Task::nop_and_yield();
 		}
 	}
 }

@@ -410,7 +410,7 @@ namespace MOS::Task
 	};
 
 	inline void
-	print_info(TcbPtr_t tcb, const char* format = " #%-2d %-9s %-5d %-9s %2d%%\n")
+	print_info(TcbPtr_t tcb, const char* format = " #%-2d %-9s %-5d %-9s %3d%%\n")
 	{
 		kprintf(format,
 		        tcb->get_tid(),
@@ -424,9 +424,9 @@ namespace MOS::Task
 	inline void print_all()
 	{
 		DisIntrGuard_t guard;
-		kprintf("-----------------------------------\n");
+		kprintf("------------------------------------\n");
 		debug_tcbs.iter([](TcbPtr_t tcb) { print_info(tcb); });
-		kprintf("-----------------------------------\n");
+		kprintf("------------------------------------\n");
 	}
 
 	inline void delay(const Tick_t ticks)

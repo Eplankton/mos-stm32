@@ -11,6 +11,7 @@ namespace MOS::Test
 	void MutexTest()
 	{
 		static Sync::Mutex_t mutex; // Take by 1-2-3... order
+
 		static auto mtx_test = [](void* argv) {
 			auto name = Task::current()->get_name();
 			while (true) {
@@ -33,7 +34,7 @@ namespace MOS::Test
 	{
 		using UserGlobal::leds;
 
-		static auto J1 = [](void* argv) {
+		static auto T1 = [](void* argv) {
 			for (uint8_t i = 0; i < 20; i++) {
 				leds[1].toggle(); // green
 				Task::delay(250);
@@ -42,8 +43,8 @@ namespace MOS::Test
 			kprintf("Async J1 exits...\n");
 		};
 
-		static auto J0 = [](void* argv) {
-			auto future = Task::async(J1, nullptr, "J1");
+		static auto T0 = [](void* argv) {
+			auto future = Task::async(T1, nullptr, "T1");
 
 			for (uint8_t i = 0; i < 10; i++) {
 				leds[2].toggle(); // blue
@@ -58,7 +59,7 @@ namespace MOS::Test
 			}
 		};
 
-		Task::create(J0, nullptr, 2, "J0");
+		Task::create(T0, nullptr, 2, "T0");
 	}
 
 	void MsgQueueTest()
@@ -70,24 +71,24 @@ namespace MOS::Test
 
 		static auto send = [](void* argv) {
 			while (true) {
-				auto& val = *(int*) argv;
-				mailbox.send(val, 0);
+				auto& data = *(int*) argv;
+				mailbox.send(data, 0);
 				Task::delay(5);
 			}
 		};
 
 		static auto recv = [](void* argv) {
 			while (true) {
-				int val  = -1;
-				auto res = mailbox.recv(val, 100);
+				int data = -1;
+				auto res = mailbox.recv(data, 100);
 
 				DisIntrGuard_t guard;
-				// kprintf(res ? "%d\n" : "Timeout!\n", val);
 				kprintf(res ? "" : "Timeout!\n");
+				// kprintf(res ? "%d\n" : "Timeout!\n", data);
 			}
 		};
 
-		static auto impl = [](void* argv) {
+		static auto msgq_test = [](void* argv) {
 			Task::create(recv, nullptr, 5, "recv");
 			static int s[] = {0, 1, 2, 3, 4};
 			for (auto& i: s) {
@@ -95,7 +96,7 @@ namespace MOS::Test
 			}
 		};
 
-		Task::create(impl, nullptr, 0, "MsgQueTst");
+		Task::create(msgq_test, nullptr, 0, "MsgQueTst");
 	}
 }
 
