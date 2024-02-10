@@ -2,6 +2,7 @@
 #define _MOS_BUFFER_
 
 #include "../utils.hpp"
+#include "../sync.hpp"
 
 namespace MOS::DataType
 {
@@ -47,6 +48,24 @@ namespace MOS::DataType
 
 	template <size_t N>
 	using RxBuffer_t = Buffer_t<char, N>;
+
+	template <size_t N>
+	struct SyncRxBuf_t : public RxBuffer_t<N>
+	{
+		using Sema_t = Sync::Semaphore_t;
+
+		MOS_INLINE inline void
+		down() { sema.down(); }
+
+		MOS_INLINE inline void
+		up() { sema.up(); }
+
+		MOS_INLINE inline void
+		up_from_isr() { sema.up_from_isr(); }
+
+	private:
+		Sema_t sema {0};
+	};
 }
 
 #endif

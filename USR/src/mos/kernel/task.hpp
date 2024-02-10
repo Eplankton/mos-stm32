@@ -429,7 +429,8 @@ namespace MOS::Task
 		kprintf("------------------------------------\n");
 	}
 
-	inline void delay(const Tick_t ticks)
+	MOS_INLINE inline void
+	delay(const Tick_t ticks)
 	{
 		// A modified version of TCB_t::pri_cmp that will reverse the order
 		// of tasks under the same priority to prevent starvation

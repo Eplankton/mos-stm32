@@ -204,6 +204,9 @@ namespace MOS::ISR
 			char8_t data = uart3.receive_data();
 			if (!rx_buf.full()) {
 				rx_buf.add(data);
+				if (data == '\n') {
+					rx_buf.up_from_isr();
+				}
 			}
 			else {
 				rx_buf.clear();

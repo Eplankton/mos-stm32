@@ -11,6 +11,7 @@
 
 #include "kernel/utils.hpp"
 #include "kernel/task.hpp"
+#include "kernel/data_type/buffer.hpp"
 
 namespace MOS::Shell
 {
@@ -139,8 +140,8 @@ namespace MOS::Shell
 
 	inline void launch(void* input_buf)
 	{
-		using Text_t     = Command_t::Text_t;
-		using RxBufPtr_t = DataType::RxBuffer_t<Macro::RX_BUF_SIZE>*;
+		using Text_t      = Command_t::Text_t;
+		using SyncRxBuf_t = DataType::SyncRxBuf_t<Macro::RX_BUF_SIZE>;
 
 		static auto parser = [](Text_t str) {
 			for (const auto& cmd: cmds) {
@@ -154,27 +155,17 @@ namespace MOS::Shell
 		CmdCall::uname_cmd(nullptr);
 		Task::print_all();
 
-		auto rx_buf = (RxBufPtr_t) input_buf;
+		auto rx_buf = (SyncRxBuf_t*) input_buf;
 
 		while (true) {
-			// Valid input should end with '\n'
-			if (rx_buf->back() == '\n') {
-				rx_buf->pop();
-				auto rx = rx_buf->c_str();
-				kprintf("> %s\n", rx);
-				parser(rx);
-				rx_buf->clear();
-			}
-			else {
-				Task::delay(5);
-			}
+			rx_buf->down();
+			rx_buf->pop();
+			auto rx = rx_buf->c_str();
+			kprintf("> %s\n", rx);
+			parser(rx);
+			rx_buf->clear();
 		}
 	}
 }
 
 #endif
-
-// Wake up, Neo...
-// The Matrix has you...
-// Follow the white rabbit.
-// Knock, knock, Neo.

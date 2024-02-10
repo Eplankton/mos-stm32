@@ -32,7 +32,7 @@ int main(void)
 	// Create user tasks
 	Task::create(App::Task0, nullptr, 2, "T0", page);
 	// Task::create(App::GUI, nullptr, 3, "GUI");
-	Task::create(App::LCD, nullptr, 3, "LCD");
+	// Task::create(App::LCD, nullptr, 3, "LCD");
 
 	// Test examples
 	// Test::MutexTest();

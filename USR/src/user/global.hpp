@@ -15,13 +15,13 @@ namespace MOS::UserGlobal
 {
 	using namespace HAL::STM32F4xx;
 	using namespace Driver::Device;
-	using Rxbuf_t = DataType::RxBuffer_t<Macro::RX_BUF_SIZE>;
+	using SyncRxBuf_t = DataType::SyncRxBuf_t<Macro::RX_BUF_SIZE>;
 
 	// Serial Input/Output
 	auto& uart3 = convert(USART3);
 
-	// UART RX Buffer
-	Rxbuf_t rx_buf;
+	// Sync UART RX Buffer
+	SyncRxBuf_t rx_buf;
 
 	// RGB LEDs
 	LED_t leds[] = {

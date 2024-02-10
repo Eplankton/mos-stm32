@@ -27,10 +27,11 @@ namespace MOS::Sync
 		inline Semaphore_t() = delete;
 
 		MOS_INLINE
-		inline Semaphore_t(int32_t val): cnt(val) {}
+		inline Semaphore_t(int32_t _cnt): cnt(_cnt) {}
 
 		// P
-		inline void down()
+		MOS_NO_INLINE void
+		down()
 		{
 			// Assert if irq disabled
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
@@ -42,19 +43,30 @@ namespace MOS::Sync
 			}
 		}
 
-		// V
-		inline void up()
+		// `V-opr`
+		void up()
 		{
 			// Assert if irq disabled
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 			DisIntrGuard_t guard;
+			up_raw();
+			if (Task::higher_exists()) {
+				return Task::yield();
+			}
+		}
+
+		// `V-opr` from ISR
+		MOS_INLINE inline void
+		up_from_isr() { up_raw(); }
+
+	private:
+		MOS_INLINE inline void
+		up_raw()
+		{
 			if (cnt < 0) {
 				Task::resume_raw(waiting_list.begin(), waiting_list);
 			}
 			cnt += 1;
-			if (Task::higher_exists()) {
-				return Task::yield();
-			}
 		}
 	};
 
@@ -77,7 +89,8 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		release()
 		{
-			MOS_ASSERT(owner == Task::current(), "Lock can only be released by holder");
+			MOS_ASSERT(owner == Task::current(),
+			           "Lock can only be released by holder");
 			sema.up();
 			owner = nullptr;
 		}
@@ -127,7 +140,8 @@ namespace MOS::Sync
 		void unlock() // V operation
 		{
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
-			MOS_ASSERT(owner == Task::current(), "Lock can only be released by holder");
+			MOS_ASSERT(owner == Task::current(),
+			           "Lock can only be released by holder");
 
 			DisIntrGuard_t guard;
 			recursive -= 1;
