@@ -55,13 +55,13 @@ namespace MOS::DataType
 		using Sema_t = Sync::Semaphore_t;
 
 		MOS_INLINE inline void
-		down() { sema.down(); }
+		wait() { sema.down(); }
 
 		MOS_INLINE inline void
-		up() { sema.up(); }
+		signal() { sema.up(); }
 
 		MOS_INLINE inline void
-		up_from_isr() { sema.up_from_isr(); }
+		signal_from_isr() { sema.up_from_isr(); }
 
 	private:
 		Sema_t sema {0};

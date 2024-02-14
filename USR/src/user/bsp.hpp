@@ -13,9 +13,9 @@ namespace MOS::Bsp
 	// For printf_
 	extern "C" void _putchar(char ch)
 	{
-		using UserGlobal::uart3;
-		uart3.send_data(ch);
-		uart3.wait_flag(USART_FLAG_TXE);
+		using UserGlobal::uart;
+		uart.send_data(ch);
+		uart.wait_flag(USART_FLAG_TXE);
 	}
 
 	static inline void LED_Config()
@@ -48,13 +48,13 @@ namespace MOS::Bsp
 
 	static inline void USART_Config()
 	{
-		using UserGlobal::uart3;
+		using UserGlobal::uart;
 
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOD);
 		RCC_t::APB1::enable(RCC_APB1Periph_USART3);
 		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
 
-		uart3.init(19200, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
+		uart.init(19200, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
 		        .rx_config(GPIOD, GPIO_t::get_pin_src(9), GPIO_AF_USART3) // RX -> PD9
 		        .tx_config(GPIOD, GPIO_t::get_pin_src(8), GPIO_AF_USART3) // TX -> PD8
 		        .it_enable(USART_IT_RXNE)
@@ -197,15 +197,15 @@ namespace MOS::ISR
 	// UART3 IRQ Handler
 	extern "C" void USART3_IRQHandler()
 	{
-		using UserGlobal::uart3;
+		using UserGlobal::uart;
 		using UserGlobal::rx_buf;
 
-		if (uart3.get_it_status(USART_IT_RXNE) != RESET) {
-			char8_t data = uart3.receive_data();
+		if (uart.get_it_status(USART_IT_RXNE) != RESET) {
+			char8_t data = uart.receive_data();
 			if (!rx_buf.full()) {
 				rx_buf.add(data);
 				if (data == '\n') {
-					rx_buf.up_from_isr();
+					rx_buf.signal_from_isr();
 				}
 			}
 			else {

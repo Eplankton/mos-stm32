@@ -94,13 +94,15 @@ namespace MOS::UserGlobal
 {
     using namespace HAL::STM32F4xx;
     using namespace Driver::Device;
-    using RxBuf_t = DataType::RxBuffer<Macro::RX_BUF_SIZE>;
-    
-    // Serial TX/RX
+    using namespace DataType;
+
+    using ShRxBuf_t = ShRxBuf_t<Macro::RX_BUF_SIZE>;
+
+    // Serial Input/Output
     auto& uart = convert(USARTx);
 
-    // RX Buffer
-    RxBuf_t rx_buf;
+    // Shell Rx Buffer
+    ShRxBuf_t rx_buf;
 
     // LED red, green, blue
     LED_t leds[] = {
@@ -249,8 +251,9 @@ o'' )_____//   Version @ x.x.x(...)
 
 ✅ Done
 1. Tids from BitMap_t
-2. Task::Async::{Future_t, async} (Experimental)
-3. IPC::MsgQueue_t, Message Queue (Experimental)
+2. (Experimental) Task::Async::{Future_t, async}
+3. (Experimental) IPC::MsgQueue_t, Message Queue
+4. (Experimental) Task::create allows fn signature as /* void fn(auto argv) */
 
 📌 Plan
 1. IPC::pipe/channel

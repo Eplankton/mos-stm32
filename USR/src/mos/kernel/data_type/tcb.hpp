@@ -49,10 +49,7 @@ namespace MOS::DataType
 		Argv_t argv = nullptr;
 		Name_t name = "";
 
-		// Low -> High: 15->0, Invalid: -1
-		Prior_t pri     = PRI_MIN,
-		        old_pri = PRI_NONE;
-
+		Prior_t pri        = PRI_MIN;
 		Page_t page        = {ERROR, nullptr, 0};
 		Status status      = TERMINATED;
 		Tick_t time_slice  = TIME_SLICE,
@@ -69,18 +66,6 @@ namespace MOS::DataType
 		        Page_t page)
 		    : fn(fn), argv(argv), pri(pri),
 		      name(name), page(page) {}
-
-		MOS_INLINE inline void
-		set_tid(Tid_t tid_val) volatile
-		{
-			tid = tid_val;
-		}
-
-		MOS_INLINE inline Tid_t
-		get_tid() volatile const
-		{
-			return tid;
-		}
 
 		MOS_INLINE inline TcbPtr_t
 		next() volatile const
@@ -121,9 +106,21 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		set_status(Status new_status) volatile
+		set_tid(Tid_t _tid) volatile
 		{
-			status = new_status;
+			tid = _tid;
+		}
+
+		MOS_INLINE inline Tid_t
+		get_tid() volatile const
+		{
+			return tid;
+		}
+
+		MOS_INLINE inline void
+		set_status(Status _status) volatile
+		{
+			status = _status;
 		}
 
 		MOS_INLINE inline Status
@@ -163,25 +160,25 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		set_SP(const uint32_t* _sp) volatile
+		set_sp(const uint32_t* _sp) volatile
 		{
 			sp = (StackPtr_t) _sp;
 		}
 
 		MOS_INLINE inline void
-		set_xPSR(const uint32_t _xpsr) volatile
+		set_xpsr(const uint32_t _xpsr) volatile
 		{
 			page.from_bottom(1) = _xpsr;
 		}
 
 		MOS_INLINE inline void
-		set_PC(const uint32_t _pc) volatile
+		set_pc(const uint32_t _pc) volatile
 		{
 			page.from_bottom(2) = _pc;
 		}
 
 		MOS_INLINE inline void
-		set_LR(const uint32_t _lr) volatile
+		set_lr(const uint32_t _lr) volatile
 		{
 			page.from_bottom(3) = _lr;
 		}
@@ -280,25 +277,25 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		iter(TcbListIterFn auto&& fn) const
 		{
-			auto wrapper = [](auto&& fn) {
+			auto wrap = [](auto&& fn) {
 				return [&](const Node_t& node) {
 					fn((const TCB_t&) node);
 				};
 			};
 
-			ListImpl_t::iter(wrapper(fn));
+			ListImpl_t::iter(wrap(fn));
 		}
 
 		MOS_INLINE inline void
 		iter_mut(auto&& fn)
 		{
-			auto wrapper = [](auto&& fn) {
+			auto wrap = [](auto&& fn) {
 				return [&](Node_t& node) {
 					fn((TCB_t&) node);
 				};
 			};
 
-			ListImpl_t::iter_mut(wrapper(fn));
+			ListImpl_t::iter_mut(wrap(fn));
 		}
 
 		MOS_INLINE inline TcbPtr_t
@@ -321,13 +318,13 @@ namespace MOS::DataType
 		inline void
 		insert_in_order(TcbPtr_t tcb, TcbCmpFn auto&& cmp)
 		{
-			auto wrapper = [](auto&& cmp) {
+			auto wrap = [](auto&& cmp) {
 				return [&](const Node_t& lhs, const Node_t& rhs) {
 					return cmp((TcbPtr_t) &lhs, (TcbPtr_t) &rhs);
 				};
 			};
 
-			ListImpl_t::insert_in_order(tcb->node, wrapper(cmp));
+			ListImpl_t::insert_in_order(tcb->node, wrap(cmp));
 		}
 
 		MOS_INLINE inline void

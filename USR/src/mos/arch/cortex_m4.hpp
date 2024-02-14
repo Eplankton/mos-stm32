@@ -11,6 +11,8 @@
 #define MOS_TEST_IRQ()            __get_PRIMASK() == 0
 #define MOS_DISABLE_IRQ()         asm volatile("CPSID    I")
 #define MOS_ENABLE_IRQ()          asm volatile("CPSIE    I")
+#define MOS_DSB()                 __DSB()
+#define MOS_ISB()                 __ISB()
 #define MOS_NOP()                 asm volatile("nop")
 
 #define ARCH_INIT_ASM                                                               \
@@ -52,7 +54,7 @@
 	"POP     {LR}\n"         /* Restore the values of LR */                                                              \
 	"LDR     R0, =cur_tcb\n" /* Reload cur_tcb */                                                                        \
 	"LDR     R1, [R0]\n"                                                                                                 \
-	"LDR     R4, [R1,#8]\n" /* Load the content of next task's sp */                                      \
+	"LDR     R4, [R1,#8]\n" /* Load the content of next task's sp */                                                     \
 	"MOV     SP, R4\n"      /* Use R4 to load the new task's sp to SP */                                                 \
 	"POP     {R4-R7}\n"     /* Pop registers R8-R11 */                                                                   \
 	"MOV     R8, R4\n"                                                                                                   \

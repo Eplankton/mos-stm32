@@ -9,6 +9,7 @@
 namespace MOS::Task
 {
 	using namespace KernelGlobal;
+	using namespace Concepts;
 	using namespace Utils;
 	using namespace Alloc;
 
@@ -142,17 +143,17 @@ namespace MOS::Task
 		// A descending stack consists of 16 registers as context.
 		// high -> low, descending stack
 		// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
-		tcb->set_SP(&tcb->page.from_bottom(16));
+		tcb->set_sp(&tcb->page.from_bottom(16));
 
 		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the Thumb state.
 		// V6-m and V7-m cores can only support Thumb state so it should always be set to '1'.
-		tcb->set_xPSR((uint32_t) 0x01000000);
+		tcb->set_xpsr((uint32_t) 0x01000000);
 
 		// Set the stacked PC
-		tcb->set_PC((uint32_t) tcb->fn);
+		tcb->set_pc((uint32_t) tcb->fn);
 
 		// Call terminate(current()) automatically
-		tcb->set_LR((uint32_t) exit);
+		tcb->set_lr((uint32_t) exit);
 
 		// Set arguments
 		tcb->set_argv((uint32_t) tcb->argv);
@@ -160,9 +161,34 @@ namespace MOS::Task
 		return tcb;
 	}
 
-	inline TcbPtr_t
-	create_raw(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name, Page_t page)
+	template <typename Fn, typename ArgvType>
+	concept InvokableWith = requires(Fn fn, ArgvType argv) {
+		{
+			fn.operator()(argv)
+		} -> Same<void>;
+	};
+
+	template <typename Fn, typename ArgvType>
+	concept AsLambdaFn = InvokableWith<Fn, ArgvType> ||
+	                     InvokableWith<Fn, deref_t<ArgvType>*> ||
+	                     InvokableWith<Fn, deref_t<ArgvType>&>;
+
+	MOS_INLINE static inline constexpr Fn_t
+	fn_convert(auto fn, auto argv)
 	{
+		if constexpr (AsLambdaFn<decltype(fn), decltype(argv)>) {
+			return (Fn_t) (uint32_t) + fn;
+		}
+		else {
+			return (Fn_t) (uint32_t) fn;
+		}
+	}
+
+	inline TcbPtr_t
+	create_raw(auto fn, auto argv, Pri_t pri, Name_t name, Page_t page)
+	{
+		DisIntrGuard_t guard;
+
 		MOS_ASSERT(fn != nullptr, "fn can't be null");
 
 		if (page.get_raw() == nullptr) {
@@ -175,11 +201,11 @@ namespace MOS::Task
 			return nullptr;
 		}
 
-		DisIntrGuard_t guard;
-		TcbPtr_t cur = current(), tcb = nullptr;
-
 		// Construct a tcb at the head of a page
-		tcb = TCB_t::build(fn, argv, pri, name, page);
+		auto cur = Task::current(),
+		     tcb = TCB_t::build(fn_convert(fn, argv),
+		                        (Argv_t) argv,
+		                        pri, name, page);
 
 		// Load empty context
 		setup_context(tcb);
@@ -206,7 +232,7 @@ namespace MOS::Task
 	}
 
 	inline TcbPtr_t
-	create_impl(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name, Page_t page)
+	create_impl(auto fn, auto argv, Pri_t pri, Name_t name, Page_t page)
 	{
 		auto tcb = create_raw(fn, argv, pri, name, page);
 
@@ -220,7 +246,7 @@ namespace MOS::Task
 
 	// Create task from static memory
 	MOS_INLINE inline TcbPtr_t
-	create(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name, Page_t page)
+	create(auto fn, auto argv, Pri_t pri, Name_t name, Page_t page)
 	{
 		return create_impl(fn, argv, pri, name, page);
 	}
@@ -237,7 +263,7 @@ namespace MOS::Task
 
 	// Create task from pre-allocated `page_pool`
 	MOS_INLINE inline TcbPtr_t
-	create(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name)
+	create(auto fn, auto argv, Pri_t pri, Name_t name)
 	{
 		auto page = page_alloc(PagePolicy::POOL, PAGE_SIZE);
 		return create_impl(fn, argv, pri, name, page);
@@ -245,7 +271,7 @@ namespace MOS::Task
 
 	// Create task from dynamic allocated memory
 	MOS_INLINE inline TcbPtr_t
-	create(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name, PgSz_t pg_sz)
+	create(auto fn, auto argv, Pri_t pri, Name_t name, PgSz_t pg_sz)
 	{
 		auto page = page_alloc(PagePolicy::DYNAMIC, pg_sz);
 		return create_impl(fn, argv, pri, name, page);
@@ -253,7 +279,7 @@ namespace MOS::Task
 
 	// Not recommended to use
 	MOS_INLINE inline TcbPtr_t
-	create_from_isr(Fn_t fn, Argv_t argv, Pri_t pri, Name_t name)
+	create_from_isr(auto fn, auto argv, Pri_t pri, Name_t name)
 	{
 		auto page = page_alloc(PagePolicy::POOL, PAGE_SIZE);
 		return create_raw(fn, argv, pri, name, page); // No yield()
@@ -276,7 +302,8 @@ namespace MOS::Task
 		ready_list.send_to_in_order(tcb, dest, cmp);
 	}
 
-	inline void block_to(TcbPtr_t tcb, TcbList_t& dest)
+	inline void
+	block_to(TcbPtr_t tcb, TcbList_t& dest)
 	{
 		if (tcb == nullptr || tcb->is_status(Status::BLOCKED))
 			return;
@@ -324,7 +351,8 @@ namespace MOS::Task
 		        TCB_t::pri_cmp);
 	}
 
-	inline void resume(TcbPtr_t tcb, TcbList_t& src = blocked_list)
+	inline void
+	resume(TcbPtr_t tcb, TcbList_t& src = blocked_list)
 	{
 		if (tcb == nullptr || !tcb->is_status(Status::BLOCKED))
 			return;
@@ -341,7 +369,8 @@ namespace MOS::Task
 	}
 
 	// Not recommended
-	inline void resume_from_isr(TcbPtr_t tcb, TcbList_t& src = blocked_list)
+	inline void
+	resume_from_isr(TcbPtr_t tcb, TcbList_t& src = blocked_list)
 	{
 		if (tcb == nullptr || !tcb->is_status(Status::BLOCKED))
 			return;
@@ -429,8 +458,7 @@ namespace MOS::Task
 		kprintf("------------------------------------\n");
 	}
 
-	MOS_INLINE inline void
-	delay(const Tick_t ticks)
+	void delay(const Tick_t ticks)
 	{
 		// A modified version of TCB_t::pri_cmp that will reverse the order
 		// of tasks under the same priority to prevent starvation
@@ -501,7 +529,7 @@ namespace MOS::Task
 		};
 
 		MOS_INLINE inline auto
-		async_raw(Fn_t fn, Argv_t argv, Name_t name, Page_t page)
+		async_raw(auto fn, auto argv, Name_t name, Page_t page)
 		{
 			DisIntrGuard_t guard;
 			auto tcb = create_raw(
@@ -514,20 +542,20 @@ namespace MOS::Task
 		}
 
 		MOS_INLINE inline auto
-		async(Fn_t fn, Argv_t argv, Name_t name, Page_t page)
+		async(auto fn, auto argv, Name_t name, Page_t page)
 		{
 			return async_raw(fn, argv, name, page);
 		}
 
 		MOS_INLINE inline auto
-		async(Fn_t fn, Argv_t argv, Name_t name)
+		async(auto fn, auto argv, Name_t name)
 		{
 			auto page = page_alloc(PagePolicy::POOL, PAGE_SIZE);
 			return async_raw(fn, argv, name, page);
 		}
 
 		MOS_INLINE inline auto
-		async(Fn_t fn, Argv_t argv, Name_t name, PgSz_t pg_sz)
+		async(auto fn, auto argv, Name_t name, PgSz_t pg_sz)
 		{
 			auto page = page_alloc(PagePolicy::DYNAMIC, pg_sz);
 			return async_raw(fn, argv, name, page);

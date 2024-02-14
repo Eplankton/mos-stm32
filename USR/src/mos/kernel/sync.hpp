@@ -113,16 +113,9 @@ namespace MOS::Sync
 			}
 
 			// Compare priority with ceiling
-			if (ceiling < cur->get_pri()) {
-				// Temporarily raise the priority
-				cur->old_pri = cur->get_pri();
-				cur->set_pri(ceiling);
-			}
-			else {
+			if (cur->get_pri() < ceiling) {
 				// If current priority is higher, set it as the new ceiling
 				ceiling = cur->get_pri();
-				// Raise the priority of all waiting tasks
-				raise_all_pri();
 			}
 
 			sema.cnt -= 1;
@@ -153,28 +146,20 @@ namespace MOS::Sync
 
 			// If has waiting tasks
 			if (!sema.waiting_list.empty()) {
-				// Starvation Prevention by choosing first one
+				// Starvation Prevention
 				auto tcb = sema.waiting_list.begin();
 				Task::resume_raw(tcb, sema.waiting_list);
 
-				// Transfer ownership to the last highest priority task in queue
 				owner = tcb;
 				sema.cnt += 1;
 
-				set_new_ceiling();
+				search_ceiling();
 
 				if (Task::higher_exists()) {
 					return Task::yield();
 				}
 			}
 			else {
-				// Restore the original priority of the owner
-				if (recursive == 0 && owner->old_pri != PRI_NONE) {
-					// Restore the original priority
-					owner->set_pri(owner->old_pri);
-					owner->old_pri = PRI_NONE;
-				}
-
 				// No owner if no tasks are waiting
 				owner = nullptr;
 				sema.cnt += 1;
@@ -201,20 +186,13 @@ namespace MOS::Sync
 		Prior_t ceiling  = PRI_MIN;
 
 		MOS_INLINE inline void
-		raise_all_pri()
+		search_ceiling()
 		{
-			sema.waiting_list.iter_mut([&](TCB_t& tcb) {
-				tcb.set_pri(ceiling);
-			});
-		}
-
-		MOS_INLINE inline void
-		set_new_ceiling()
-		{
+			ceiling = PRI_MIN;
 			sema.waiting_list.iter([&](const TCB_t& tcb) {
-				const auto old_pr = tcb.old_pri;
-				if (old_pr != PRI_NONE && old_pr < ceiling) {
-					ceiling = old_pr;
+				const auto pri = tcb.get_pri();
+				if (pri < ceiling) {
+					ceiling = pri;
 				}
 			});
 		}
@@ -301,12 +279,11 @@ namespace MOS::Sync
 		}
 
 		inline void
-		wait(MutexImpl_t& mtx,
-		     Invocable<bool> auto&& pred)
+		wait(MutexImpl_t& mtx, Invocable<bool> auto&& pred)
 		{
-			mtx.unlock();
+			mtx.unlock(); // Unlock first
 			while (!pred()) {
-				block_current();
+				block_this();
 			}
 			mtx.lock();
 		}
@@ -333,7 +310,7 @@ namespace MOS::Sync
 		TcbList_t waiting_list;
 
 		MOS_INLINE inline void
-		block_current()
+		block_this()
 		{
 			DisIntrGuard_t guard;
 			Task::block_to_raw(Task::current(), waiting_list);

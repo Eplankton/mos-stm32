@@ -75,9 +75,11 @@ namespace MOS::DataType
 			return nullptr;
 		}
 
-		MOS_NO_INLINE void // Never inline because of instruction reordering
+		MOS_INLINE void
 		insert(Node_t& node, NodePtr_t pos)
 		{
+			MOS_DSB(); // Avoid reordering
+			MOS_ISB();
 			if (pos == nullptr)
 				return;
 			node.next       = pos;
@@ -87,9 +89,11 @@ namespace MOS::DataType
 			len += 1;
 		}
 
-		MOS_NO_INLINE void // Never inline because of instruction reordering
+		MOS_INLINE void
 		remove(Node_t& node)
 		{
+			MOS_DSB(); // Avoid reordering
+			MOS_ISB();
 			auto prev  = node.prev,
 			     next  = node.next;
 			prev->next = next;

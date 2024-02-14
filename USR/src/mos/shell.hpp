@@ -138,10 +138,11 @@ namespace MOS::Shell
 	        {"reboot", CmdCall::reboot_cmd},
 	};
 
-	inline void launch(void* input_buf)
+	using ShRxBuf_t = DataType::SyncRxBuf_t<Macro::RX_BUF_SIZE>;
+
+	void launch(ShRxBuf_t& rx_buf)
 	{
-		using Text_t      = Command_t::Text_t;
-		using SyncRxBuf_t = DataType::SyncRxBuf_t<Macro::RX_BUF_SIZE>;
+		using Text_t = Command_t::Text_t;
 
 		static auto parser = [](Text_t str) {
 			for (const auto& cmd: cmds) {
@@ -155,15 +156,13 @@ namespace MOS::Shell
 		CmdCall::uname_cmd(nullptr);
 		Task::print_all();
 
-		auto rx_buf = (SyncRxBuf_t*) input_buf;
-
 		while (true) {
-			rx_buf->down();
-			rx_buf->pop();
-			auto rx = rx_buf->c_str();
+			rx_buf.wait(); // Sync from ISR
+			rx_buf.pop();  // Parsing begins
+			auto rx = rx_buf.c_str();
 			kprintf("> %s\n", rx);
 			parser(rx);
-			rx_buf->clear();
+			rx_buf.clear(); // Parsing ends
 		}
 	}
 }

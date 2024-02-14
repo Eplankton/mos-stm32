@@ -69,9 +69,8 @@ namespace MOS::Test
 
 		static MailBox_t mailbox;
 
-		static auto send = [](void* argv) {
+		static auto send = [](const int& data) {
 			while (true) {
-				auto& data = *(int*) argv;
 				mailbox.send(data, 0);
 				Task::delay(5);
 			}
@@ -91,7 +90,7 @@ namespace MOS::Test
 		static auto msgq_test = [](void* argv) {
 			Task::create(recv, nullptr, 5, "recv");
 			static int s[] = {0, 1, 2, 3, 4};
-			for (auto& i: s) {
+			for (const auto& i: s) {
 				Task::create(send, &i, 6, "send");
 			}
 		};

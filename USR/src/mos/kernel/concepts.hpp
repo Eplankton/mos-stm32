@@ -164,8 +164,13 @@ namespace MOS::Concepts
 	};
 
 	template <typename T>
-		requires Valid_Pointer<T*>
 	struct deref<T*>
+	{
+		using type = T;
+	};
+
+	template <typename T>
+	struct deref<T&>
 	{
 		using type = T;
 	};
