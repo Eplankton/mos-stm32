@@ -367,14 +367,14 @@ namespace MOS::DataType
 		using Len_t    = volatile uint32_t;
 		using Tid_t    = volatile TCB_t::Tid_t;
 
-		Raw_t raw    = {nullptr};
-		Len_t len    = 0;
-		Tid_t cr_tid = -1;
+		Raw_t raw = {nullptr};
+		Len_t len = 0;
+		Tid_t tid = -1;
 
 		MOS_INLINE inline void
-		set_cr_tid(TcbPtr_t tcb) volatile
+		mark_tcb(TcbPtr_t tcb) volatile
 		{
-			cr_tid = tcb->get_tid();
+			tid = tcb->get_tid();
 		}
 
 		MOS_INLINE inline Len_t

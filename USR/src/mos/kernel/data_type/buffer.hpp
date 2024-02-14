@@ -52,8 +52,6 @@ namespace MOS::DataType
 	template <size_t N>
 	struct SyncRxBuf_t : public RxBuffer_t<N>
 	{
-		using Sema_t = Sync::Semaphore_t;
-
 		MOS_INLINE inline void
 		wait() { sema.down(); }
 
@@ -64,7 +62,7 @@ namespace MOS::DataType
 		signal_from_isr() { sema.up_from_isr(); }
 
 	private:
-		Sema_t sema {0};
+		Sync::Sema_t sema {0};
 	};
 }
 

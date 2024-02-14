@@ -17,17 +17,17 @@ namespace MOS::Sync
 	using Cnt_t    = volatile int32_t;
 	using Status   = TCB_t::Status;
 
-	struct Semaphore_t
+	struct Sema_t
 	{
 		TcbList_t waiting_list;
 		Cnt_t cnt;
 
 		// Must set an original value
 		MOS_INLINE
-		inline Semaphore_t() = delete;
+		inline Sema_t() = delete;
 
 		MOS_INLINE
-		inline Semaphore_t(int32_t _cnt): cnt(_cnt) {}
+		inline Sema_t(int32_t _cnt): cnt(_cnt) {}
 
 		// P
 		MOS_NO_INLINE void
@@ -72,7 +72,7 @@ namespace MOS::Sync
 
 	struct Lock_t
 	{
-		Semaphore_t sema;
+		Sema_t sema;
 		TcbPtr_t owner;
 
 		MOS_INLINE
@@ -101,9 +101,7 @@ namespace MOS::Sync
 		void lock() // P operation
 		{
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
-
 			DisIntrGuard_t guard;
-
 			auto cur = Task::current();
 
 			if (owner == cur) {
@@ -140,7 +138,7 @@ namespace MOS::Sync
 			recursive -= 1;
 
 			if (recursive > 0) {
-				// If the lock is still held by the owner
+				// If the lock is still held by this owner
 				return;
 			}
 
@@ -180,10 +178,10 @@ namespace MOS::Sync
 		}
 
 	private:
-		Semaphore_t sema = 1;
-		Cnt_t recursive  = 0;
-		TcbPtr_t owner   = nullptr;
-		Prior_t ceiling  = PRI_MIN;
+		Sema_t sema     = 1;
+		Cnt_t recursive = 0;
+		TcbPtr_t owner  = nullptr;
+		Prior_t ceiling = PRI_MIN;
 
 		MOS_INLINE inline void
 		search_ceiling()
@@ -201,18 +199,20 @@ namespace MOS::Sync
 	template <typename T = void>
 	struct Mutex_t : private MutexImpl_t
 	{
-		using MutexImpl_t::exec;
 		using Raw_t    = T;
 		using RawRef_t = Raw_t&;
+		using MutexImpl_t::exec;
 
 		struct MutexGuard_t
 		{
+			using Mtx_t = Mutex_t<Raw_t>;
+
 			// Unlock when scope ends
 			MOS_INLINE
 			inline ~MutexGuard_t() { mutex.unlock(); }
 
 			MOS_INLINE
-			inline MutexGuard_t(Mutex_t<Raw_t>& mutex)
+			inline MutexGuard_t(Mtx_t& mutex)
 			    : mutex(mutex) { mutex.MutexImpl_t::lock(); }
 
 			// Raw Accessor
@@ -223,7 +223,7 @@ namespace MOS::Sync
 			operator*() { return get(); }
 
 		private:
-			Mutex_t<Raw_t>& mutex;
+			Mtx_t& mutex;
 		};
 
 		MOS_INLINE

@@ -11,9 +11,9 @@
 #define MOS_TEST_IRQ()            __get_PRIMASK() == 0
 #define MOS_DISABLE_IRQ()         asm volatile("CPSID    I")
 #define MOS_ENABLE_IRQ()          asm volatile("CPSIE    I")
+#define MOS_NOP()                 asm volatile("nop")
 #define MOS_DSB()                 __DSB()
 #define MOS_ISB()                 __ISB()
-#define MOS_NOP()                 asm volatile("nop")
 
 #define ARCH_INIT_ASM                                                               \
 	"CPSID   I\n"            /* Disable irq to enter critical section */            \

@@ -37,7 +37,7 @@ int main(void)
 	// Test examples
 	// Test::MutexTest();
 	// Test::AsyncTest();
-	Test::MsgQueueTest();
+	// Test::MsgQueueTest();
 
 	// Start scheduling, never return
 	Scheduler::launch();

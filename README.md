@@ -234,7 +234,7 @@ o'' )_____//   Version @ x.x.x(...)
 📦 Version 0.0.2
 
 ✅ Done
-1. Sync::{Semaphore_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}, where Mutex_t adopts Priority Ceiling Protocol
+1. Sync::{Sema_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}, where Mutex_t adopts Priority Ceiling Protocol
 2. Scheduler::Policy::PreemptivePriority, under same priority -> RoundRobin
 3. Task::terminate() will be implicitly called when task exits
 4. Shell::{Command, CmdCall, launch}

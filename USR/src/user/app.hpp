@@ -11,9 +11,10 @@
 
 namespace MOS::App
 {
+	using Color = Driver::Device::ST7735S_t::Color;
+
 	namespace Gui
 	{
-		using Color = Driver::Device::ST7735S_t::Color;
 		using UserGlobal::lcd;
 
 		extern "C" void gui_delay_ms(uint16_t ms) { Task::delay(ms); }
@@ -57,10 +58,10 @@ namespace MOS::App
 
 	void LCD(void* argv)
 	{
-		using Color = Driver::Device::ST7735S_t::Color;
 		using Sync::Mutex_t;
 		using UserGlobal::lcd;
 
+		// Create a mutex wrapping lcd
 		static auto lcd_mtx = Mutex_t {lcd};
 
 		auto GIF = [](void* argv) {

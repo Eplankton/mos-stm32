@@ -73,7 +73,7 @@ namespace MOS::Scheduler
 		cur_tcb = ready_list.begin();
 		MOS_ASSERT(cur_tcb != ready_list.end(), "Scheduler Launch Failed!");
 		cur_tcb->set_status(Status::RUNNING);
-		debug_tcbs.set_cr_tid(cur_tcb); // For debug only
+		debug_tcbs.mark_tcb(cur_tcb); // For debug only
 		os_status = READY;
 		init();
 	}
@@ -98,7 +98,7 @@ namespace MOS::Scheduler
 		static auto switch_to = [](TcbPtr_t tcb) {
 			tcb->set_status(Status::RUNNING);
 			cur_tcb = tcb;
-			debug_tcbs.set_cr_tid(cur_tcb); // For debug only
+			debug_tcbs.mark_tcb(cur_tcb); // For debug only
 		};
 
 		try_wake_up();
@@ -110,7 +110,6 @@ namespace MOS::Scheduler
 
 		if (cr->is_status(Status::TERMINATED) ||
 		    cr->is_status(Status::BLOCKED)) {
-			// cur_tcb has been removed from ready_list
 			return switch_to(st);
 		}
 

@@ -214,7 +214,7 @@ void create_ui(
 		thePyramid.rotate();
 		thePyramid.draw(64, 120, false); //refresh pyramid
 
-		thread_sleep(15);
+		thread_sleep(10);
 	}
 }
 

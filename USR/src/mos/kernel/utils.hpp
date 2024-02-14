@@ -7,8 +7,9 @@
 #include "../config.h"
 #include "../arch/cpu.hpp"
 
-#define MOS_NO_INLINE __attribute__((noinline))
+#define MOS_FLATTEN   __attribute__((flatten))
 #define MOS_INLINE    __attribute__((always_inline))
+#define MOS_NO_INLINE __attribute__((noinline))
 
 #if (MOS_CONF_PRINTF)
 #include "printf.h"

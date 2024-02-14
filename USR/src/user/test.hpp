@@ -40,7 +40,7 @@ namespace MOS::Test
 				Task::delay(250);
 			}
 			Task::delay(1000);
-			kprintf("Async J1 exits...\n");
+			kprintf("Async T1 exits...\n");
 		};
 
 		static auto T0 = [](void* argv) {

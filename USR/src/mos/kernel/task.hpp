@@ -161,25 +161,32 @@ namespace MOS::Task
 		return tcb;
 	}
 
+	// clang-format off
 	template <typename Fn, typename ArgvType>
-	concept InvokableWith = requires(Fn fn, ArgvType argv) {
-		{
-			fn.operator()(argv)
-		} -> Same<void>;
+	concept LambdaValidInvoke = requires(Fn fn, ArgvType argv) {
+		{ fn.operator()(argv) } -> Same<void>;
 	};
+	// clang-format on
 
 	template <typename Fn, typename ArgvType>
-	concept AsLambdaFn = InvokableWith<Fn, ArgvType> ||
-	                     InvokableWith<Fn, deref_t<ArgvType>*> ||
-	                     InvokableWith<Fn, deref_t<ArgvType>&>;
+	concept AsLambdaFn = LambdaValidInvoke<Fn, ArgvType> ||
+	                     LambdaValidInvoke<Fn, deref_t<ArgvType>*> ||
+	                     LambdaValidInvoke<Fn, deref_t<ArgvType>&>;
+
+	template <typename Fn, typename ArgvType>
+	concept AsRegularFn = Invocable<Fn, void, ArgvType> ||
+	                      Invocable<Fn, void, deref_t<ArgvType>*> ||
+	                      Invocable<Fn, void, deref_t<ArgvType>&>;
 
 	MOS_INLINE static inline constexpr Fn_t
-	fn_convert(auto fn, auto argv)
+	fn_check(auto fn, auto argv)
 	{
 		if constexpr (AsLambdaFn<decltype(fn), decltype(argv)>) {
 			return (Fn_t) (uint32_t) + fn;
 		}
 		else {
+			static_assert(AsRegularFn<decltype(fn), decltype(argv)>,
+			              "Mismatched invoke type!");
 			return (Fn_t) (uint32_t) fn;
 		}
 	}
@@ -203,9 +210,7 @@ namespace MOS::Task
 
 		// Construct a tcb at the head of a page
 		auto cur = Task::current(),
-		     tcb = TCB_t::build(fn_convert(fn, argv),
-		                        (Argv_t) argv,
-		                        pri, name, page);
+		     tcb = TCB_t::build(fn_check(fn, argv), (Argv_t) argv, pri, name, page);
 
 		// Load empty context
 		setup_context(tcb);
@@ -491,7 +496,7 @@ namespace MOS::Task
 
 				// A distinguishable task can be marked by tid and stamp(os_ticks)
 				MOS_INLINE inline bool
-				is_valid(TcbPtr_t tcb) const
+				check(TcbPtr_t tcb) const
 				{
 					return tid == tcb->get_tid() &&
 					       stmp == tcb->get_stamp();
@@ -513,7 +518,7 @@ namespace MOS::Task
 				// If tcb is invalid -> task has been deinited -> DONE (mostly)
 				// If tcb is valid, check status, TERMINATED -> DONE (rarely)
 				DisIntrGuard_t guard;
-				return !stamp.is_valid(tcb) ||
+				return !stamp.check(tcb) ||
 				       tcb->is_status(Status::TERMINATED);
 			}
 
@@ -531,7 +536,6 @@ namespace MOS::Task
 		MOS_INLINE inline auto
 		async_raw(auto fn, auto argv, Name_t name, Page_t page)
 		{
-			DisIntrGuard_t guard;
 			auto tcb = create_raw(
 			        fn,
 			        argv,
