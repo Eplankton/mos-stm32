@@ -151,7 +151,7 @@ namespace MOS::Sync
 				owner = tcb;
 				sema.cnt += 1;
 
-				search_ceiling();
+				update_ceiling();
 
 				if (Task::higher_exists()) {
 					return Task::yield();
@@ -184,7 +184,7 @@ namespace MOS::Sync
 		Prior_t ceiling = PRI_MIN;
 
 		MOS_INLINE inline void
-		search_ceiling()
+		update_ceiling()
 		{
 			ceiling = PRI_MIN;
 			sema.waiting_list.iter([&](const TCB_t& tcb) {
@@ -208,25 +208,25 @@ namespace MOS::Sync
 			using Mtx_t = Mutex_t<Raw_t>;
 
 			MOS_INLINE
-			inline MutexGuard_t(Mtx_t& _mutex)
-			    : mutex(_mutex) { mutex.MutexImpl_t::lock(); }
+			inline MutexGuard_t(Mtx_t& _mtx)
+			    : mtx(_mtx) { mtx.MutexImpl_t::lock(); }
 
 			MOS_INLINE
-			inline ~MutexGuard_t() { mutex.unlock(); }
+			inline ~MutexGuard_t() { mtx.unlock(); }
 
 			// Raw Accessor
 			MOS_INLINE inline RawRef_t
-			get() { return mutex.raw; }
+			get() { return mtx.raw; }
 
 			MOS_INLINE inline RawRef_t
 			operator*() { return get(); }
 
 		private:
-			Mtx_t& mutex;
+			Mtx_t& mtx;
 		};
 
 		MOS_INLINE
-		inline Mutex_t(Raw_t raw): raw(raw) {}
+		inline Mutex_t(Raw_t _raw): raw(_raw) {}
 
 		MOS_INLINE inline auto
 		lock() { return MutexGuard_t {*this}; }
@@ -243,14 +243,14 @@ namespace MOS::Sync
 		struct MutexGuard_t
 		{
 			MOS_INLINE
-			inline MutexGuard_t(Mutex_t& _mutex)
-			    : mutex(_mutex) { mutex.MutexImpl_t::lock(); }
+			inline MutexGuard_t(Mutex_t& _mtx)
+			    : mtx(_mtx) { mtx.MutexImpl_t::lock(); }
 
 			MOS_INLINE
-			inline ~MutexGuard_t() { mutex.unlock(); }
+			inline ~MutexGuard_t() { mtx.unlock(); }
 
 		private:
-			Mutex_t& mutex;
+			Mutex_t& mtx;
 		};
 
 		MOS_INLINE inline Mutex_t() = default;
@@ -286,7 +286,7 @@ namespace MOS::Sync
 			mtx.lock();
 		}
 
-		inline void signal() // Notify one
+		inline void notify() // Signal
 		{
 			DisIntrGuard_t guard;
 			if (has_waiters()) {
@@ -295,7 +295,7 @@ namespace MOS::Sync
 			return Task::yield();
 		}
 
-		inline void broadcast() // Notify all
+		inline void notify_all() // Broadcast
 		{
 			DisIntrGuard_t guard;
 			while (has_waiters()) {
@@ -341,7 +341,7 @@ namespace MOS::Sync
 					cnt = 0;
 				}
 			});
-			cond.broadcast();
+			cond.notify_all();
 		}
 	};
 }

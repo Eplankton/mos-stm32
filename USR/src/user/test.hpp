@@ -83,19 +83,19 @@ namespace MOS::Test
 
 				DisIntrGuard_t guard;
 				kprintf(res ? "" : "Timeout!\n");
-				// kprintf(res ? "%d\n" : "Timeout!\n", data);
+				// kprintf(res ? "%d\n" : "Timeout!\n", msg);
 			}
 		};
 
-		static auto msgq_test = [](void* argv) {
+		static auto launch = [](void* argv) {
+			static int data[] = {6, 7, 8, 9, 10};
 			Task::create(recv, nullptr, 5, "recv");
-			static int data[] = {0, 1, 2, 3, 4};
 			for (const auto& msg: data) {
-				Task::create(send, &msg, 6, "send");
+				Task::create(send, &msg, msg, "send");
 			}
 		};
 
-		Task::create(msgq_test, nullptr, 0, "MsgQueTst");
+		Task::create(launch, nullptr, 0, "msgq");
 	}
 }
 

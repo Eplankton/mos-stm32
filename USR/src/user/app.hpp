@@ -7,7 +7,11 @@
 // User Application
 #include "src/user/global.hpp"
 #include "src/user/gui/GuiLite.h"
-#include "src/user/img/cat_gif.h"
+
+// GIFs
+#include "src/user/img/face_gif/frames.h"
+#include "src/user/img/mac_gif/frames.h"
+#include "src/user/img/cat_gif/frames.h"
 
 namespace MOS::App
 {
@@ -66,19 +70,18 @@ namespace MOS::App
 
 		auto GIF = [](void* argv) {
 			while (true) {
-				for (auto frame: cat_gif) {
+				for (auto frame: face_gif) {
 					lcd_mtx.lock().get().draw_img(
 					        0, 0,
 					        128, 128,
 					        frame);
-					Task::delay(25);
+					Task::delay(100);
 				}
-				Task::delay(1);
 			}
 		};
 
 		auto Slogan = [](void* argv) {
-			static constexpr const Color rgb[] = {
+			constexpr Color rgb[] = {
 			        Color::RED,
 			        Color::GREEN,
 			        Color::GRAYBLUE,
@@ -87,8 +90,8 @@ namespace MOS::App
 			while (true) {
 				for (auto color: rgb) {
 					lcd_mtx.lock().get().show_str(
-					        0, 130,
-					        "[MOS]: Hello, World!",
+					        0, 128,
+					        "Hello, World!",
 					        color);
 					Task::delay(250);
 				}
@@ -105,7 +108,7 @@ namespace MOS::App
 		using HAL::STM32F4xx::RTC_t;
 		using Utils::DisIntrGuard_t;
 
-		static auto print_date_and_time = [] {
+		static auto print_rtc_info = [] {
 			DisIntrGuard_t guard;
 			const auto date = RTC_t::get_date();
 			const auto time = RTC_t::get_time();
@@ -117,7 +120,7 @@ namespace MOS::App
 
 		while (true) {
 			Task::block();
-			print_date_and_time();
+			print_rtc_info();
 		}
 	}
 

@@ -15,9 +15,9 @@ namespace MOS::IPC
 	template <typename T, size_t N>
 	struct MsgQueue_t
 	{
-		using Tick_t    = TCB_t::Tick_t;
-		using TcbPtr_t  = TCB_t::TcbPtr_t;
-		using Raw_t     = Queue_t<T, N>;
+		using Tick_t   = TCB_t::Tick_t;
+		using TcbPtr_t = TCB_t::TcbPtr_t;
+		using Raw_t    = Queue_t<T, N>;
 
 		TcbList_t senders, receivers;
 		Raw_t raw;
@@ -38,28 +38,28 @@ namespace MOS::IPC
 			Task::yield();
 		}
 
-		void wake_up(TcbList_t& dest)
+		void wake_up(TcbList_t& src)
 		{
-			auto wake = [&](TcbPtr_t tcb) {
+			auto wake_opr = [&](TcbPtr_t tcb) {
 				if (tcb->get_delay() > os_ticks)
 					tcb->set_delay(0);
-				Task::resume_raw(tcb, dest);
+				Task::resume_raw(tcb, src);
 			};
 
-			if (!dest.empty()) {
-				wake(dest.begin());
-				auto it = dest.begin();
-				while (it != dest.end()) {
+			if (!src.empty()) {
+				wake_opr(src.begin());
+				auto it = src.begin();
+				while (it != src.end()) {
 					auto nx = it->next();
 					if (it->get_delay() <= os_ticks) {
-						wake(it);
+						wake_opr(it);
 					}
 					it = nx;
 				}
 			}
 		}
 
-		MOS_INLINE inline bool
+		MOS_INLINE static inline bool
 		is_timeout()
 		{
 			return Task::current()->get_delay() != 0;

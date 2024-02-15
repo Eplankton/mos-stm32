@@ -49,21 +49,20 @@ namespace MOS::DataType
 		Argv_t argv = nullptr;
 		Name_t name = "";
 
-		Prior_t pri        = PRI_MIN;
 		Page_t page        = {ERROR, nullptr, 0};
+		Prior_t pri        = PRI_MIN;
 		Status status      = TERMINATED;
 		Tick_t time_slice  = TIME_SLICE,
 		       delay_ticks = 0,
-		       stamp       = 0;
+		       stamp       = -1;
 		TcbPtr_t parent    = nullptr;
 
-		MOS_INLINE TCB_t() = default;
-		MOS_INLINE TCB_t(
-		        Fn_t fn,
-		        Argv_t argv,
-		        Prior_t pri,
-		        Name_t name,
-		        Page_t page)
+		TCB_t() = default;
+		TCB_t(Fn_t fn,
+		      Argv_t argv,
+		      Prior_t pri,
+		      Name_t name,
+		      Page_t page)
 		    : fn(fn), argv(argv), pri(pri),
 		      name(name), page(page) {}
 
@@ -265,7 +264,7 @@ namespace MOS::DataType
 	concept TcbListIterFn = Invocable<Fn, Ret, const TCB_t&>;
 
 	template <typename Fn, typename Ret = void>
-	concept TcbListIterMutFn = Invocable<Fn, Ret, const TCB_t&>;
+	concept TcbListIterMutFn = Invocable<Fn, Ret, TCB_t&>;
 
 	template <typename Fn>
 	concept TcbCmpFn = Invocable<Fn, bool, TCB_t*, TCB_t*>;

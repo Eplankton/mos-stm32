@@ -27,7 +27,10 @@ namespace MOS::DataType
 		}
 
 		inline void
-		push(void* dest, const void* src, const u32 size, const u32 N) volatile
+		push(void* dest,
+		     const void* src,
+		     const u32 size,
+		     const u32 N) volatile
 		{
 			if (!full()) {
 				Utils::memcpy(dest, src, size);
@@ -83,7 +86,8 @@ namespace MOS::DataType
 		Queue_t()  = default;
 		~Queue_t() = default;
 
-		static inline constexpr uint32_t capacity() { return N; }
+		static inline constexpr uint32_t
+		capacity() { return N; }
 
 		MOS_INLINE inline auto
 		data() const volatile { return m_data; }
@@ -106,19 +110,19 @@ namespace MOS::DataType
 		push(const T& val) volatile
 		{
 			push((void*) (m_data + this->m_tail),
-			     (void*) &val,
-			     sizeof(T),
-			     N);
+			     (void*) &val, sizeof(T), N);
 		}
 
-		inline value_type serve() volatile
+		inline value_type
+		serve() volatile
 		{
 			auto tmp = front();
 			pop();
 			return tmp;
 		}
 
-		inline void iter_mut(auto&& fn) volatile
+		inline void
+		iter(auto&& fn) const volatile
 		{
 			if (empty()) return;
 			else {
@@ -130,7 +134,8 @@ namespace MOS::DataType
 			}
 		}
 
-		inline void iter(auto&& fn) const volatile
+		inline void
+		iter_mut(auto&& fn) volatile
 		{
 			if (empty()) return;
 			else {
