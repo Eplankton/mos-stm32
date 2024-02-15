@@ -20,6 +20,9 @@ namespace MOS::DataType
 	template <typename Fn, typename Ret = void>
 	concept ListIterFn = Invocable<Fn, Ret, const ListNode_t&>;
 
+	template <typename Fn, typename Ret = void>
+	concept ListIterMutFn = Invocable<Fn, Ret, ListNode_t&>;
+
 	template <typename Fn>
 	concept NodeCmpFn = Invocable<Fn, bool, const ListNode_t&, const ListNode_t&>;
 
@@ -54,7 +57,7 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		iter_mut(auto&& fn)
+		iter_mut(ListIterMutFn auto&& fn)
 		{
 			for (auto it = begin();
 			     it != end();

@@ -47,10 +47,10 @@ namespace MOS::DataType
 	};
 
 	template <size_t N>
-	using RxBuffer_t = Buffer_t<char, N>;
+	using RxBuf_t = Buffer_t<char, N>;
 
 	template <size_t N>
-	struct SyncRxBuf_t : public RxBuffer_t<N>
+	struct SyncRxBuf_t : public RxBuf_t<N>
 	{
 		MOS_INLINE inline void
 		wait() { sema.down(); }

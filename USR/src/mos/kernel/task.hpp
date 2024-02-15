@@ -29,7 +29,7 @@ namespace MOS::Task
 	MOS_INLINE inline void
 	yield() { MOS_TRIGGER_PENDSV_INTR(); }
 
-	// Whether any task with higher priority exists
+	// Whether task with higher priority than tcb exists
 	MOS_INLINE inline bool
 	higher_exists(TcbPtr_t tcb = current())
 	{
@@ -163,29 +163,29 @@ namespace MOS::Task
 
 	// clang-format off
 	template <typename Fn, typename ArgvType>
-	concept LambdaValidInvoke = requires(Fn fn, ArgvType argv) {
+	concept LambdaInvocable = requires(Fn fn, ArgvType argv) {
 		{ fn.operator()(argv) } -> Same<void>;
 	};
 	// clang-format on
 
 	template <typename Fn, typename ArgvType>
-	concept AsLambdaFn = LambdaValidInvoke<Fn, ArgvType> ||
-	                     LambdaValidInvoke<Fn, deref_t<ArgvType>*> ||
-	                     LambdaValidInvoke<Fn, deref_t<ArgvType>&>;
+	concept AsLambdaFn = LambdaInvocable<Fn, ArgvType> ||
+	                     LambdaInvocable<Fn, deref_t<ArgvType>*> ||
+	                     LambdaInvocable<Fn, deref_t<ArgvType>&>;
 
 	template <typename Fn, typename ArgvType>
-	concept AsRegularFn = Invocable<Fn, void, ArgvType> ||
-	                      Invocable<Fn, void, deref_t<ArgvType>*> ||
-	                      Invocable<Fn, void, deref_t<ArgvType>&>;
+	concept AsFnPtr = Invocable<Fn, void, ArgvType> ||
+	                  Invocable<Fn, void, deref_t<ArgvType>*> ||
+	                  Invocable<Fn, void, deref_t<ArgvType>&>;
 
 	MOS_INLINE static inline constexpr Fn_t
-	fn_check(auto fn, auto argv)
+	type_check(auto fn, auto argv)
 	{
 		if constexpr (AsLambdaFn<decltype(fn), decltype(argv)>) {
 			return (Fn_t) (uint32_t) + fn;
 		}
 		else {
-			static_assert(AsRegularFn<decltype(fn), decltype(argv)>,
+			static_assert(AsFnPtr<decltype(fn), decltype(argv)>,
 			              "Mismatched invoke type!");
 			return (Fn_t) (uint32_t) fn;
 		}
@@ -210,7 +210,7 @@ namespace MOS::Task
 
 		// Construct a tcb at the head of a page
 		auto cur = Task::current(),
-		     tcb = TCB_t::build(fn_check(fn, argv), (Argv_t) argv, pri, name, page);
+		     tcb = TCB_t::build(type_check(fn, argv), (Argv_t) argv, pri, name, page);
 
 		// Load empty context
 		setup_context(tcb);
@@ -444,7 +444,7 @@ namespace MOS::Task
 	};
 
 	inline void
-	print_info(TcbPtr_t tcb, const char* format = " #%-2d %-9s %-5d %-9s %3d%%\n")
+	print_info(TcbPtr_t tcb, const char* format = " #%-2d %-10s %-5d %-9s %3d%%\n")
 	{
 		kprintf(format,
 		        tcb->get_tid(),
@@ -458,12 +458,13 @@ namespace MOS::Task
 	inline void print_all()
 	{
 		DisIntrGuard_t guard;
-		kprintf("------------------------------------\n");
+		kprintf("-------------------------------------\n");
 		debug_tcbs.iter([](TcbPtr_t tcb) { print_info(tcb); });
-		kprintf("------------------------------------\n");
+		kprintf("-------------------------------------\n");
 	}
 
-	void delay(const Tick_t ticks)
+	MOS_INLINE inline void
+	delay(const Tick_t ticks)
 	{
 		// A modified version of TCB_t::pri_cmp that will reverse the order
 		// of tasks under the same priority to prevent starvation
@@ -472,13 +473,9 @@ namespace MOS::Task
 		// 	return lhs->get_pri() <= rhs->get_pri();
 		// };
 
-		static auto delay_cmp = [](TcbPtr_t lhs, TcbPtr_t rhs) {
-			return lhs->get_delay() < rhs->get_delay();
-		};
-
 		auto cur = current();
 		cur->set_delay(os_ticks + ticks);
-		block_to_in_order(cur, sleeping_list, delay_cmp);
+		block_to_in_order(cur, sleeping_list, TCB_t::delay_cmp);
 	}
 
 	inline namespace Async

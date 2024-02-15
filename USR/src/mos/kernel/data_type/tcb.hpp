@@ -236,6 +236,12 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE static inline bool
+		delay_cmp(ConstTcbPtr_t lhs, ConstTcbPtr_t rhs)
+		{
+			return lhs->get_delay() < rhs->get_delay();
+		}
+
+		MOS_INLINE static inline bool
 		pri_equal(ConstTcbPtr_t lhs, ConstTcbPtr_t rhs)
 		{
 			return lhs->get_pri() == rhs->get_pri();
@@ -257,6 +263,9 @@ namespace MOS::DataType
 
 	template <typename Fn, typename Ret = void>
 	concept TcbListIterFn = Invocable<Fn, Ret, const TCB_t&>;
+
+	template <typename Fn, typename Ret = void>
+	concept TcbListIterMutFn = Invocable<Fn, Ret, const TCB_t&>;
 
 	template <typename Fn>
 	concept TcbCmpFn = Invocable<Fn, bool, TCB_t*, TCB_t*>;
@@ -287,7 +296,7 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		iter_mut(auto&& fn)
+		iter_mut(TcbListIterMutFn auto&& fn)
 		{
 			auto wrap = [](auto&& fn) {
 				return [&](Node_t& node) {

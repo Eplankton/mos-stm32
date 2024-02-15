@@ -3824,7 +3824,7 @@ void create_thread(unsigned long* thread_id, void* attr, void *(*start_routine) 
     log_out("Not support now");
 }
 
-extern "C" void gui_delay_ms(unsigned short nms);
+extern "C" void gui_delay_ms(unsigned int ms);
 void thread_sleep(unsigned int milli_seconds)
 {//MCU alway implemnet driver code in APP.
 		gui_delay_ms(milli_seconds);

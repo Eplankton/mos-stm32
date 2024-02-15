@@ -138,9 +138,9 @@ namespace MOS::Shell
 	        {"reboot", CmdCall::reboot_cmd},
 	};
 
-	using ShRxBuf_t = DataType::SyncRxBuf_t<Macro::RX_BUF_SIZE>;
+	using SyncRxBuf_t = DataType::SyncRxBuf_t<Macro::RX_BUF_SIZE>;
 
-	void launch(ShRxBuf_t& rx_buf)
+	void launch(SyncRxBuf_t& rx_buf)
 	{
 		using Text_t = Command_t::Text_t;
 

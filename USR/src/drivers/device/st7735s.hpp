@@ -163,7 +163,7 @@ namespace Driver::Device
 		const uint8_t direction = 1;
 
 		ST7735S_t(SPI_t::Raw_t spi, PortPin_t sclk, PortPin_t mosi,
-		        PortPin_t cs, PortPin_t rst, PortPin_t dc)
+		          PortPin_t cs, PortPin_t rst, PortPin_t dc)
 		    : spi(SPI_t::convert(spi)),
 		      sclk(sclk),
 		      mosi(mosi),
@@ -243,7 +243,10 @@ namespace Driver::Device
 			write_16bit_data(color);
 		}
 
-		inline void draw_img(Pixel_t x, Pixel_t y, Pixel_t w, Pixel_t h, const uint16_t* img)
+		inline void draw_img(
+		        Pixel_t x, Pixel_t y,
+		        Pixel_t w, Pixel_t h,
+		        const uint16_t* img)
 		{
 			// 设置绘图区域
 			address_set(x, y, x + w - 1, y + h - 1);
@@ -258,7 +261,11 @@ namespace Driver::Device
 			}
 		}
 
-		void show_char(Pixel_t x, Pixel_t y, uint8_t num, uint8_t mode, Color color = WHITE)
+		void show_char(
+		        Pixel_t x, Pixel_t y,
+		        uint8_t num,
+		        uint8_t mode,
+		        Color color = WHITE)
 		{
 			uint8_t temp;
 			uint16_t x0 = x;
@@ -288,7 +295,10 @@ namespace Driver::Device
 			}
 		}
 
-		void show_string(Pixel_t x, Pixel_t y, const char* str, Color color = WHITE)
+		void show_str(
+		        Pixel_t x, Pixel_t y,
+		        const char* str,
+		        Color color = WHITE)
 		{
 			while (*str != '\0') {
 				if (*str == '\n') {

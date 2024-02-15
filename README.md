@@ -1,4 +1,4 @@
-# MOS-STM32 🦉
+# MOS-STM32 🌮
 
 ### Introduction 🚀
 [English](https://github.com/Eplankton/mos-stm32/blob/master/README.md) | [中文](https://gitee.com/Eplankton/mos-stm32/blob/master/README.md)
@@ -15,7 +15,7 @@ o'' )_____//    [MOS-STM32]
 ### Repository 🌏
 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
 
-### Architecture 👾
+### Architecture 🔍
 <img src="Pic/mos-arch.svg">
 
 [USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
@@ -96,13 +96,13 @@ namespace MOS::UserGlobal
     using namespace Driver::Device;
     using namespace DataType;
 
-    using ShRxBuf_t = ShRxBuf_t<Macro::RX_BUF_SIZE>;
+    using SyncRxBuf_t = SyncRxBuf_t<Macro::RX_BUF_SIZE>;
 
     // Serial Input/Output
     auto& uart = convert(USARTx);
 
     // Shell Rx Buffer
-    ShRxBuf_t rx_buf;
+    SyncRxBuf_t rx_buf;
 
     // LED red, green, blue
     LED_t leds[] = {
@@ -235,11 +235,11 @@ o'' )_____//   Version @ x.x.x(...)
 
 ✅ Done
 1. Sync::{Sema_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}, where Mutex_t adopts Priority Ceiling Protocol
-2. Scheduler::Policy::PreemptivePriority, under same priority -> RoundRobin
-3. Task::terminate() will be implicitly called when task exits
+2. Scheduler::Policy::PreemptPri, under same priority -> RoundRobin
+3. Task::terminate will be implicitly called when task exits
 4. Shell::{Command, CmdCall, launch}
 5. HAL::STM32F4xx::SPI_t and Driver::ST7735S_t, support GuiLite
-6. KernelGlobal::os_ticks and Task::delay() for blocking delay
+6. KernelGlobal::os_ticks and Task::delay for blocking delay
 7. Refactor the project into {kernel, arch, drivers}
 8. Support GCC and STM32CubeMX HAL
 9. HAL::STM32F4xx::RTC_t, CmdCall::date_cmd and App::Calendar

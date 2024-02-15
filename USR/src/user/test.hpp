@@ -25,9 +25,9 @@ namespace MOS::Test
 			}
 		};
 
-		Task::create(mtx_test, nullptr, 1, "T1");
-		Task::create(mtx_test, nullptr, 2, "T2");
-		Task::create(mtx_test, nullptr, 3, "T3");
+		Task::create(mtx_test, nullptr, 1, "Mtx1");
+		Task::create(mtx_test, nullptr, 2, "Mtx2");
+		Task::create(mtx_test, nullptr, 3, "Mtx3");
 	}
 
 	void AsyncTest()
@@ -69,17 +69,17 @@ namespace MOS::Test
 
 		static MailBox_t mailbox;
 
-		static auto send = [](const int& data) {
+		static auto send = [](const int& msg) {
 			while (true) {
-				mailbox.send(data, 0);
+				mailbox.send(msg, 0);
 				Task::delay(5);
 			}
 		};
 
 		static auto recv = [](void* argv) {
 			while (true) {
-				int data = -1;
-				auto res = mailbox.recv(data, 100);
+				int msg  = -1;
+				auto res = mailbox.recv(msg, 200);
 
 				DisIntrGuard_t guard;
 				kprintf(res ? "" : "Timeout!\n");
@@ -89,9 +89,9 @@ namespace MOS::Test
 
 		static auto msgq_test = [](void* argv) {
 			Task::create(recv, nullptr, 5, "recv");
-			static int s[] = {0, 1, 2, 3, 4};
-			for (const auto& i: s) {
-				Task::create(send, &i, 6, "send");
+			static int data[] = {0, 1, 2, 3, 4};
+			for (const auto& msg: data) {
+				Task::create(send, &msg, 6, "send");
 			}
 		};
 

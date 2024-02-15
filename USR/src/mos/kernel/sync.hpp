@@ -7,22 +7,22 @@ namespace MOS::Sync
 {
 	using namespace Macro;
 	using namespace Utils;
+	using namespace Concepts;
 
 	using DataType::TCB_t;
 	using DataType::TcbList_t;
-	using Concepts::Invocable;
 
 	using TcbPtr_t = TCB_t::TcbPtr_t;
 	using Prior_t  = TCB_t::Prior_t;
-	using Cnt_t    = volatile int32_t;
 	using Status   = TCB_t::Status;
+	using Cnt_t    = volatile int32_t;
 
 	struct Sema_t
 	{
 		TcbList_t waiting_list;
 		Cnt_t cnt;
 
-		// Must set an original value
+		// The initial value must be set
 		MOS_INLINE
 		inline Sema_t() = delete;
 
@@ -207,13 +207,12 @@ namespace MOS::Sync
 		{
 			using Mtx_t = Mutex_t<Raw_t>;
 
-			// Unlock when scope ends
 			MOS_INLINE
-			inline ~MutexGuard_t() { mutex.unlock(); }
+			inline MutexGuard_t(Mtx_t& _mutex)
+			    : mutex(_mutex) { mutex.MutexImpl_t::lock(); }
 
 			MOS_INLINE
-			inline MutexGuard_t(Mtx_t& mutex)
-			    : mutex(mutex) { mutex.MutexImpl_t::lock(); }
+			inline ~MutexGuard_t() { mutex.unlock(); }
 
 			// Raw Accessor
 			MOS_INLINE inline RawRef_t
@@ -241,15 +240,14 @@ namespace MOS::Sync
 	{
 		using MutexImpl_t::exec;
 
-		struct MutexGuard_t // No Raw Accessor for T=void
+		struct MutexGuard_t
 		{
-			// Unlock when scope ends
 			MOS_INLINE
-			inline ~MutexGuard_t() { mutex.unlock(); }
+			inline MutexGuard_t(Mutex_t& _mutex)
+			    : mutex(_mutex) { mutex.MutexImpl_t::lock(); }
 
 			MOS_INLINE
-			inline MutexGuard_t(Mutex_t& mutex)
-			    : mutex(mutex) { mutex.MutexImpl_t::lock(); }
+			inline ~MutexGuard_t() { mutex.unlock(); }
 
 		private:
 			Mutex_t& mutex;
@@ -332,7 +330,7 @@ namespace MOS::Sync
 		Cnt_t total, cnt = 0;
 
 		MOS_INLINE
-		inline Barrier_t(Cnt_t total): total(total) {}
+		inline Barrier_t(Cnt_t _total): total(_total) {}
 
 		inline void wait()
 		{

@@ -21,10 +21,11 @@ namespace MOS::Scheduler
 		// If `st` has higher priority, the current task `cr` will be set to `READY` status and switched to `st`.
 		// If the `time slice` of the current task `cr` is exhausted (i.e., `cr->time_slice <= 0`),
 		// the `time_slice` will be reset to `TIME_SLICE`, and switched to the next.
-		// If there are other tasks with the same priority as `cr` that are ready to run (i.e., `nx != ed && TCB_t::pri_equal(nx, cr)`),
+		// If there are other tasks with the same priority as `cr` that are ready
+		// to run (i.e., `nx != ed && TCB_t::pri_equal(nx, cr)`),
 		// the scheduler will perform `RoundRobin` scheduling among these tasks (so called a `PriGroup`).
 		// Otherwise, the scheduler switches back to `st` with the highest priority.
-		PreemptivePriority,
+		PreemptPri,
 	};
 
 	enum class OpStatus
@@ -121,7 +122,7 @@ namespace MOS::Scheduler
 			}
 		}
 
-		if constexpr (policy == PreemptivePriority) {
+		if constexpr (policy == PreemptPri) {
 			// If there's a task with higher priority
 			if (TCB_t::pri_cmp(st, cr)) {
 				cr->set_status(Status::READY);
@@ -146,7 +147,7 @@ namespace MOS::Scheduler
 	extern "C" __attribute__((used, always_inline)) inline void
 	next_tcb()
 	{
-		next_tcb<Policy::MOS_CONF_POLICY>();
+		next_tcb<Policy::MOS_CONF_SCHED_POLICY>();
 	}
 }
 

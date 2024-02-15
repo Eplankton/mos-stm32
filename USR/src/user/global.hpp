@@ -8,7 +8,7 @@
 #include "src/drivers/device/st7735s.hpp"
 #include "src/drivers/device/led.hpp"
 
-// Buffer Type
+// Rx Buffer
 #include "src/mos/kernel/data_type/buffer.hpp"
 
 namespace MOS::UserGlobal
@@ -17,13 +17,13 @@ namespace MOS::UserGlobal
 	using namespace Driver::Device;
 	using namespace DataType;
 
-	using ShRxBuf_t = SyncRxBuf_t<Macro::RX_BUF_SIZE>;
+	using SyncRxBuf_t = SyncRxBuf_t<Macro::RX_BUF_SIZE>;
 
 	// Serial Input/Output
 	auto& uart = convert(USART3);
 
-	// Shell Rx Buffer
-	ShRxBuf_t rx_buf;
+	// Sync Rx Buffer
+	SyncRxBuf_t rx_buf;
 
 	// RGB LEDs
 	LED_t leds[] = {

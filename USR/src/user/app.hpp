@@ -17,11 +17,11 @@ namespace MOS::App
 	{
 		using UserGlobal::lcd;
 
-		extern "C" void gui_delay_ms(uint16_t ms) { Task::delay(ms); }
+		extern "C" void
+		gui_delay_ms(uint32_t ms) { Task::delay(ms); }
 
-		extern "C" void gfx_draw_pixel(
-		        int32_t x, int32_t y,
-		        uint32_t rgb)
+		extern "C" void
+		gfx_draw_pixel(int32_t x, int32_t y, uint32_t rgb)
 		{
 			lcd.draw_point(x, y, (Color) GL_RGB_32_to_16(rgb));
 		}
@@ -62,7 +62,7 @@ namespace MOS::App
 		using UserGlobal::lcd;
 
 		// Create a mutex wrapping lcd
-		static auto lcd_mtx = Mutex_t {lcd};
+		static Mutex_t lcd_mtx {lcd};
 
 		auto GIF = [](void* argv) {
 			while (true) {
@@ -78,17 +78,17 @@ namespace MOS::App
 		};
 
 		auto Slogan = [](void* argv) {
-			constexpr Color rgb[] = {
+			static constexpr const Color rgb[] = {
 			        Color::RED,
 			        Color::GREEN,
 			        Color::GRAYBLUE,
 			};
 
 			while (true) {
-				for (const auto color: rgb) {
-					lcd_mtx.lock().get().show_string(
+				for (auto color: rgb) {
+					lcd_mtx.lock().get().show_str(
 					        0, 130,
-					        "Hello, World!",
+					        "[MOS]: Hello, World!",
 					        color);
 					Task::delay(250);
 				}
