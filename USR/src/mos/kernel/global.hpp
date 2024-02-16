@@ -31,11 +31,15 @@ namespace MOS::KernelGlobal
 
 	// Put it in `extern "C"` because the name is referred in `asm("")` and don't change it.
 	// At anytime, `cur_tcb` should point to the task running currently.
-	MOS_DEBUG_INFO TcbPtr_t cur_tcb = nullptr;
-	MOS_DEBUG_INFO Tick_t os_ticks  = 0;
+	MOS_DEBUG_INFO
+	TcbPtr_t cur_tcb = nullptr;
+
+	MOS_DEBUG_INFO
+	Tick_t os_ticks = 0;
 
 	// For debug only
-	MOS_DEBUG_INFO DebugTcbs_t debug_tcbs {};
+	MOS_DEBUG_INFO
+	DebugTcbs_t debug_tcbs {};
 }
 
 #endif

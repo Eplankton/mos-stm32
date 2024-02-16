@@ -26,7 +26,7 @@ namespace MOS::DataType
 		using Fn_t          = Ret_t (*)(Argv_t);
 		using Name_t        = const char*;
 
-		enum class Status
+		enum class Status : int8_t
 		{
 			TERMINATED,
 			READY,
@@ -42,49 +42,45 @@ namespace MOS::DataType
 		StackPtr_t sp = nullptr;
 
 		// Add more members here
-		Tid_t tid = -1;
+		Node_t event;
+		Tid_t tid          = -1;
+		TcbPtr_t parent    = nullptr;
+		Page_t page        = {ERROR, nullptr, 0};
+		Prior_t pri        = PRI_MIN;
+		Status status      = TERMINATED;
+		Tick_t time_slice  = TIME_SLICE,
+		       delay_ticks = -1,
+		       stamp       = -1;
 
 		// Only for debug
 		Fn_t fn     = nullptr;
 		Argv_t argv = nullptr;
 		Name_t name = "";
 
-		Page_t page        = {ERROR, nullptr, 0};
-		Prior_t pri        = PRI_MIN;
-		Status status      = TERMINATED;
-		Tick_t time_slice  = TIME_SLICE,
-		       delay_ticks = 0,
-		       stamp       = -1;
-		TcbPtr_t parent    = nullptr;
-
 		TCB_t() = default;
-		TCB_t(Fn_t fn,
-		      Argv_t argv,
-		      Prior_t pri,
-		      Name_t name,
-		      Page_t page)
+		TCB_t(Fn_t fn, Argv_t argv, Prior_t pri,
+		      Name_t name, Page_t page)
 		    : fn(fn), argv(argv), pri(pri),
 		      name(name), page(page) {}
 
 		MOS_INLINE inline TcbPtr_t
-		next() volatile const
+		next() const volatile
 		{
 			return (TcbPtr_t) node.next;
 		}
 
 		MOS_INLINE inline TcbPtr_t
-		prev() volatile const
+		prev() const volatile
 		{
 			return (TcbPtr_t) node.prev;
 		}
 
-		MOS_INLINE inline void
-		deinit() volatile
+		void deinit() volatile
 		{
 			Page_t inactive {
 			        .policy = page.get_policy(),
 			        .raw    = page.get_raw(),
-			        // Don't care about the size
+			        // Ignore the size
 			};
 
 			// Use inplace new
@@ -99,7 +95,7 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline TcbPtr_t
-		get_parent() volatile const
+		get_parent() const volatile
 		{
 			return parent;
 		}
@@ -111,7 +107,7 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline Tid_t
-		get_tid() volatile const
+		get_tid() const volatile
 		{
 			return tid;
 		}
@@ -123,25 +119,25 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline Status
-		get_status() volatile const
+		get_status() const volatile
 		{
 			return status;
 		}
 
 		MOS_INLINE inline bool
-		is_status(Status expected) volatile const
+		is_status(Status expected) const volatile
 		{
 			return get_status() == expected;
 		}
 
 		MOS_INLINE inline bool
-		is_sleeping() volatile const
+		is_sleeping() const volatile
 		{
 			return delay_ticks != 0 && is_status(BLOCKED);
 		}
 
 		MOS_INLINE inline Name_t
-		get_name() volatile const
+		get_name() const volatile
 		{
 			return name;
 		}
@@ -153,13 +149,13 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline Prior_t
-		get_pri() volatile const
+		get_pri() const volatile
 		{
 			return pri;
 		}
 
 		MOS_INLINE inline void
-		set_sp(const uint32_t* _sp) volatile
+		set_sp(const uint32_t _sp) volatile
 		{
 			sp = (StackPtr_t) _sp;
 		}
@@ -213,7 +209,7 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline uint32_t
-		page_usage() volatile const
+		page_usage() const volatile
 		{
 			const uint32_t stk_top = (uint32_t) &page.from_bottom();
 			const uint32_t atu     = (stk_top - (uint32_t) sp + sizeof(TCB_t));
@@ -221,11 +217,17 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline uint32_t
-		stack_usage() volatile const
+		stack_usage() const volatile
 		{
 			const uint32_t stk_top = (uint32_t) &page.from_bottom();
 			const uint32_t atu     = (stk_top - (uint32_t) sp);
 			return atu * 25 / (page.get_size() - sizeof(TCB_t) / sizeof(void*));
+		}
+
+		MOS_INLINE inline bool
+		in_event() const volatile
+		{
+			return event.prev != &event;
 		}
 
 		MOS_INLINE static inline bool
@@ -269,18 +271,18 @@ namespace MOS::DataType
 	template <typename Fn>
 	concept TcbCmpFn = Invocable<Fn, bool, TCB_t*, TCB_t*>;
 
-	// A wrapper of ListImpl_t for TCB_t
-	struct TcbList_t : private ListImpl_t
+	// A wrapper of List_t for TCB_t
+	struct TcbList_t : private List_t
 	{
 		using TcbPtr_t = TCB_t::TcbPtr_t;
-		using ListImpl_t::size;
-		using ListImpl_t::empty;
+		using List_t::size;
+		using List_t::empty;
 
 		MOS_INLINE inline TcbPtr_t
-		begin() const { return (TcbPtr_t) ListImpl_t::begin(); }
+		begin() const { return (TcbPtr_t) List_t::begin(); }
 
 		MOS_INLINE inline TcbPtr_t
-		end() const { return (TcbPtr_t) ListImpl_t::end(); }
+		end() const { return (TcbPtr_t) List_t::end(); }
 
 		MOS_INLINE inline void
 		iter(TcbListIterFn auto&& fn) const
@@ -291,7 +293,7 @@ namespace MOS::DataType
 				};
 			};
 
-			ListImpl_t::iter(wrap(fn));
+			List_t::iter(wrap(fn));
 		}
 
 		MOS_INLINE inline void
@@ -303,7 +305,7 @@ namespace MOS::DataType
 				};
 			};
 
-			ListImpl_t::iter_mut(wrap(fn));
+			List_t::iter_mut(wrap(fn));
 		}
 
 		MOS_INLINE inline TcbPtr_t
@@ -320,28 +322,28 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		insert(TcbPtr_t tcb, TcbPtr_t pos)
 		{
-			ListImpl_t::insert(tcb->node, (NodePtr_t) pos);
+			List_t::insert(tcb->node, (NodePtr_t) pos);
 		}
 
 		inline void
 		insert_in_order(TcbPtr_t tcb, TcbCmpFn auto&& cmp)
 		{
 			auto wrap = [](auto&& cmp) {
-				return [&](const Node_t& lhs, const Node_t& rhs) {
+				return [&](const auto& lhs, const auto& rhs) {
 					return cmp((TcbPtr_t) &lhs, (TcbPtr_t) &rhs);
 				};
 			};
 
-			ListImpl_t::insert_in_order(tcb->node, wrap(cmp));
+			List_t::insert_in_order(tcb->node, wrap(cmp));
 		}
 
 		MOS_INLINE inline void
-		add(TcbPtr_t tcb) { ListImpl_t::add(tcb->node); }
+		add(TcbPtr_t tcb) { List_t::add(tcb->node); }
 
 		MOS_INLINE inline void
 		remove(TcbPtr_t tcb)
 		{
-			ListImpl_t::remove(tcb->node);
+			List_t::remove(tcb->node);
 		}
 
 		MOS_INLINE inline void
@@ -380,7 +382,7 @@ namespace MOS::DataType
 		Tid_t tid = -1;
 
 		MOS_INLINE inline void
-		mark_tcb(TcbPtr_t tcb) volatile
+		mark(TcbPtr_t tcb) volatile
 		{
 			tid = tcb->get_tid();
 		}
@@ -435,7 +437,7 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline TcbPtr_t
-		iter_until(auto&& fn) volatile const
+		iter_until(auto&& fn) const volatile
 		    requires Invocable<decltype(fn), bool, TcbPtr_t>
 		{
 			for (auto& pt: raw) {

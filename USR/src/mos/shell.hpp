@@ -144,7 +144,7 @@ namespace MOS::Shell
 	{
 		using Text_t = Command_t::Text_t;
 
-		static auto parser = [](Text_t str) {
+		auto parser = [](Text_t str) {
 			for (const auto& cmd: cmds) {
 				if (auto argv = cmd.match(str)) {
 					return cmd.run(argv);

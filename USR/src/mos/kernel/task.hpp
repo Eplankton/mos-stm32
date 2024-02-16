@@ -13,15 +13,17 @@ namespace MOS::Task
 	using namespace Utils;
 	using namespace Alloc;
 
+	using Node_t   = TCB_t::Node_t;
 	using Fn_t     = TCB_t::Fn_t;
 	using Argv_t   = TCB_t::Argv_t;
-	using Pri_t    = TCB_t::Prior_t;
-	using Node_t   = TCB_t::Node_t;
+	using Prior_t  = TCB_t::Prior_t;
 	using Name_t   = TCB_t::Name_t;
 	using Tid_t    = TCB_t::Tid_t;
 	using Tick_t   = TCB_t::Tick_t;
 	using TcbPtr_t = TCB_t::TcbPtr_t;
-	using Status   = TCB_t::Status;
+
+	using enum Page_t::Policy;
+	using enum TCB_t::Status;
 
 	MOS_INLINE inline TcbPtr_t
 	current() { return cur_tcb; }
@@ -91,8 +93,8 @@ namespace MOS::Task
 	inline void terminate_raw(TcbPtr_t tcb)
 	{
 		// Remove the task from where it belongs to
-		if (tcb->is_status(Status::RUNNING) ||
-		    tcb->is_status(Status::READY)) {
+		if (tcb->is_status(RUNNING) ||
+		    tcb->is_status(READY)) {
 			ready_list.remove(tcb);
 		}
 		else if (tcb->is_sleeping()) {
@@ -103,7 +105,7 @@ namespace MOS::Task
 		}
 
 		// Mark tcb as TERMINATED and add to zombie_list
-		tcb->set_status(Status::TERMINATED);
+		tcb->set_status(TERMINATED);
 
 		// Clear the bit in tids
 		tids.reset(tcb->get_tid());
@@ -112,22 +114,23 @@ namespace MOS::Task
 		debug_tcbs.remove(tcb);
 
 		// Only DYNAMIC pages need delayed recycling
-		if (tcb->page.is_policy(PagePolicy::DYNAMIC)) {
+		if (tcb->page.is_policy(DYNAMIC)) {
 			zombie_list.add(tcb);
 		}
-		else { // Otherwise for POOL or STATIC, just deinit immediately
+		else {
+			// Otherwise for POOL or STATIC, just deinit immediately
 			tcb->deinit();
 		}
 	}
 
 	inline void terminate(TcbPtr_t tcb = current())
 	{
-		if (tcb == nullptr || tcb->is_status(Status::TERMINATED))
-			return;
-
-		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		DisIntrGuard_t guard;
+
+		if (tcb == nullptr || tcb->is_status(TERMINATED))
+			return;
+
 		terminate_raw(tcb);
 		if (tcb == current()) {
 			return yield();
@@ -143,7 +146,7 @@ namespace MOS::Task
 		// A descending stack consists of 16 registers as context.
 		// high -> low, descending stack
 		// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
-		tcb->set_sp(&tcb->page.from_bottom(16));
+		tcb->set_sp((uint32_t) &tcb->page.from_bottom(16));
 
 		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the Thumb state.
 		// V6-m and V7-m cores can only support Thumb state so it should always be set to '1'.
@@ -186,17 +189,17 @@ namespace MOS::Task
 		}
 		else {
 			static_assert(AsFnPtr<decltype(fn), decltype(argv)>,
-			              "Mismatched invoke type!");
+			              "Mismatched Invoke Type!");
 			return (Fn_t) (uint32_t) fn;
 		}
 	}
 
-	inline TcbPtr_t
-	create_raw(auto fn, auto argv, Pri_t pri, Name_t name, Page_t page)
+	inline TcbPtr_t // No yield() inside
+	create_raw(auto fn, auto argv, Prior_t pri, Name_t name, Page_t page)
 	{
-		DisIntrGuard_t guard;
-
 		MOS_ASSERT(fn != nullptr, "fn can't be null");
+		MOS_ASSERT(test_irq(), "Disabled Interrupt");
+		DisIntrGuard_t guard;
 
 		if (page.get_raw() == nullptr) {
 			MOS_MSG("Page Alloc Failed!");
@@ -209,8 +212,11 @@ namespace MOS::Task
 		}
 
 		// Construct a tcb at the head of a page
-		auto cur = Task::current(),
-		     tcb = TCB_t::build(type_check(fn, argv), (Argv_t) argv, pri, name, page);
+		auto cur = current(),
+		     tcb = TCB_t::build(
+		             type_check(fn, argv),
+		             (Argv_t) argv,
+		             pri, name, page);
 
 		// Load empty context
 		setup_context(tcb);
@@ -225,7 +231,7 @@ namespace MOS::Task
 		tcb->set_parent(cur);
 
 		// Set tcb to be READY
-		tcb->set_status(Status::READY);
+		tcb->set_status(READY);
 
 		// Add to ready_list
 		ready_list.insert_in_order(tcb, TCB_t::pri_cmp);
@@ -237,7 +243,7 @@ namespace MOS::Task
 	}
 
 	inline TcbPtr_t
-	create_impl(auto fn, auto argv, Pri_t pri, Name_t name, Page_t page)
+	create_impl(auto fn, auto argv, Prior_t pri, Name_t name, Page_t page)
 	{
 		auto tcb = create_raw(fn, argv, pri, name, page);
 
@@ -249,15 +255,8 @@ namespace MOS::Task
 		return tcb;
 	}
 
-	// Create task from static memory
-	MOS_INLINE inline TcbPtr_t
-	create(auto fn, auto argv, Pri_t pri, Name_t name, Page_t page)
-	{
-		return create_impl(fn, argv, pri, name, page);
-	}
-
 	MOS_INLINE inline Page_t
-	page_alloc(PagePolicy policy, PgSz_t pg_sz)
+	page_alloc(Page_t::Policy policy, PgSz_t pg_sz)
 	{
 		return Page_t {
 		        .policy = policy,
@@ -266,34 +265,41 @@ namespace MOS::Task
 		};
 	}
 
+	// Create task from static memory
+	MOS_INLINE inline TcbPtr_t
+	create(auto fn, auto argv, Prior_t pri, Name_t name, Page_t page)
+	{
+		return create_impl(fn, argv, pri, name, page);
+	}
+
 	// Create task from pre-allocated `page_pool`
 	MOS_INLINE inline TcbPtr_t
-	create(auto fn, auto argv, Pri_t pri, Name_t name)
+	create(auto fn, auto argv, Prior_t pri, Name_t name)
 	{
-		auto page = page_alloc(PagePolicy::POOL, PAGE_SIZE);
-		return create_impl(fn, argv, pri, name, page);
+		auto page = page_alloc(POOL, PAGE_SIZE);
+		return create(fn, argv, pri, name, page);
 	}
 
 	// Create task from dynamic allocated memory
 	MOS_INLINE inline TcbPtr_t
-	create(auto fn, auto argv, Pri_t pri, Name_t name, PgSz_t pg_sz)
+	create(auto fn, auto argv, Prior_t pri, Name_t name, PgSz_t pg_sz)
 	{
-		auto page = page_alloc(PagePolicy::DYNAMIC, pg_sz);
-		return create_impl(fn, argv, pri, name, page);
+		auto page = page_alloc(DYNAMIC, pg_sz);
+		return create(fn, argv, pri, name, page);
 	}
 
 	// Not recommended to use
 	MOS_INLINE inline TcbPtr_t
-	create_from_isr(auto fn, auto argv, Pri_t pri, Name_t name)
+	create_from_isr(auto fn, auto argv, Prior_t pri, Name_t name)
 	{
-		auto page = page_alloc(PagePolicy::POOL, PAGE_SIZE);
-		return create_raw(fn, argv, pri, name, page); // No yield()
+		auto page = page_alloc(POOL, PAGE_SIZE);
+		return create_raw(fn, argv, pri, name, page);
 	}
 
 	static inline void
 	block_to_raw(TcbPtr_t tcb, TcbList_t& dest = blocked_list)
 	{
-		tcb->set_status(Status::BLOCKED);
+		tcb->set_status(BLOCKED);
 		ready_list.send_to(tcb, dest);
 	}
 
@@ -303,19 +309,19 @@ namespace MOS::Task
 	        TcbList_t& dest,
 	        TcbCmpFn auto&& cmp)
 	{
-		tcb->set_status(Status::BLOCKED);
+		tcb->set_status(BLOCKED);
 		ready_list.send_to_in_order(tcb, dest, cmp);
 	}
 
 	inline void
 	block_to(TcbPtr_t tcb, TcbList_t& dest)
 	{
-		if (tcb == nullptr || tcb->is_status(Status::BLOCKED))
-			return;
-
-		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		DisIntrGuard_t guard;
+
+		if (tcb == nullptr || tcb->is_status(BLOCKED))
+			return;
+
 		block_to_raw(tcb, dest);
 		if (tcb == current()) {
 			return yield();
@@ -328,12 +334,12 @@ namespace MOS::Task
 	        TcbList_t& dest,
 	        TcbCmpFn auto&& cmp)
 	{
-		if (tcb == nullptr || tcb->is_status(Status::BLOCKED))
-			return;
-
-		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		DisIntrGuard_t guard;
+
+		if (tcb == nullptr || tcb->is_status(BLOCKED))
+			return;
+
 		block_to_in_order_raw(tcb, dest, cmp);
 		if (tcb == current()) {
 			return yield();
@@ -349,7 +355,7 @@ namespace MOS::Task
 	static inline void
 	resume_raw(TcbPtr_t tcb, TcbList_t& src = blocked_list)
 	{
-		tcb->set_status(Status::READY);
+		tcb->set_status(READY);
 		src.send_to_in_order(
 		        tcb,
 		        ready_list,
@@ -359,41 +365,35 @@ namespace MOS::Task
 	inline void
 	resume(TcbPtr_t tcb, TcbList_t& src = blocked_list)
 	{
-		if (tcb == nullptr || !tcb->is_status(Status::BLOCKED))
-			return;
-
-		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		DisIntrGuard_t guard;
-		resume_raw(tcb, src);
 
-		// If tasks with higher priority exist
+		if (tcb == nullptr || !tcb->is_status(BLOCKED))
+			return;
+
+		resume_raw(tcb, src);
 		if (higher_exists()) {
 			return yield();
 		}
 	}
 
-	// Not recommended
 	inline void
 	resume_from_isr(TcbPtr_t tcb, TcbList_t& src = blocked_list)
 	{
-		if (tcb == nullptr || !tcb->is_status(Status::BLOCKED))
-			return;
-
+		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		DisIntrGuard_t guard;
+		if (tcb == nullptr || !tcb->is_status(BLOCKED))
+			return;
 		resume_raw(tcb, src);
 	}
 
 	inline void
-	change_pri(TcbPtr_t tcb, Pri_t pri)
+	change_pri(TcbPtr_t tcb, Prior_t pri)
 	{
-		// Assert if irq disabled
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		DisIntrGuard_t guard;
 		tcb->set_pri(pri);
 		ready_list.re_insert(tcb, TCB_t::pri_cmp);
-
-		// If tasks with higher priority exist
 		if (higher_exists()) {
 			return yield();
 		}
@@ -405,8 +405,6 @@ namespace MOS::Task
 		DisIntrGuard_t guard;
 
 		auto fetch = [info](TcbPtr_t tcb) {
-			using Concepts::Same;
-
 			if constexpr (Same<decltype(info), Tid_t>) {
 				return tcb->get_tid() == info;
 			}
@@ -427,16 +425,16 @@ namespace MOS::Task
 	}
 
 	MOS_INLINE inline constexpr auto
-	status_name(const Status status)
+	status_name(const TCB_t::Status status)
 	{
 		switch (status) {
-			case Status::READY:
+			case READY:
 				return "READY";
-			case Status::RUNNING:
+			case RUNNING:
 				return "RUNNING";
-			case Status::BLOCKED:
+			case BLOCKED:
 				return "BLOCKED";
-			case Status::TERMINATED:
+			case TERMINATED:
 				return "TERMINATED";
 			default:
 				return "INVALID";
@@ -463,19 +461,18 @@ namespace MOS::Task
 		kprintf("-------------------------------------\n");
 	}
 
-	MOS_INLINE inline void
-	delay(const Tick_t ticks)
+	void delay(const Tick_t ticks)
 	{
-		// A modified version of TCB_t::pri_cmp that will reverse the order
-		// of tasks under the same priority to prevent starvation
-		//
-		// static auto reverse_pri_cmp = [](TcbPtr_t lhs, TcbPtr_t rhs) {
-		// 	return lhs->get_pri() <= rhs->get_pri();
-		// };
-
 		auto cur = current();
 		cur->set_delay(os_ticks + ticks);
 		block_to_in_order(cur, sleeping_list, TCB_t::delay_cmp);
+	}
+
+	inline void
+	wake_raw(TcbPtr_t tcb)
+	{
+		tcb->set_delay(-1);
+		Task::resume_raw(tcb, sleeping_list);
 	}
 
 	inline namespace Async
@@ -516,7 +513,7 @@ namespace MOS::Task
 				// If tcb is valid, check status, TERMINATED -> DONE (rarely)
 				DisIntrGuard_t guard;
 				return !stamp.check(tcb) ||
-				       tcb->is_status(Status::TERMINATED);
+				       tcb->is_status(TERMINATED);
 			}
 
 			MOS_INLINE inline void
@@ -524,7 +521,7 @@ namespace MOS::Task
 			{
 				// Spin Waiting
 				while (!is_ready()) {
-					Task::delay(1);
+					delay(1);
 				}
 				tcb = nullptr;
 			}
@@ -551,15 +548,15 @@ namespace MOS::Task
 		MOS_INLINE inline auto
 		async(auto fn, auto argv, Name_t name)
 		{
-			auto page = page_alloc(PagePolicy::POOL, PAGE_SIZE);
-			return async_raw(fn, argv, name, page);
+			auto page = page_alloc(POOL, PAGE_SIZE);
+			return async(fn, argv, name, page);
 		}
 
 		MOS_INLINE inline auto
 		async(auto fn, auto argv, Name_t name, PgSz_t pg_sz)
 		{
-			auto page = page_alloc(PagePolicy::DYNAMIC, pg_sz);
-			return async_raw(fn, argv, name, page);
+			auto page = page_alloc(DYNAMIC, pg_sz);
+			return async(fn, argv, name, page);
 		}
 	}
 }

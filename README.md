@@ -1,4 +1,4 @@
-# MOS-STM32 🌮
+## MOS-STM32 🧀
 
 ### Introduction 🚀
 [English](https://github.com/Eplankton/mos-stm32/blob/master/README.md) | [中文](https://gitee.com/Eplankton/mos-stm32/blob/master/README.md)
@@ -16,9 +16,8 @@ o'' )_____//    [MOS-STM32]
 [GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
 
 ### Architecture 🔍
-<img src="Pic/mos-arch.svg">
-
 [USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
+<img src="Pic/mos-arch.svg">
 ```    
 src
 ├── drivers                  Hardware Drivers(SPL/HAL/LL/...)
@@ -38,7 +37,7 @@ src
 │   │   ├── alloc.hpp        Static/Dynamic Allocator
 │   │   ├── global.hpp       Kernel Globals
 │   │   ├── printf.c         Thread-safe printf
-│   │   ├── task.hpp         Task create, yield, terminate, block, ...
+│   │   ├── task.hpp         Task control
 │   │   ├── sync.hpp         Sync primitives
 │   │   ├── scheduler.hpp    Scheduler and Policy
 │   │   ├── ipc.hpp          Inter-Process Communication
@@ -74,7 +73,7 @@ src
 <img src="Pic/board.gif" width="39.1%"> <img src="Pic/guilite.gif" width="34.5%">
 
 `Concurrent Task Period & Time Sequence`
-<img src="Pic/T0-T1.png" width="90%">
+<img src="Pic/T0-T1.png" width="80%">
 <img src="Pic/tids.png" width="65%">
 
 
@@ -97,20 +96,14 @@ namespace MOS::UserGlobal
     using namespace Driver::Device;
     using namespace DataType;
 
-    using SyncRxBuf_t = SyncRxBuf_t<Macro::RX_BUF_SIZE>;
-
     // Serial Input/Output
-    auto& uart = convert(USARTx);
+    auto& uart = STM32F4xx::convert(USARTx);
 
     // Shell Rx Buffer
-    SyncRxBuf_t rx_buf;
+    DataType::SyncRxBuf_t rx_buf;
 
     // LED red, green, blue
-    LED_t leds[] = {
-        {  RED_PORT,   RED_PIN},
-        {GREEN_PORT, GREEN_PIN},
-        { BLUE_PORT,  BLUE_PIN},
-    };
+    Device::LED_t leds[] = {···};
 }
 ```
 ```C++
@@ -153,7 +146,7 @@ namespace MOS::App
     {
         using UserGlobal::leds;
         bar.wait();
-        for (uint8_t i = 0; i < 20; i++) {
+        for (auto _: Range(0, 20)) {
            leds[1].toggle(); // green
            Task::delay(250);
         }
@@ -253,7 +246,7 @@ o'' )_____//   Version @ x.x.x(...)
 ✅ Done
 1. Tids from BitMap_t
 2. (Experimental) Task::Async::{Future_t, async}
-3. (Experimental) IPC::MsgQueue_t, Message Queue
+3. IPC::MsgQueue_t, Message Queue
 4. (Experimental) Task::create allows fn signature as /* void fn(auto argv) */
 
 📌 Plan

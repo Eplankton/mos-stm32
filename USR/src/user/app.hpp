@@ -1,20 +1,18 @@
 #ifndef _MOS_USER_APP_
 #define _MOS_USER_APP_
 
-// MOS Kernel
-#include "src/mos/kernel.hpp"
-
-// User Application
-#include "src/user/global.hpp"
-#include "src/user/gui/GuiLite.h"
-
 // GIFs
 #include "src/user/img/face_gif/frames.h"
 #include "src/user/img/mac_gif/frames.h"
 #include "src/user/img/cat_gif/frames.h"
 
+#include "src/mos/kernel.hpp"
+#include "src/user/global.hpp"
+#include "src/user/gui/GuiLite.h"
+
 namespace MOS::App
 {
+	using namespace Utils;
 	using Color = Driver::Device::ST7735S_t::Color;
 
 	namespace Gui
@@ -65,7 +63,7 @@ namespace MOS::App
 		using Sync::Mutex_t;
 		using UserGlobal::lcd;
 
-		// Create a mutex wrapping lcd
+		// A mutex wrapper of lcd&
 		static Mutex_t lcd_mtx {lcd};
 
 		auto GIF = [](void* argv) {
@@ -75,7 +73,7 @@ namespace MOS::App
 					        0, 0,
 					        128, 128,
 					        frame);
-					Task::delay(100);
+					Task::delay(125);
 				}
 			}
 		};
@@ -98,7 +96,7 @@ namespace MOS::App
 			}
 		};
 
-		const auto sub_pri = Task::current()->get_pri() + 1;
+		auto sub_pri = Task::current()->get_pri();
 		Task::create(GIF, nullptr, sub_pri, "GIF");
 		Task::create(Slogan, nullptr, sub_pri, "Slogan");
 	}
@@ -106,9 +104,8 @@ namespace MOS::App
 	void Calendar(void* argv)
 	{
 		using HAL::STM32F4xx::RTC_t;
-		using Utils::DisIntrGuard_t;
 
-		static auto print_rtc_info = [] {
+		auto print_rtc_info = [] {
 			DisIntrGuard_t guard;
 			const auto date = RTC_t::get_date();
 			const auto time = RTC_t::get_time();
@@ -132,7 +129,7 @@ namespace MOS::App
 	{
 		using UserGlobal::leds;
 		bar.wait();
-		for (uint8_t i = 0; i < 20; i++) {
+		for (auto _: Range(0, 20)) {
 			// f1 = !f1;
 			leds[1].toggle();
 			Task::delay(250);

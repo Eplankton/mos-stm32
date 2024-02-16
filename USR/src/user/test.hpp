@@ -8,6 +8,8 @@
 
 namespace MOS::Test
 {
+	using namespace Utils;
+
 	void MutexTest()
 	{
 		static Sync::Mutex_t mutex; // Take by 1-2-3... order
@@ -16,7 +18,7 @@ namespace MOS::Test
 			auto name = Task::current()->get_name();
 			while (true) {
 				mutex.exec([&] {
-					for (uint8_t i = 0; i < 5; i++) {
+					for (auto _: Range(0, 5)) {
 						kprintf("%s is working...\n", name);
 						Task::delay(100);
 					}
@@ -35,7 +37,7 @@ namespace MOS::Test
 		using UserGlobal::leds;
 
 		static auto T1 = [](void* argv) {
-			for (uint8_t i = 0; i < 20; i++) {
+			for (auto _: Range(0, 20)) {
 				leds[1].toggle(); // green
 				Task::delay(250);
 			}
@@ -46,7 +48,7 @@ namespace MOS::Test
 		static auto T0 = [](void* argv) {
 			auto future = Task::async(T1, nullptr, "T1");
 
-			for (uint8_t i = 0; i < 10; i++) {
+			for (auto _: Range(0, 10)) {
 				leds[2].toggle(); // blue
 				Task::delay(500);
 			}
@@ -64,22 +66,21 @@ namespace MOS::Test
 
 	void MsgQueueTest()
 	{
-		using Utils::DisIntrGuard_t;
-		using MailBox_t = IPC::MsgQueue_t<int, 3>;
+		using MsgQueue_t = IPC::MsgQueue_t<int, 3>;
 
-		static MailBox_t mailbox;
+		static MsgQueue_t msg_queue;
 
-		static auto send = [](const int& msg) {
+		static auto send = [](int msg) {
 			while (true) {
-				mailbox.send(msg, 0);
-				Task::delay(5);
+				msg_queue.send(msg);
+				Task::delay(50);
 			}
 		};
 
 		static auto recv = [](void* argv) {
 			while (true) {
 				int msg  = -1;
-				auto res = mailbox.recv(msg, 200);
+				auto res = msg_queue.recv(msg, 100);
 
 				DisIntrGuard_t guard;
 				kprintf(res ? "" : "Timeout!\n");
@@ -88,10 +89,10 @@ namespace MOS::Test
 		};
 
 		static auto launch = [](void* argv) {
-			static int data[] = {6, 7, 8, 9, 10};
-			Task::create(recv, nullptr, 5, "recv");
-			for (const auto& msg: data) {
-				Task::create(send, &msg, msg, "send");
+			const int data[] = {5, 6, 7, 8, 9};
+			Task::create(recv, nullptr, 4, "recv");
+			for (auto msg: data) {
+				Task::create(send, msg, (Task::Prior_t) msg, "send");
 			}
 		};
 

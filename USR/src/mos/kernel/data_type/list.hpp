@@ -26,10 +26,11 @@ namespace MOS::DataType
 	template <typename Fn>
 	concept NodeCmpFn = Invocable<Fn, bool, const ListNode_t&, const ListNode_t&>;
 
-	struct ListImpl_t
+	using List_t = struct ListImpl_t
 	{
+		using Self_t    = ListImpl_t;
 		using Node_t    = ListNode_t;
-		using NodePtr_t = Node_t::SelfPtr_t;
+		using NodePtr_t = Node_t*;
 
 		Node_t head;
 		uint32_t len = 0;
@@ -107,7 +108,9 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		insert_in_order(Node_t& node, NodeCmpFn auto&& cmp)
+		insert_in_order(
+		        Node_t& node,
+		        NodeCmpFn auto&& cmp)
 		{
 			auto st = begin();
 			while (st != end() && cmp(*st, node)) {
@@ -120,14 +123,17 @@ namespace MOS::DataType
 		add(Node_t& node) { insert(node, end()); }
 
 		MOS_INLINE inline void
-		send_to(Node_t& node, ListImpl_t& dest)
+		send_to(Node_t& node, Self_t& dest)
 		{
 			remove(node);
 			dest.add(node);
 		}
 
 		MOS_INLINE inline void
-		send_to_in_order(Node_t& node, ListImpl_t& dest, NodeCmpFn auto&& cmp)
+		send_to_in_order(
+		        Node_t& node,
+		        Self_t& dest,
+		        NodeCmpFn auto&& cmp)
 		{
 			remove(node);
 			dest.insert_in_order(node, cmp);
@@ -137,14 +143,6 @@ namespace MOS::DataType
 		re_insert(Node_t& node, NodeCmpFn auto&& cmp)
 		{
 			send_to_in_order(node, *this, cmp);
-		}
-
-		MOS_INLINE inline bool
-		contains(const Node_t& node)
-		{
-			return iter_until([&node](const Node_t& x) {
-				       return &node == &x;
-			       }) != nullptr;
 		}
 	};
 }

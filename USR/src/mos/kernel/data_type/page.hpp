@@ -11,7 +11,7 @@ namespace MOS::DataType
 		using Raw_t  = Word_t*;
 		using Size_t = const size_t;
 
-		enum class Policy
+		enum class Policy : int8_t
 		{
 			STATIC,
 			POOL,

@@ -15,7 +15,7 @@ namespace MOS::Bsp
 	{
 		using UserGlobal::uart;
 		uart.send_data(ch);
-		uart.wait_for(USART_FLAG_TXE);
+		uart.wait_flag(USART_FLAG_TXE);
 	}
 
 	static inline void LED_Config()
@@ -173,10 +173,11 @@ namespace MOS::ISR
 	{
 		using HAL::STM32F4xx::EXTI_t;
 		using UserGlobal::leds;
+		using Utils::Range;
 
 		// To simulate a burst task
 		static auto K1_IRQ = [](void* argv) {
-			for (uint8_t i = 0; i < 10; i++) {
+			for (auto _: Range(0, 10)) {
 				leds[2].toggle();
 				Task::print_name();
 				Task::delay(250);
@@ -201,8 +202,8 @@ namespace MOS::ISR
 		using UserGlobal::rx_buf;
 
 		if (uart.get_it_status(USART_IT_RXNE) != RESET) {
-			char8_t data = uart.receive_data();
 			if (!rx_buf.full()) {
+				char8_t data = uart.recv_data();
 				rx_buf.add(data);
 				if (data == '\n') {
 					rx_buf.signal_from_isr();

@@ -1,11 +1,14 @@
-#ifndef _MOS_UTIL_
-#define _MOS_UTIL_
+#ifndef _MOS_UTILS_
+#define _MOS_UTILS_
 
 #include <stdint.h>
 #include <stddef.h>
 
 #include "../config.h"
 #include "../arch/cpu.hpp"
+
+#define container_of(ptr, type, member) \
+	(type*) ((char*) ptr - offsetof(type, member))
 
 #define MOS_FLATTEN   __attribute__((flatten))
 #define MOS_INLINE    __attribute__((always_inline))
@@ -108,11 +111,68 @@ namespace MOS::Utils
 		return ptr;
 	}
 
+	struct Range
+	{
+		using Raw_t = int32_t;
+
+		const Raw_t st, ed, n;
+
+		MOS_INLINE
+		inline Range(Raw_t _st, Raw_t _ed, Raw_t _n = 1)
+		    : st(_st), ed(_ed), n(_n) {}
+
+		struct Iter_t
+		{
+			const Raw_t step;
+			Raw_t raw;
+
+			MOS_INLINE
+			inline Iter_t(Raw_t _raw, Raw_t _step)
+			    : raw(_raw), step(_step) {}
+
+			MOS_INLINE
+			inline void operator++() { raw += step; }
+
+			MOS_INLINE inline auto&
+			operator*() const { return raw; }
+
+			MOS_INLINE inline bool
+			operator!=(const Iter_t& other) const
+			{
+				return step > 0 ? raw < *other
+				                : raw > *other;
+			}
+		};
+
+		MOS_INLINE inline Iter_t
+		begin() const { return {st, n}; }
+
+		MOS_INLINE inline Iter_t
+		end() const { return {ed, n}; }
+
+		MOS_INLINE inline Iter_t
+		rbegin() const { return {ed - n, -n}; }
+
+		MOS_INLINE inline Iter_t
+		rend() const { return {st - n, -n}; }
+	};
+
 	// Create Auto Global Critical Section
 	struct DisIntrGuard_t
 	{
 		MOS_INLINE inline DisIntrGuard_t() { MOS_DISABLE_IRQ(); }
 		MOS_INLINE inline ~DisIntrGuard_t() { MOS_ENABLE_IRQ(); }
+	};
+
+	// Global Critical Section
+	struct GlbCrtSect_t
+	{
+		MOS_INLINE inline void
+		exec(auto&& section)
+		{
+			DisIntrGuard_t guard;
+			section();
+		}
 	};
 }
 

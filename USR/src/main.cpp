@@ -1,4 +1,5 @@
-// MOS Shell
+// MOS Kernel & Shell
+#include "mos/kernel.hpp"
 #include "mos/shell.hpp"
 
 // User Application
@@ -7,7 +8,7 @@
 #include "user/app.hpp"
 #include "user/test.hpp"
 
-uint32_t tst_pkb[256];
+uint32_t stc_pkb[256];
 
 int main(void)
 {
@@ -25,14 +26,14 @@ int main(void)
 
 	DataType::Page_t page {
 	        .policy = DataType::Page_t::Policy::STATIC,
-	        .raw    = tst_pkb,
-	        .size   = sizeof(tst_pkb) / sizeof(size_t),
+	        .raw    = stc_pkb,
+	        .size   = sizeof(stc_pkb) / sizeof(size_t),
 	};
 
 	// Create user tasks
 	Task::create(App::Task0, nullptr, 2, "T0", page);
-	// Task::create(App::GUI, nullptr, 3, "GUI");
-	Task::create(App::LCD, nullptr, 3, "LCD");
+	Task::create(App::GUI, nullptr, 3, "GUI", 256);
+	// Task::create(App::LCD, nullptr, 3, "LCD");
 
 	// Test examples
 	// Test::MutexTest();
