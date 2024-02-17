@@ -290,7 +290,7 @@ namespace MOS::Sync
 		{
 			DisIntrGuard_t guard;
 			if (has_waiters()) {
-				wake_up_one();
+				wake_up();
 			}
 			return Task::yield();
 		}
@@ -299,7 +299,7 @@ namespace MOS::Sync
 		{
 			DisIntrGuard_t guard;
 			while (has_waiters()) {
-				wake_up_one();
+				wake_up();
 			}
 			return Task::yield();
 		}
@@ -316,7 +316,7 @@ namespace MOS::Sync
 		}
 
 		MOS_INLINE inline void
-		wake_up_one()
+		wake_up()
 		{
 			DisIntrGuard_t guard;
 			Task::resume_raw(waiting_list.begin(), waiting_list);

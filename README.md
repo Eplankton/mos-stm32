@@ -102,7 +102,7 @@ namespace MOS::UserGlobal
     DataType::SyncRxBuf_t rx_buf;
 
     // LED red, green, blue
-    Device::LED_t leds[] = {···};
+    Device::LED_t leds[] = {...};
 }
 ```
 ```C++
@@ -255,6 +255,7 @@ o'' )_____//   Version @ x.x.x(...)
 4. DMA_t Driver
 5. More scheduler algorithms
 6. FPU support
+7. Result<T, E>, Option<T>
 ```
 
 ### References 🛸

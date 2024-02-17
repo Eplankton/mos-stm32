@@ -164,16 +164,19 @@ namespace MOS::Utils
 		MOS_INLINE inline ~DisIntrGuard_t() { MOS_ENABLE_IRQ(); }
 	};
 
-	// Global Critical Section
-	struct GlbCrtSect_t
+	template <typename T>
+	inline constexpr T&&
+	move(T& x) noexcept
 	{
-		MOS_INLINE inline void
-		exec(auto&& section)
-		{
-			DisIntrGuard_t guard;
-			section();
-		}
-	};
+		return static_cast<T&&>(x);
+	}
+
+	template <typename T>
+	inline constexpr T&&
+	move(T&& x) noexcept
+	{
+		return static_cast<T&&>(x);
+	}
 }
 
 // Inplace new

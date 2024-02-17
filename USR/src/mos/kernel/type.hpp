@@ -1,5 +1,5 @@
-#ifndef _DRIVER_TYPE_
-#define _DRIVER_TYPE_
+#ifndef _MOS_TYPE_
+#define _MOS_TYPE_
 
 #include <stdint.h>
 

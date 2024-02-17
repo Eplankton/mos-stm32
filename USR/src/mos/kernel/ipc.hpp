@@ -38,11 +38,8 @@ namespace MOS::IPC
 					return false;
 			}
 
-			{
-				DisIntrGuard_t guard;
-				raw.push(msg);
-				try_wake_up(receivers);
-			}
+			raw.push(msg);
+			try_wake_up(receivers);
 
 			if (Task::higher_exists()) {
 				Task::yield();
@@ -61,11 +58,8 @@ namespace MOS::IPC
 					return false;
 			}
 
-			{
-				DisIntrGuard_t guard;
-				buf = raw.serve();
-				try_wake_up(senders);
-			}
+			buf = raw.serve();
+			try_wake_up(senders);
 
 			if (Task::higher_exists()) {
 				Task::yield();
@@ -94,8 +88,12 @@ namespace MOS::IPC
 				       lhs->get_delay() < rhs->get_delay();
 			};
 
-			auto cur = Task::current();
-			dest.insert_in_order(cur->event, pd_cmp);
+			{
+				DisIntrGuard_t guard;
+				auto cur = Task::current();
+				dest.insert_in_order(cur->event, pd_cmp);
+			}
+
 			Task::delay(timeout);
 		}
 
@@ -106,6 +104,7 @@ namespace MOS::IPC
 				Task::wake_raw(into_tcb(event));
 			};
 
+			DisIntrGuard_t guard;
 			if (!src.empty()) {
 				wake_up(src.begin());
 			}
