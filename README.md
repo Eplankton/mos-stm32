@@ -67,7 +67,7 @@ src
 `MutexTest`
 ![mutex_test](Pic/mutex.gif)
 
-`LCD Driver & GUI Demo`
+`LCD Driver & GUI Demo`<br>
 <img src="Pic/cat.gif" width="21%"> <img src="Pic/mac.gif" width="20.35%"> <img src="Pic/face.gif" width="20.35%">
 <img src="Pic/board.gif" width="39.1%"> <img src="Pic/guilite.gif" width="34.5%">
 
