@@ -172,14 +172,16 @@ namespace MOS::Task
 	// clang-format on
 
 	template <typename Fn, typename ArgvType>
-	concept AsLambdaFn = LambdaInvocable<Fn, ArgvType> ||
-	                     LambdaInvocable<Fn, deref_t<ArgvType>*> ||
-	                     LambdaInvocable<Fn, deref_t<ArgvType>&>;
+	concept AsLambdaFn =
+	        LambdaInvocable<Fn, ArgvType> ||
+	        LambdaInvocable<Fn, deref_t<ArgvType>*> ||
+	        LambdaInvocable<Fn, deref_t<ArgvType>&>;
 
 	template <typename Fn, typename ArgvType>
-	concept AsFnPtr = Invocable<Fn, void, ArgvType> ||
-	                  Invocable<Fn, void, deref_t<ArgvType>*> ||
-	                  Invocable<Fn, void, deref_t<ArgvType>&>;
+	concept AsFnPtr =
+	        Invocable<Fn, void, ArgvType> ||
+	        Invocable<Fn, void, deref_t<ArgvType>*> ||
+	        Invocable<Fn, void, deref_t<ArgvType>&>;
 
 	MOS_INLINE static inline constexpr Fn_t
 	type_check(auto fn, auto argv)
@@ -242,6 +244,16 @@ namespace MOS::Task
 		return tcb;
 	}
 
+	MOS_INLINE inline Page_t
+	page_alloc(Page_t::Policy policy, PgSz_t pg_sz)
+	{
+		return Page_t {
+		        .policy = policy,
+		        .raw    = palloc(policy, pg_sz),
+		        .size   = pg_sz,
+		};
+	}
+
 	inline TcbPtr_t
 	create_impl(auto fn, auto argv, Prior_t pri, Name_t name, Page_t page)
 	{
@@ -253,16 +265,6 @@ namespace MOS::Task
 		}
 
 		return tcb;
-	}
-
-	MOS_INLINE inline Page_t
-	page_alloc(Page_t::Policy policy, PgSz_t pg_sz)
-	{
-		return Page_t {
-		        .policy = policy,
-		        .raw    = palloc(policy, pg_sz),
-		        .size   = pg_sz,
-		};
 	}
 
 	// Create task from static memory
@@ -356,10 +358,7 @@ namespace MOS::Task
 	resume_raw(TcbPtr_t tcb, TcbList_t& src = blocked_list)
 	{
 		tcb->set_status(READY);
-		src.send_to_in_order(
-		        tcb,
-		        ready_list,
-		        TCB_t::pri_cmp);
+		src.send_to_in_order(tcb, ready_list, TCB_t::pri_cmp);
 	}
 
 	inline void

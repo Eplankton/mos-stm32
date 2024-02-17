@@ -42,7 +42,6 @@ namespace MOS::DataType
 		StackPtr_t sp = nullptr;
 
 		// Add more members here
-		Node_t event;
 		Tid_t tid          = -1;
 		TcbPtr_t parent    = nullptr;
 		Page_t page        = {ERROR, nullptr, 0};
@@ -51,6 +50,7 @@ namespace MOS::DataType
 		Tick_t time_slice  = TIME_SLICE,
 		       delay_ticks = -1,
 		       stamp       = -1;
+		Node_t event;
 
 		// Only for debug
 		Fn_t fn     = nullptr;

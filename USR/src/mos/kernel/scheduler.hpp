@@ -6,16 +6,11 @@
 
 namespace MOS::Scheduler
 {
-	using namespace KernelGlobal;
-
-	using TcbPtr_t = TCB_t::TcbPtr_t;
-	using Fn_t     = TCB_t::Fn_t;
-
-	enum class OpStatus : int8_t
+	enum class SchedStatus : int8_t
 	{
 		OK  = true,
 		ERR = !OK,
-	} static os_status = OpStatus::ERR;
+	} static sched_status = SchedStatus::ERR;
 
 	enum class Policy : int8_t
 	{
@@ -33,12 +28,24 @@ namespace MOS::Scheduler
 		PreemptPri,
 	};
 
+	using namespace Macro;
+
+	using KernelGlobal::ready_list;
+	using KernelGlobal::sleeping_list;
+	using KernelGlobal::cur_tcb;
+	using KernelGlobal::os_ticks;
+	using KernelGlobal::debug_tcbs;
+
+	using DataType::TCB_t;
+	using TcbPtr_t = TCB_t::TcbPtr_t;
+	using Fn_t     = TCB_t::Fn_t;
+
 	using enum TCB_t::Status;
-	using enum OpStatus;
+	using enum SchedStatus;
 	using enum Policy;
 
 	MOS_INLINE inline bool
-	is_ready() { return os_status == OpStatus::OK; }
+	is_ok() { return sched_status == SchedStatus::OK; }
 
 	// This will execute only once for the first task
 	__attribute__((naked)) inline void
@@ -71,12 +78,14 @@ namespace MOS::Scheduler
 		             PRI_MIN,
 		             "idle");
 
+		MOS_ASSERT(!ready_list.empty(), "Launch Failed!");
+
 		cur_tcb = ready_list.begin();
-		MOS_ASSERT(cur_tcb != ready_list.end(),
-		           "Scheduler Launch Failed!");
 		cur_tcb->set_status(RUNNING);
+
 		debug_tcbs.mark(cur_tcb); // For debug only
-		os_status = OpStatus::OK;
+		sched_status = SchedStatus::OK;
+
 		init();
 	}
 
@@ -84,12 +93,12 @@ namespace MOS::Scheduler
 	try_wake_up()
 	{
 		// sleeping_list is sorted
-		auto to_wake = sleeping_list.begin();
-		while (to_wake != sleeping_list.end()) {
-			if (to_wake->get_delay() > os_ticks)
+		auto tcb = sleeping_list.begin();
+		while (tcb != sleeping_list.end()) {
+			if (tcb->get_delay() > os_ticks)
 				return;
-			Task::wake_raw(to_wake);
-			to_wake = sleeping_list.begin(); // check next
+			Task::wake_raw(tcb);
+			tcb = sleeping_list.begin(); // check next
 		}
 	}
 
@@ -118,7 +127,7 @@ namespace MOS::Scheduler
 			if (cr->time_slice <= 0) {
 				cr->time_slice = TIME_SLICE;
 				cr->set_status(READY);
-				return switch_to((nx == ed) ? st : nx);
+				return switch_to(nx == ed ? st : nx);
 			}
 		}
 
@@ -166,7 +175,7 @@ namespace MOS::ISR
 	{
 		DisIntrGuard_t guard;
 		Task::inc_ticks();
-		if (Scheduler::is_ready()) {
+		if (Scheduler::is_ok()) {
 			return Task::nop_and_yield();
 		}
 	}

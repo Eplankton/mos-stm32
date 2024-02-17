@@ -68,11 +68,11 @@ namespace MOS::Test
 	{
 		using MsgQueue_t = IPC::MsgQueue_t<int, 3>;
 
-		static MsgQueue_t msg_queue;
+		static MsgQueue_t msg_q;
 
 		static auto send = [](int msg) {
 			while (true) {
-				msg_queue.send(msg);
+				msg_q.send(msg);
 				Task::delay(50);
 			}
 		};
@@ -80,7 +80,7 @@ namespace MOS::Test
 		static auto recv = [](void* argv) {
 			while (true) {
 				int msg  = -1;
-				auto res = msg_queue.recv(msg, 100);
+				auto res = msg_q.recv(msg, 100);
 
 				DisIntrGuard_t guard;
 				kprintf(res ? "" : "Timeout!\n");

@@ -68,7 +68,6 @@ src
 ![mutex_test](Pic/mutex.gif)
 
 `LCD Driver & GUI Demo`
-
 <img src="Pic/cat.gif" width="21%"> <img src="Pic/mac.gif" width="20.35%"> <img src="Pic/face.gif" width="20.35%">
 <img src="Pic/board.gif" width="39.1%"> <img src="Pic/guilite.gif" width="34.5%">
 
@@ -177,13 +176,13 @@ int main(void)
     // Create Shell with rx_buf
     Task::create(Shell::launch, &rx_buf, 1, "Shell");
     
-    // Create LED task
+    /* User Tasks */
     Task::create(App::Task0, nullptr, 2, "T0");
 
-    // Test examples
+    /* Test examples */
     Test::MutexTest();
     Test::AsyncTest();
-     
+    
     // Start scheduling, never return
     Scheduler::launch();
 
@@ -247,7 +246,7 @@ o'' )_____//   Version @ x.x.x(...)
 1. Tids from BitMap_t
 2. (Experimental) Task::Async::{Future_t, async}
 3. IPC::MsgQueue_t, Message Queue
-4. (Experimental) Task::create allows fn signature as /* void fn(auto argv) */
+4. Task::create allows generic fn signature as /* void fn(auto argv) */
 
 📌 Plan
 1. IPC::pipe/channel

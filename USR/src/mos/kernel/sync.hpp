@@ -259,7 +259,7 @@ namespace MOS::Sync
 		lock() { return MutexGuard_t {*this}; }
 	};
 
-	// Template Deduction for T = void
+	// Template Deduction
 	Mutex_t() -> Mutex_t<void>;
 
 	template <typename T>

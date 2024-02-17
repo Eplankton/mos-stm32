@@ -28,9 +28,10 @@ namespace MOS::DataType
 
 	using List_t = struct ListImpl_t
 	{
-		using Self_t    = ListImpl_t;
-		using Node_t    = ListNode_t;
-		using NodePtr_t = Node_t*;
+		using Self_t         = ListImpl_t;
+		using Node_t         = ListNode_t;
+		using NodePtr_t      = Node_t*;
+		using ConstNodePtr_t = const Node_t*;
 
 		Node_t head;
 		uint32_t len = 0;

@@ -3,7 +3,6 @@
 
 #include "data_type/queue.hpp"
 #include "task.hpp"
-#include "global.hpp"
 
 namespace MOS::IPC
 {
@@ -17,10 +16,17 @@ namespace MOS::IPC
 	template <typename T, size_t N>
 	struct MsgQueue_t
 	{
-		using EventList_t = List_t;
-		using Tick_t      = TCB_t::Tick_t;
-		using TcbPtr_t    = TCB_t::TcbPtr_t;
-		using Raw_t       = Queue_t<T, N>;
+		using Tick_t         = TCB_t::Tick_t;
+		using Raw_t          = Queue_t<T, N>;
+		using EventList_t    = List_t;
+		using NodePtr_t      = List_t::NodePtr_t;
+		using ConstNodePtr_t = List_t::ConstNodePtr_t;
+
+		MOS_INLINE inline bool
+		full() const { return raw.full(); }
+
+		MOS_INLINE inline bool
+		empty() const { return raw.empty(); }
 
 		bool send(const T& msg, Tick_t timeout = 0)
 		{
@@ -28,12 +34,8 @@ namespace MOS::IPC
 				if (timeout == 0)
 					return false;
 				block_to(senders, timeout);
-				DisIntrGuard_t guard; // Resumed
-				auto cur = Task::current();
-				if (cur->in_event()) {
-					senders.remove(cur->event);
+				if (!check_on(senders)) // Resumed
 					return false;
-				}
 			}
 
 			{
@@ -55,12 +57,8 @@ namespace MOS::IPC
 				if (timeout == 0)
 					return false;
 				block_to(receivers, timeout);
-				DisIntrGuard_t guard; // Resumed
-				auto cur = Task::current();
-				if (cur->in_event()) {
-					receivers.remove(cur->event);
+				if (!check_on(receivers)) // Resumed
 					return false;
-				}
 			}
 
 			{
@@ -80,14 +78,20 @@ namespace MOS::IPC
 		EventList_t senders, receivers;
 		Raw_t raw;
 
+		MOS_INLINE static inline auto
+		into_tcb(ConstNodePtr_t _event)
+		{
+			return container_of(_event, TCB_t, event);
+		}
+
 		void block_to(EventList_t& dest, Tick_t timeout)
 		{
 			// Pri & Delay Compare
 			auto pd_cmp = [](const auto& _lhs, const auto& _rhs) {
-				auto lhs = (const TCB_t&) _lhs,
-				     rhs = (const TCB_t&) _rhs;
-				return lhs.get_pri() < rhs.get_pri() &&
-				       lhs.get_delay() < rhs.get_delay();
+				auto lhs = into_tcb(&_lhs),
+				     rhs = into_tcb(&_rhs);
+				return lhs->get_pri() < rhs->get_pri() &&
+				       lhs->get_delay() < rhs->get_delay();
 			};
 
 			auto cur = Task::current();
@@ -97,15 +101,26 @@ namespace MOS::IPC
 
 		void try_wake_up(EventList_t& src)
 		{
-			auto wake_opr = [&](TcbPtr_t tcb) {
-				src.remove(tcb->event);
-				Task::wake_raw(tcb);
+			auto wake_up = [&](NodePtr_t event) {
+				src.remove(*event);
+				Task::wake_raw(into_tcb(event));
 			};
 
 			if (!src.empty()) {
-				auto tcb = container_of(src.begin(), TCB_t, event);
-				wake_opr(tcb);
+				wake_up(src.begin());
 			}
+		}
+
+		bool check_on(EventList_t& src)
+		{
+			DisIntrGuard_t guard;
+			auto cur = Task::current();
+			if (cur->in_event()) {
+				// If still event-linked -> Timeout(Awakened by Scheduler)
+				src.remove(cur->event);
+				return false;
+			}
+			return true;
 		}
 	};
 }
