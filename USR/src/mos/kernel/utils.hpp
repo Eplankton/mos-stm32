@@ -165,7 +165,6 @@ namespace MOS::Utils
 		rend() const { return {st - n, -n}; }
 	};
 
-	// Create Auto Global Critical Section
 	struct DisIntrGuard_t
 	{
 		MOS_INLINE

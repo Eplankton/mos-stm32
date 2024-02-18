@@ -41,11 +41,11 @@ namespace MOS::Bsp
 	{
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOC);
 		RCC_t::APB2::enable(RCC_APB2Periph_SYSCFG);
-		SYSCFG_t::exti_line_config(
+		SYSCFG_t::exti_line_config( // K1 -> PC13
 		    EXTI_PortSourceGPIOC,
 		    EXTI_PinSource13
-		); // K1 -> PC13
-		EXTI_t::init(
+		);
+		EXTI_t::init( // K1 Intr Config
 		    EXTI_Line13,
 		    EXTI_Mode_Interrupt,
 		    EXTI_Trigger_Rising, ENABLE
@@ -61,22 +61,22 @@ namespace MOS::Bsp
 		RCC_t::APB1::enable(RCC_APB1Periph_USART3);
 		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
 
-		uart.init(
+		uart.init( // 38400-8-1-N
 		        38400,
 		        USART_WordLength_8b,
 		        USART_StopBits_1,
 		        USART_Parity_No
 		)
-		    .rx_config(
+		    .rx_config( // RX -> PD9
 		        GPIOD,
 		        GPIO_t::get_pin_src(9),
 		        GPIO_AF_USART3
-		    ) // RX -> PD9
-		    .tx_config(
+		    )
+		    .tx_config( // TX -> PD8
 		        GPIOD,
 		        GPIO_t::get_pin_src(8),
 		        GPIO_AF_USART3
-		    ) // TX -> PD8
+		    )
 		    .it_enable(USART_IT_RXNE)
 		    .enable();
 	}
@@ -93,16 +93,16 @@ namespace MOS::Bsp
 		);
 
 		lcd.spi
-		    .sclk_config(
+		    .sclk_config( // SCLK -> PA5
 		        GPIOA,
 		        GPIO_t::get_pin_src(5),
 		        GPIO_AF_SPI1
-		    ) // SCLK -> PA5
-		    .mosi_config(
+		    )
+		    .mosi_config( // MOSI -> PA7
 		        GPIOA,
 		        GPIO_t::get_pin_src(7),
 		        GPIO_AF_SPI1
-		    ); // MOSI -> PA7
+		    );
 		lcd.init();
 	}
 
@@ -239,7 +239,7 @@ namespace MOS::ISR
 				if (!rx_buf.full()) {
 					char8_t data = uart.recv_data();
 					rx_buf.add(data);
-					if (data == '\n') {
+					if (data == '\n') { // Cmd received
 						rx_buf.signal_from_isr();
 					}
 				}

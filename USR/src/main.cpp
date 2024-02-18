@@ -13,7 +13,6 @@ uint32_t stc_pkb[256];
 int main(void)
 {
 	using namespace MOS;
-	using UserGlobal::rx_buf;
 
 	// Init hardware and clocks
 	Bsp::config();
@@ -22,7 +21,12 @@ int main(void)
 	Task::create(App::Calendar, nullptr, 0, "Calendar");
 
 	// Create Shell with rx_buf
-	Task::create(Shell::launch, &rx_buf, 1, "Shell");
+	Task::create(
+	    Shell::launch,
+	    &UserGlobal::rx_buf,
+	    1,
+	    "Shell"
+	);
 
 	DataType::Page_t page {
 	    .policy = DataType::Page_t::Policy::STATIC,

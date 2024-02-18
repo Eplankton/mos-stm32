@@ -38,7 +38,10 @@ namespace MOS::Sync
 			DisIntrGuard_t guard;
 			cnt -= 1;
 			if (cnt < 0) {
-				Task::block_to_raw(Task::current(), waiting_list);
+				Task::block_to_raw(
+				    Task::current(),
+				    waiting_list
+				);
 				return Task::yield();
 			}
 		}
@@ -64,7 +67,10 @@ namespace MOS::Sync
 		up_raw()
 		{
 			if (cnt < 0) {
-				Task::resume_raw(waiting_list.begin(), waiting_list);
+				Task::resume_raw(
+				    waiting_list.begin(),
+				    waiting_list
+				);
 			}
 			cnt += 1;
 		}
@@ -81,7 +87,10 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		acquire()
 		{
-			MOS_ASSERT(owner != Task::current(), "Non-recursive lock");
+			MOS_ASSERT(
+			    owner != Task::current(),
+			    "Non-recursive lock"
+			);
 			owner = Task::current();
 			sema.down();
 		}
@@ -191,12 +200,14 @@ namespace MOS::Sync
 		update_ceiling()
 		{
 			ceiling = PRI_MIN;
-			sema.waiting_list.iter([&](const TCB_t& tcb) {
-				const auto pri = tcb.get_pri();
-				if (pri < ceiling) {
-					ceiling = pri;
-				}
-			});
+			sema.waiting_list.iter(
+			    [&](const TCB_t& tcb) {
+				    const auto pri = tcb.get_pri();
+				    if (pri < ceiling) {
+					    ceiling = pri;
+				    }
+			    }
+			);
 		}
 	};
 
@@ -281,7 +292,10 @@ namespace MOS::Sync
 		}
 
 		inline void
-		wait(MutexImpl_t& mtx, Invocable<bool> auto&& pred)
+		wait(
+		    MutexImpl_t& mtx,
+		    Invocable<bool> auto&& pred
+		)
 		{
 			mtx.unlock(); // Unlock first
 			while (!pred()) {
@@ -315,7 +329,10 @@ namespace MOS::Sync
 		block_this()
 		{
 			DisIntrGuard_t guard;
-			Task::block_to_raw(Task::current(), waiting_list);
+			Task::block_to_raw(
+			    Task::current(),
+			    waiting_list
+			);
 			return Task::yield();
 		}
 

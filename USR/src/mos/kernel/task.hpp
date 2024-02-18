@@ -94,8 +94,7 @@ namespace MOS::Task
 	terminate_raw(TcbPtr_t tcb)
 	{
 		// Remove the task from where it belongs to
-		if (tcb->is_status(RUNNING) ||
-		    tcb->is_status(READY)) {
+		if (tcb->is_status(RUNNING) || tcb->is_status(READY)) {
 			ready_list.remove(tcb);
 		}
 		else if (tcb->is_sleeping()) {
@@ -188,14 +187,14 @@ namespace MOS::Task
 	type_check(auto fn, auto argv)
 	{
 		if constexpr (AsLambdaFn<decltype(fn), decltype(argv)>) {
-			return (Fn_t) (uint32_t) + fn;
+			return (Fn_t) ((uint32_t) + fn); // '+fn' convert lambda into FnPtr
 		}
 		else {
 			static_assert(
 			    AsFnPtr<decltype(fn), decltype(argv)>,
 			    "Mismatched Invoke Type!"
 			);
-			return (Fn_t) (uint32_t) fn;
+			return (Fn_t) ((uint32_t) fn);
 		}
 	}
 
@@ -267,13 +266,12 @@ namespace MOS::Task
 	    Name_t name, Page_t page
 	)
 	{
-		auto tcb = create_raw(fn, argv, pri, name, page);
-
-		// If a new task has higher priority, switch at once
+		auto tcb = create_raw(
+		    fn, argv, pri, name, page
+		);
 		if (TCB_t::pri_cmp(tcb, current())) {
 			yield();
 		}
-
 		return tcb;
 	}
 
@@ -344,10 +342,8 @@ namespace MOS::Task
 	{
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		DisIntrGuard_t guard;
-
 		if (tcb == nullptr || tcb->is_status(BLOCKED))
 			return;
-
 		block_to_raw(tcb, dest);
 		if (tcb == current()) {
 			return yield();
@@ -363,10 +359,8 @@ namespace MOS::Task
 	{
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		DisIntrGuard_t guard;
-
 		if (tcb == nullptr || tcb->is_status(BLOCKED))
 			return;
-
 		block_to_in_order_raw(tcb, dest, cmp);
 		if (tcb == current()) {
 			return yield();
@@ -401,10 +395,8 @@ namespace MOS::Task
 	{
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		DisIntrGuard_t guard;
-
 		if (tcb == nullptr || !tcb->is_status(BLOCKED))
 			return;
-
 		resume_raw(tcb, src);
 		if (higher_exists()) {
 			return yield();
@@ -501,18 +493,18 @@ namespace MOS::Task
 	void delay(const Tick_t ticks)
 	{
 		auto cur = current();
-		cur->set_delay(os_ticks + ticks);
+		cur->set_wkpt(os_ticks + ticks);
 		block_to_in_order(
 		    cur,
 		    sleeping_list,
-		    TCB_t::delay_cmp
+		    TCB_t::wkpt_cmp
 		);
 	}
 
 	inline void
 	wake_raw(TcbPtr_t tcb)
 	{
-		tcb->set_delay(-1);
+		tcb->set_wkpt(-1);
 		Task::resume_raw(tcb, sleeping_list);
 	}
 

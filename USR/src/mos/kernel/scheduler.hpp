@@ -29,12 +29,7 @@ namespace MOS::Scheduler
 	};
 
 	using namespace Macro;
-
-	using KernelGlobal::ready_list;
-	using KernelGlobal::sleeping_list;
-	using KernelGlobal::cur_tcb;
-	using KernelGlobal::os_ticks;
-	using KernelGlobal::debug_tcbs;
+	using namespace KernelGlobal;
 
 	using DataType::TCB_t;
 	using TcbPtr_t = TCB_t::TcbPtr_t;
@@ -97,7 +92,7 @@ namespace MOS::Scheduler
 		// sleeping_list is sorted
 		auto tcb = sleeping_list.begin();
 		while (tcb != sleeping_list.end()) {
-			if (tcb->get_delay() > os_ticks)
+			if (tcb->get_wkpt() > os_ticks)
 				return;
 			Task::wake_raw(tcb);
 			tcb = sleeping_list.begin(); // check next

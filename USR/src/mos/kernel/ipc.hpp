@@ -80,18 +80,22 @@ namespace MOS::IPC
 
 		void block_to(EventList_t& dest, Tick_t timeout)
 		{
-			// Pri & Delay Compare
-			auto pd_cmp = [](const auto& _lhs, const auto& _rhs) {
+			// Priority & WakePoint Compare
+			auto pri_wkpt_cmp = [](const auto& _lhs, const auto& _rhs) {
 				auto lhs = into_tcb(&_lhs),
 				     rhs = into_tcb(&_rhs);
-				return lhs->get_pri() < rhs->get_pri() &&
-				       lhs->get_delay() < rhs->get_delay();
+
+				// Compare pri first, then wkpt
+				return TCB_t::pri_cmp(lhs, rhs) &&
+				       TCB_t::wkpt_cmp(lhs, rhs);
 			};
 
 			{
 				DisIntrGuard_t guard;
-				auto cur = Task::current();
-				dest.insert_in_order(cur->event, pd_cmp);
+				dest.insert_in_order(
+				    Task::current()->event,
+				    pri_wkpt_cmp
+				);
 			}
 
 			Task::delay(timeout);
@@ -99,9 +103,9 @@ namespace MOS::IPC
 
 		void try_wake_up(EventList_t& src)
 		{
-			auto wake_up = [&](NodePtr_t event) {
-				src.remove(*event);
-				Task::wake_raw(into_tcb(event));
+			auto wake_up = [&](NodePtr_t event_node) {
+				src.remove(*event_node);
+				Task::wake_raw(into_tcb(event_node));
 			};
 
 			DisIntrGuard_t guard;
@@ -115,7 +119,8 @@ namespace MOS::IPC
 			DisIntrGuard_t guard;
 			auto cur = Task::current();
 			if (cur->in_event()) {
-				// If still event-linked -> Timeout(Awakened by Scheduler)
+				// If still in event-linked
+				// -> Timeout(Awakened by Scheduler)
 				src.remove(cur->event);
 				return false;
 			}

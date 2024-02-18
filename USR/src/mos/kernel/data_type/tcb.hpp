@@ -42,14 +42,16 @@ namespace MOS::DataType
 		StackPtr_t sp = nullptr;
 
 		// Add more members here
-		Tid_t tid          = -1;
-		TcbPtr_t parent    = nullptr;
-		Page_t page        = {ERROR, nullptr, 0};
-		Prior_t pri        = PRI_MIN;
-		Status status      = TERMINATED;
-		Tick_t time_slice  = TIME_SLICE,
-		       delay_ticks = -1,
-		       stamp       = -1;
+		Tid_t tid         = -1;
+		TcbPtr_t parent   = nullptr;
+		Page_t page       = {ERROR, nullptr, 0};
+		Prior_t pri       = PRI_MIN;
+		Status status     = TERMINATED;
+		Tick_t time_slice = TIME_SLICE,
+		       wake_point = -1,
+		       stamp      = -1;
+
+		// For events like send/recv/...
 		Node_t event;
 
 		// Only for debug
@@ -58,9 +60,11 @@ namespace MOS::DataType
 		Name_t name = "";
 
 		TCB_t() = default;
-		TCB_t(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
-		    : fn(fn), argv(argv), pri(pri),
-		      name(name), page(page) {}
+		TCB_t(
+		    Fn_t fn, Argv_t argv, Prior_t pri,
+		    Name_t name, Page_t page
+		): fn(fn), argv(argv), pri(pri),
+		   name(name), page(page) {}
 
 		MOS_INLINE inline TcbPtr_t
 		next() const volatile
@@ -132,7 +136,7 @@ namespace MOS::DataType
 		MOS_INLINE inline bool
 		is_sleeping() const volatile
 		{
-			return delay_ticks != 0 && is_status(BLOCKED);
+			return wake_point != 0 && is_status(BLOCKED);
 		}
 
 		MOS_INLINE inline Name_t
@@ -183,16 +187,18 @@ namespace MOS::DataType
 			page.from_bottom(8) = _argv;
 		}
 
+		// Set Wake Point
 		MOS_INLINE inline void
-		set_delay(const Tick_t ticks) volatile
+		set_wkpt(const Tick_t ticks) volatile
 		{
-			delay_ticks = ticks;
+			wake_point = ticks;
 		}
 
+		// Get Wake Point
 		MOS_INLINE inline Tick_t
-		get_delay() const volatile
+		get_wkpt() const volatile
 		{
-			return delay_ticks;
+			return wake_point;
 		}
 
 		MOS_INLINE inline void
@@ -236,9 +242,9 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE static inline bool
-		delay_cmp(ConstTcbPtr_t lhs, ConstTcbPtr_t rhs)
+		wkpt_cmp(ConstTcbPtr_t lhs, ConstTcbPtr_t rhs)
 		{
-			return lhs->get_delay() < rhs->get_delay();
+			return lhs->get_wkpt() < rhs->get_wkpt();
 		}
 
 		MOS_INLINE static inline bool
@@ -249,11 +255,8 @@ namespace MOS::DataType
 
 		static inline TcbPtr_t
 		build(
-		    Fn_t fn,
-		    Argv_t argv,
-		    Prior_t pri,
-		    Name_t name,
-		    Page_t page
+		    Fn_t fn, Argv_t argv, Prior_t pri,
+		    Name_t name, Page_t page
 		)
 		{
 			// Use inplace new
