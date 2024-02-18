@@ -109,9 +109,7 @@ namespace MOS::DataType
 		}
 
 		MOS_INLINE inline void
-		insert_in_order(
-		        Node_t& node,
-		        NodeCmpFn auto&& cmp)
+		insert_in_order(Node_t& node, NodeCmpFn auto&& cmp)
 		{
 			auto st = begin();
 			while (st != end() && cmp(*st, node)) {
@@ -132,9 +130,10 @@ namespace MOS::DataType
 
 		MOS_INLINE inline void
 		send_to_in_order(
-		        Node_t& node,
-		        Self_t& dest,
-		        NodeCmpFn auto&& cmp)
+		    Node_t& node,
+		    Self_t& dest,
+		    NodeCmpFn auto&& cmp
+		)
 		{
 			remove(node);
 			dest.insert_in_order(node, cmp);

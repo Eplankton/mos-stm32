@@ -27,10 +27,7 @@ namespace MOS::DataType
 		}
 
 		inline void
-		push(void* dest,
-		     const void* src,
-		     const u32 size,
-		     const u32 N) volatile
+		push(void* dest, const void* src, const u32 size, const u32 N) volatile
 		{
 			if (!full()) {
 				Utils::memcpy(dest, src, size);
@@ -109,8 +106,12 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		push(const T& val) volatile
 		{
-			push((void*) (m_data + this->m_tail),
-			     (void*) &val, sizeof(T), N);
+			push(
+			    (void*) (m_data + this->m_tail),
+			    (void*) &val,
+			    sizeof(T),
+			    N
+			);
 		}
 
 		inline value_type

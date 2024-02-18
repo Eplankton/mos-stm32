@@ -89,8 +89,10 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		release()
 		{
-			MOS_ASSERT(owner == Task::current(),
-			           "Lock can only be released by holder");
+			MOS_ASSERT(
+			    owner == Task::current(),
+			    "Lock can only be released by holder"
+			);
 			sema.up();
 			owner = nullptr;
 		}
@@ -131,8 +133,10 @@ namespace MOS::Sync
 		void unlock() // V operation
 		{
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
-			MOS_ASSERT(owner == Task::current(),
-			           "Lock can only be released by holder");
+			MOS_ASSERT(
+			    owner == Task::current(),
+			    "Lock can only be released by holder"
+			);
 
 			DisIntrGuard_t guard;
 			recursive -= 1;
@@ -319,7 +323,10 @@ namespace MOS::Sync
 		wake_up()
 		{
 			DisIntrGuard_t guard;
-			Task::resume_raw(waiting_list.begin(), waiting_list);
+			Task::resume_raw(
+			    waiting_list.begin(),
+			    waiting_list
+			);
 		}
 	};
 

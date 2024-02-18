@@ -12,7 +12,8 @@ namespace MOS::DataType
 
 		Raw_t data = {0};
 
-		MOS_INLINE inline BitMap_t() = default;
+		MOS_INLINE
+		inline BitMap_t() = default;
 
 		MOS_INLINE inline void
 		set(uint32_t pos) volatile

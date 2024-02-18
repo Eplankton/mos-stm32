@@ -58,8 +58,7 @@ namespace MOS::DataType
 		Name_t name = "";
 
 		TCB_t() = default;
-		TCB_t(Fn_t fn, Argv_t argv, Prior_t pri,
-		      Name_t name, Page_t page)
+		TCB_t(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
 		    : fn(fn), argv(argv), pri(pri),
 		      name(name), page(page) {}
 
@@ -78,9 +77,9 @@ namespace MOS::DataType
 		void deinit() volatile
 		{
 			Page_t inactive {
-			        .policy = page.get_policy(),
-			        .raw    = page.get_raw(),
-			        // Ignore the size
+			    .policy = page.get_policy(),
+			    .raw    = page.get_raw(),
+			    // Ignore the size
 			};
 
 			// Use inplace new
@@ -249,15 +248,21 @@ namespace MOS::DataType
 		}
 
 		static inline TcbPtr_t
-		build(Fn_t fn, Argv_t argv, Prior_t pri, Name_t name, Page_t page)
+		build(
+		    Fn_t fn,
+		    Argv_t argv,
+		    Prior_t pri,
+		    Name_t name,
+		    Page_t page
+		)
 		{
 			// Use inplace new
 			return new (page.get_raw()) TCB_t {
-			        fn,
-			        argv,
-			        pri,
-			        name,
-			        page,
+			    fn,
+			    argv,
+			    pri,
+			    name,
+			    page,
 			};
 		}
 	};
@@ -355,9 +360,10 @@ namespace MOS::DataType
 
 		MOS_INLINE inline void
 		send_to_in_order(
-		        TcbPtr_t tcb,
-		        TcbList_t& dest,
-		        TcbCmpFn auto&& cmp)
+		    TcbPtr_t tcb,
+		    TcbList_t& dest,
+		    TcbCmpFn auto&& cmp
+		)
 		{
 			remove(tcb);
 			dest.insert_in_order(tcb, cmp);

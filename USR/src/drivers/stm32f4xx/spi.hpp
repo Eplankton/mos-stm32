@@ -36,33 +36,55 @@ namespace HAL::STM32F4xx
 		}
 
 		inline auto&
-		attach(GPIO_t::Raw_t port, PinSrc_t src, AF_t af,
-		       Speed_t speed = GPIO_High_Speed)
+		attach(
+		    GPIO_t::Raw_t port,
+		    PinSrc_t src,
+		    AF_t af,
+		    Speed_t speed = GPIO_High_Speed
+		)
 		{
 			GPIO_t::convert(port)
-			        .init(GPIO_t::get_pin(src),
-			              GPIO_Mode_AF,
-			              speed,
-			              GPIO_OType_PP,
-			              GPIO_PuPd_UP)
-			        .pin_af_config(src, af);
+			    .init(
+			        GPIO_t::get_pin(src),
+			        GPIO_Mode_AF,
+			        speed,
+			        GPIO_OType_PP,
+			        GPIO_PuPd_UP
+			    )
+			    .pin_af_config(src, af);
 			return *this;
 		}
 
 		inline auto&
-		sclk_config(GPIO_t::Raw_t sclk_port,
-		            PinSrc_t sclk_src, AF_t sclk_af,
-		            Speed_t sclk_speed = GPIO_High_Speed)
+		sclk_config(
+		    GPIO_t::Raw_t sclk_port,
+		    PinSrc_t sclk_src,
+		    AF_t sclk_af,
+		    Speed_t sclk_speed = GPIO_High_Speed
+		)
 		{
-			return attach(sclk_port, sclk_src, sclk_af, sclk_speed);
+			return attach(
+			    sclk_port,
+			    sclk_src,
+			    sclk_af,
+			    sclk_speed
+			);
 		}
 
 		inline auto&
-		mosi_config(GPIO_t::Raw_t mosi_port,
-		            PinSrc_t mosi_src, AF_t mosi_af,
-		            Speed_t mosi_speed = GPIO_High_Speed)
+		mosi_config(
+		    GPIO_t::Raw_t mosi_port,
+		    PinSrc_t mosi_src,
+		    AF_t mosi_af,
+		    Speed_t mosi_speed = GPIO_High_Speed
+		)
 		{
-			return attach(mosi_port, mosi_src, mosi_af, mosi_speed);
+			return attach(
+			    mosi_port,
+			    mosi_src,
+			    mosi_af,
+			    mosi_speed
+			);
 		}
 
 		inline auto&

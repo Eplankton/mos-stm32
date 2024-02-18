@@ -39,7 +39,6 @@ BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: BeforeColon
 ColumnLimit: 0
 CompactNamespaces: false
-ContinuationIndentWidth: 8
 IndentCaseLabels: true
 IndentPPDirectives: None
 IndentWidth: 4
@@ -71,3 +70,7 @@ AlignConsecutiveMacros: true
 SpaceBeforeCtorInitializerColon: false
 AlignArrayOfStructures: Right
 SortUsingDeclarations: Never
+AlignAfterOpenBracket: BlockIndent
+AllowShortCaseLabelsOnASingleLine: true
+IndentExternBlock: Indent
+ContinuationIndentWidth: 4

@@ -59,29 +59,43 @@ namespace HAL::STM32F4xx
 		}
 
 		inline auto&
-		attach(RawPort_t port, PinSrc_t src,
-		       AF_t af, Speed_t speed = GPIO_Fast_Speed)
+		attach(
+		    RawPort_t port,
+		    PinSrc_t src,
+		    AF_t af,
+		    Speed_t speed = GPIO_Fast_Speed
+		)
 		{
 			GPIO_t::convert(port)
-			        .init(GPIO_t::get_pin(src),
-			              GPIO_Mode_AF,
-			              speed,
-			              GPIO_OType_OD,
-			              GPIO_PuPd_NOPULL)
-			        .pin_af_config(src, af);
+			    .init(
+			        GPIO_t::get_pin(src),
+			        GPIO_Mode_AF,
+			        speed,
+			        GPIO_OType_OD,
+			        GPIO_PuPd_NOPULL
+			    )
+			    .pin_af_config(src, af);
 			return *this;
 		}
 
 		inline auto&
-		scl_config(RawPort_t scl_port, PinSrc_t scl_src,
-		           AF_t scl_af, Speed_t scl_speed = GPIO_Fast_Speed)
+		scl_config(
+		    RawPort_t scl_port,
+		    PinSrc_t scl_src,
+		    AF_t scl_af,
+		    Speed_t scl_speed = GPIO_Fast_Speed
+		)
 		{
 			return attach(scl_port, scl_src, scl_af);
 		}
 
 		inline auto&
-		sda_config(RawPort_t sda_port, PinSrc_t sda_src,
-		           AF_t sda_af, Speed_t sda_speed = GPIO_Fast_Speed)
+		sda_config(
+		    RawPort_t sda_port,
+		    PinSrc_t sda_src,
+		    AF_t sda_af,
+		    Speed_t sda_speed = GPIO_Fast_Speed
+		)
 		{
 			return attach(sda_port, sda_src, sda_af);
 		}

@@ -92,7 +92,12 @@ namespace MOS::Test
 			const int data[] = {5, 6, 7, 8, 9};
 			Task::create(recv, nullptr, 4, "recv");
 			for (auto msg: data) {
-				Task::create(send, msg, (Task::Prior_t) msg, "send");
+				Task::create(
+				    send,
+				    msg,
+				    msg,
+				    "send"
+				);
 			}
 		};
 

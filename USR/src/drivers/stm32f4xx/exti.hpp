@@ -30,7 +30,12 @@ namespace HAL::STM32F4xx
 		}
 
 		static inline void
-		init(Line_t line, Mode_t mode, Trigger_t trigger, State_t new_state)
+		init(
+		    Line_t line,
+		    Mode_t mode,
+		    Trigger_t trigger,
+		    State_t new_state
+		)
 		{
 			init(Init_t {line, mode, trigger, new_state});
 		}

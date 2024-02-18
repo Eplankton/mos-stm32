@@ -30,7 +30,12 @@ namespace HAL::STM32F4xx
 		}
 
 		static inline void
-		init(Channel_t channel, Prior_t preempt_pr, Prior_t sub_pr, State_t new_state)
+		init(
+		    Channel_t channel,
+		    Prior_t preempt_pr,
+		    Prior_t sub_pr,
+		    State_t new_state
+		)
 		{
 			init(Init_t {channel, preempt_pr, sub_pr, new_state});
 		}

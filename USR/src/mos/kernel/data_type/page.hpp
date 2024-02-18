@@ -42,11 +42,11 @@ namespace MOS::DataType
 
 		MOS_INLINE inline bool
 		is_policy(Policy policy)
-		        const volatile { return get_policy() == policy; }
+		    const volatile { return get_policy() == policy; }
 
 		MOS_INLINE inline Word_t&
 		from_bottom(uint32_t offset = 0)
-		        const volatile { return raw[size - offset]; }
+		    const volatile { return raw[size - offset]; }
 	};
 }
 

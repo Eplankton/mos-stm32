@@ -25,9 +25,9 @@ int main(void)
 	Task::create(Shell::launch, &rx_buf, 1, "Shell");
 
 	DataType::Page_t page {
-	        .policy = DataType::Page_t::Policy::STATIC,
-	        .raw    = stc_pkb,
-	        .size   = sizeof(stc_pkb) / sizeof(size_t),
+	    .policy = DataType::Page_t::Policy::STATIC,
+	    .raw    = stc_pkb,
+	    .size   = sizeof(stc_pkb) / sizeof(size_t),
 	};
 
 	/* User Tasks */

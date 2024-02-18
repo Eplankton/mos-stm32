@@ -24,10 +24,11 @@ namespace MOS::KernelGlobal
 	PagePool_t page_pool;
 	Tids_t tids;
 
-	TcbList_t ready_list,  // Tasks sorted by `Prior_t` that are `READY` to be scheduled.
-	        blocked_list,  // Tasks that are `BLOCKED` and waiting for a certain condition.
-	        sleeping_list, // Tasks sorted by `delay_ticks` that are sleeping `BLOCKED` for a certain amount of time.
-	        zombie_list;   // Tasks that have been `TERMINATED` but their resources are not recycled yet.
+	TcbList_t
+	    ready_list,    // Tasks sorted by `Prior_t` that are `READY` to be scheduled.
+	    blocked_list,  // Tasks that are `BLOCKED` and waiting for a certain condition.
+	    sleeping_list, // Tasks sorted by `delay_ticks` that are sleeping `BLOCKED` for a certain amount of time.
+	    zombie_list;   // Tasks that have been `TERMINATED` but their resources are not recycled yet.
 
 	// Put it in `extern "C"` because the name is referred in `asm("")` and don't change it.
 	// At anytime, `cur_tcb` should point to the task running currently.

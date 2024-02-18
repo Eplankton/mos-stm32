@@ -44,49 +44,63 @@ namespace HAL::STM32F4xx
 		}
 
 		inline auto&
-		init(BaudRate_t baud_rate  = 115200,
-		     WordLen_t word_length = USART_WordLength_8b,
-		     StopBits_t stop_bits  = USART_StopBits_1,
-		     Parity_t parity       = USART_Parity_No,
-		     Mode_t mode           = USART_Mode_Rx | USART_Mode_Tx,
-		     HFC_t hfc             = USART_HardwareFlowControl_None)
+		init(
+		    BaudRate_t baud_rate  = 115200,
+		    WordLen_t word_length = USART_WordLength_8b,
+		    StopBits_t stop_bits  = USART_StopBits_1,
+		    Parity_t parity       = USART_Parity_No,
+		    Mode_t mode           = USART_Mode_Rx | USART_Mode_Tx,
+		    HFC_t hfc             = USART_HardwareFlowControl_None
+		)
 		{
 			return init(Init_t {
-			        .USART_BaudRate            = baud_rate,
-			        .USART_WordLength          = word_length,
-			        .USART_StopBits            = stop_bits,
-			        .USART_Parity              = parity,
-			        .USART_Mode                = mode,
-			        .USART_HardwareFlowControl = hfc,
+			    .USART_BaudRate            = baud_rate,
+			    .USART_WordLength          = word_length,
+			    .USART_StopBits            = stop_bits,
+			    .USART_Parity              = parity,
+			    .USART_Mode                = mode,
+			    .USART_HardwareFlowControl = hfc,
 			});
 		}
 
 		inline auto&
-		attach(GPIO_t::Raw_t port, PinSrc_t src, AF_t af,
-		       Speed_t speed = GPIO_High_Speed)
+		attach(
+		    GPIO_t::Raw_t port,
+		    PinSrc_t src,
+		    AF_t af,
+		    Speed_t speed = GPIO_High_Speed
+		)
 		{
 			GPIO_t::convert(port)
-			        .init(GPIO_t::get_pin(src),
-			              GPIO_Mode_AF,
-			              speed,
-			              GPIO_OType_PP,
-			              GPIO_PuPd_UP)
-			        .pin_af_config(src, af);
+			    .init(
+			        GPIO_t::get_pin(src),
+			        GPIO_Mode_AF,
+			        speed,
+			        GPIO_OType_PP,
+			        GPIO_PuPd_UP
+			    )
+			    .pin_af_config(src, af);
 			return *this;
 		}
 
 		inline auto&
-		rx_config(GPIO_t::Raw_t rx_port,
-		          PinSrc_t rx_src, AF_t rx_af,
-		          Speed_t rx_speed = GPIO_High_Speed)
+		rx_config(
+		    GPIO_t::Raw_t rx_port,
+		    PinSrc_t rx_src,
+		    AF_t rx_af,
+		    Speed_t rx_speed = GPIO_High_Speed
+		)
 		{
 			return attach(rx_port, rx_src, rx_af, rx_speed);
 		}
 
 		inline auto&
-		tx_config(GPIO_t::Raw_t tx_port,
-		          PinSrc_t tx_src, AF_t tx_af,
-		          Speed_t tx_speed = GPIO_High_Speed)
+		tx_config(
+		    GPIO_t::Raw_t tx_port,
+		    PinSrc_t tx_src,
+		    AF_t tx_af,
+		    Speed_t tx_speed = GPIO_High_Speed
+		)
 		{
 			return attach(tx_port, tx_src, tx_af, tx_speed);
 		}

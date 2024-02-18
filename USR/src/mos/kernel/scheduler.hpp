@@ -6,7 +6,7 @@
 
 namespace MOS::Scheduler
 {
-	enum class SchedStatus : int8_t
+	enum class SchedStatus : bool
 	{
 		OK  = true,
 		ERR = !OK,
@@ -73,10 +73,12 @@ namespace MOS::Scheduler
 		};
 
 		// Create idle task with hook
-		Task::create(hook ? hook : idle,
-		             nullptr,
-		             PRI_MIN,
-		             "idle");
+		Task::create(
+		    hook ? hook : idle,
+		    nullptr,
+		    PRI_MIN,
+		    "idle"
+		);
 
 		MOS_ASSERT(!ready_list.empty(), "Launch Failed!");
 

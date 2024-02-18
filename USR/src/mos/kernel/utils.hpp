@@ -51,7 +51,10 @@ namespace MOS::Utils
 	}
 
 	MOS_INLINE inline void
-	delay(const uint32_t n, const uint32_t unit = 2000)
+	delay(
+	    const uint32_t n,
+	    const uint32_t unit = 2000
+	)
 	{
 		portable_delay(n * unit);
 	}
@@ -69,7 +72,10 @@ namespace MOS::Utils
 	}
 
 	inline int
-	strcmp(const char* str1, const char* str2) noexcept
+	strcmp(
+	    const char* str1,
+	    const char* str2
+	) noexcept
 	{
 		while (*str1 && (*str1 == *str2)) {
 			++str1;
@@ -79,7 +85,10 @@ namespace MOS::Utils
 	}
 
 	inline int
-	strncmp(const char* str1, const char* str2, size_t n) noexcept
+	strncmp(
+	    const char* str1,
+	    const char* str2, size_t n
+	) noexcept
 	{
 		for (size_t i = 0; i < n; i++) {
 			if (str1[i] != str2[i]) {
@@ -114,7 +123,6 @@ namespace MOS::Utils
 	struct Range
 	{
 		using Raw_t = int32_t;
-
 		const Raw_t st, ed, n;
 
 		MOS_INLINE
@@ -160,8 +168,11 @@ namespace MOS::Utils
 	// Create Auto Global Critical Section
 	struct DisIntrGuard_t
 	{
-		MOS_INLINE inline DisIntrGuard_t() { MOS_DISABLE_IRQ(); }
-		MOS_INLINE inline ~DisIntrGuard_t() { MOS_ENABLE_IRQ(); }
+		MOS_INLINE
+		inline DisIntrGuard_t() { MOS_DISABLE_IRQ(); }
+
+		MOS_INLINE
+		inline ~DisIntrGuard_t() { MOS_ENABLE_IRQ(); }
 	};
 
 	template <typename T>

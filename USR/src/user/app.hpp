@@ -31,13 +31,15 @@ namespace MOS::App
 		struct EXTERNAL_GFX_OP
 		{
 			using DrawPixelFn_t = void (*)(
-			        int32_t x, int32_t y,
-			        uint32_t rgb);
+			    int32_t x, int32_t y,
+			    uint32_t rgb
+			);
 
 			using FillRectFn_t = void (*)(
-			        int32_t x0, int32_t y0,
-			        int32_t x1, int32_t y1,
-			        uint32_t rgb);
+			    int32_t x0, int32_t y0,
+			    int32_t x1, int32_t y1,
+			    uint32_t rgb
+			);
 
 			DrawPixelFn_t draw_pixel;
 			FillRectFn_t fill_rect;
@@ -45,10 +47,11 @@ namespace MOS::App
 
 		// GUI entry point
 		extern "C" void startHello3D(
-		        void* phy_fb,
-		        int32_t width, int32_t height,
-		        int32_t color_bytes,
-		        EXTERNAL_GFX_OP* gfx_op);
+		    void* phy_fb,
+		    int32_t width, int32_t height,
+		    int32_t color_bytes,
+		    EXTERNAL_GFX_OP* gfx_op
+		);
 	}
 
 	void GUI(void* argv)
@@ -63,16 +66,17 @@ namespace MOS::App
 		using Sync::Mutex_t;
 		using UserGlobal::lcd;
 
-		// A mutex wrapper of lcd&
+		// A mutex wrapper of lcd
 		static Mutex_t lcd_mtx {lcd};
 
 		auto GIF = [](void* argv) {
 			while (true) {
 				for (auto frame: face_gif) {
 					lcd_mtx.lock().get().draw_img(
-					        0, 0,
-					        128, 128,
-					        frame);
+					    0, 0,
+					    128, 128,
+					    frame
+					);
 					Task::delay(125);
 				}
 			}
@@ -80,25 +84,26 @@ namespace MOS::App
 
 		auto Slogan = [](void* argv) {
 			constexpr Color rgb[] = {
-			        Color::RED,
-			        Color::GREEN,
-			        Color::GRAYBLUE,
+			    Color::RED,
+			    Color::GREEN,
+			    Color::GRAYBLUE,
 			};
 
 			while (true) {
 				for (auto color: rgb) {
 					lcd_mtx.lock().get().show_str(
-					        0, 128,
-					        "Hello, World!",
-					        color);
+					    0, 128,
+					    "Hello, World!",
+					    color
+					);
 					Task::delay(250);
 				}
 			}
 		};
 
-		auto sub_pri = Task::current()->get_pri();
-		Task::create(GIF, nullptr, sub_pri, "GIF");
-		Task::create(Slogan, nullptr, sub_pri, "Slogan");
+		auto pri = Task::current()->get_pri();
+		Task::create(GIF, nullptr, pri, "GIF");
+		Task::create(Slogan, nullptr, pri, "Slogan");
 	}
 
 	void Calendar(void* argv)
@@ -109,10 +114,12 @@ namespace MOS::App
 			DisIntrGuard_t guard;
 			const auto date = RTC_t::get_date();
 			const auto time = RTC_t::get_time();
-			MOS_MSG("20%0.2d/%0.2d/%0.2d"
-			        " %0.2d:%0.2d:%0.2d",
-			        date.RTC_Year, date.RTC_Month, date.RTC_Date,
-			        time.RTC_Hours, time.RTC_Minutes, time.RTC_Seconds);
+			MOS_MSG(
+			    "20%0.2d/%0.2d/%0.2d"
+			    " %0.2d:%0.2d:%0.2d",
+			    date.RTC_Year, date.RTC_Month, date.RTC_Date,
+			    time.RTC_Hours, time.RTC_Minutes, time.RTC_Seconds
+			);
 		};
 
 		while (true) {

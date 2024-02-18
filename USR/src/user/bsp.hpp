@@ -41,8 +41,15 @@ namespace MOS::Bsp
 	{
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOC);
 		RCC_t::APB2::enable(RCC_APB2Periph_SYSCFG);
-		SYSCFG_t::exti_line_config(EXTI_PortSourceGPIOC, EXTI_PinSource13); // K1 -> PC13
-		EXTI_t::init(EXTI_Line13, EXTI_Mode_Interrupt, EXTI_Trigger_Rising, ENABLE);
+		SYSCFG_t::exti_line_config(
+		    EXTI_PortSourceGPIOC,
+		    EXTI_PinSource13
+		); // K1 -> PC13
+		EXTI_t::init(
+		    EXTI_Line13,
+		    EXTI_Mode_Interrupt,
+		    EXTI_Trigger_Rising, ENABLE
+		);
 		NVIC_t::init(EXTI15_10_IRQn, 1, 1, ENABLE);
 	}
 
@@ -54,11 +61,24 @@ namespace MOS::Bsp
 		RCC_t::APB1::enable(RCC_APB1Periph_USART3);
 		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
 
-		uart.init(19200, USART_WordLength_8b, USART_StopBits_1, USART_Parity_No)
-		        .rx_config(GPIOD, GPIO_t::get_pin_src(9), GPIO_AF_USART3) // RX -> PD9
-		        .tx_config(GPIOD, GPIO_t::get_pin_src(8), GPIO_AF_USART3) // TX -> PD8
-		        .it_enable(USART_IT_RXNE)
-		        .enable();
+		uart.init(
+		        38400,
+		        USART_WordLength_8b,
+		        USART_StopBits_1,
+		        USART_Parity_No
+		)
+		    .rx_config(
+		        GPIOD,
+		        GPIO_t::get_pin_src(9),
+		        GPIO_AF_USART3
+		    ) // RX -> PD9
+		    .tx_config(
+		        GPIOD,
+		        GPIO_t::get_pin_src(8),
+		        GPIO_AF_USART3
+		    ) // TX -> PD8
+		    .it_enable(USART_IT_RXNE)
+		    .enable();
 	}
 
 	static inline void LCD_Config()
@@ -66,10 +86,23 @@ namespace MOS::Bsp
 		using UserGlobal::lcd;
 
 		RCC_t::APB2::enable(RCC_APB2Periph_SPI1);
-		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOD);
+		RCC_t::AHB1::enable(
+		    RCC_AHB1Periph_GPIOA |
+		    RCC_AHB1Periph_GPIOB |
+		    RCC_AHB1Periph_GPIOD
+		);
 
-		lcd.spi.sclk_config(GPIOA, GPIO_t::get_pin_src(5), GPIO_AF_SPI1)   // SCLK -> PA5
-		        .mosi_config(GPIOA, GPIO_t::get_pin_src(7), GPIO_AF_SPI1); // MOSI -> PA7
+		lcd.spi
+		    .sclk_config(
+		        GPIOA,
+		        GPIO_t::get_pin_src(5),
+		        GPIO_AF_SPI1
+		    ) // SCLK -> PA5
+		    .mosi_config(
+		        GPIOA,
+		        GPIO_t::get_pin_src(7),
+		        GPIO_AF_SPI1
+		    ); // MOSI -> PA7
 		lcd.init();
 	}
 
@@ -83,23 +116,23 @@ namespace MOS::Bsp
 		/*=====================同步/异步预分频器的值======================*/
 		/* 驱动日历的时钟 ck_spare = LSE/[(255+1)*(127+1)] = 1HZ */
 		constexpr RTC_t::Init_t init_cfg {
-		        .RTC_HourFormat   = RTC_HourFormat_24,
-		        .RTC_AsynchPrediv = ASYHCHPREDIV,
-		        .RTC_SynchPrediv  = SYHCHPREDIV,
+		    .RTC_HourFormat   = RTC_HourFormat_24,
+		    .RTC_AsynchPrediv = ASYHCHPREDIV,
+		    .RTC_SynchPrediv  = SYHCHPREDIV,
 		};
 
 		constexpr RTC_t::Time_t boot_time {
-		        .RTC_Hours   = 2,
-		        .RTC_Minutes = 15,
-		        .RTC_Seconds = 0,
-		        .RTC_H12     = RTC_H12_AM,
+		    .RTC_Hours   = 2,
+		    .RTC_Minutes = 15,
+		    .RTC_Seconds = 0,
+		    .RTC_H12     = RTC_H12_AM,
 		};
 
 		constexpr RTC_t::Date_t boot_date {
-		        .RTC_WeekDay = 7,
-		        .RTC_Month   = 1,
-		        .RTC_Date    = 14,
-		        .RTC_Year    = 24,
+		    .RTC_WeekDay = 7,
+		    .RTC_Month   = 1,
+		    .RTC_Date    = 14,
+		    .RTC_Year    = 24,
 		};
 
 		static auto clock_config = [&] {
@@ -114,6 +147,7 @@ namespace MOS::Bsp
 
 			/* 等待LSE稳定 */
 			while (RCC_t::get_flag_status(RCC_FLAG_LSERDY) == RESET) {
+				MOS_NOP();
 			}
 
 			/* 选择LSE做为RTC的时钟源 */
@@ -168,50 +202,51 @@ namespace MOS::Bsp
 
 namespace MOS::ISR
 {
-	// K1 IRQ Handler
-	extern "C" void EXTI15_10_IRQHandler()
-	{
-		using HAL::STM32F4xx::EXTI_t;
-		using UserGlobal::leds;
-		using Utils::Range;
+	extern "C" {
+		void EXTI15_10_IRQHandler() // K1 IRQ Handler
+		{
+			using HAL::STM32F4xx::EXTI_t;
+			using UserGlobal::leds;
+			using Utils::Range;
 
-		// To simulate a burst task
-		static auto K1_IRQ = [](void* argv) {
-			for (auto _: Range(0, 10)) {
-				leds[2].toggle();
-				Task::print_name();
-				Task::delay(250);
-			}
-		};
-
-		EXTI_t::handle_line(EXTI_Line13, [] {
-			static uint32_t k1_cnt = 0;
-			MOS_MSG("K1 Cnt = %d", ++k1_cnt);
-			Task::create_from_isr(
-			        K1_IRQ,
-			        nullptr,
-			        Task::current()->get_pri(),
-			        "K1");
-		});
-	}
-
-	// UART3 IRQ Handler
-	extern "C" void USART3_IRQHandler()
-	{
-		using UserGlobal::uart;
-		using UserGlobal::rx_buf;
-
-		if (uart.get_it_status(USART_IT_RXNE) != RESET) {
-			if (!rx_buf.full()) {
-				char8_t data = uart.recv_data();
-				rx_buf.add(data);
-				if (data == '\n') {
-					rx_buf.signal_from_isr();
+			// To simulate a burst task
+			static auto K1_IRQ = [](void* argv) {
+				for (auto _: Range(0, 10)) {
+					leds[2].toggle();
+					Task::print_name();
+					Task::delay(250);
 				}
-			}
-			else {
-				rx_buf.clear();
-				MOS_MSG("Oops! Command too long!");
+			};
+
+			EXTI_t::handle_line(EXTI_Line13, [] {
+				static uint32_t k1_cnt = 0;
+				MOS_MSG("K1 Cnt = %d", ++k1_cnt);
+				Task::create_from_isr(
+				    K1_IRQ,
+				    nullptr,
+				    Task::current()->get_pri(),
+				    "K1"
+				);
+			});
+		}
+
+		void USART3_IRQHandler() // UART3 IRQ Handler
+		{
+			using UserGlobal::uart;
+			using UserGlobal::rx_buf;
+
+			if (uart.get_it_status(USART_IT_RXNE) != RESET) {
+				if (!rx_buf.full()) {
+					char8_t data = uart.recv_data();
+					rx_buf.add(data);
+					if (data == '\n') {
+						rx_buf.signal_from_isr();
+					}
+				}
+				else {
+					rx_buf.clear();
+					MOS_MSG("Oops! Command too long!");
+				}
 			}
 		}
 	}

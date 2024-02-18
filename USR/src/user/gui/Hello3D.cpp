@@ -14,7 +14,8 @@ static c_surface* s_surface;
 static c_display* s_display;
 
 // 3D engine
-inline void multiply(int m, int n, int p, float* a, float* b, float* c) // a[m][n] * b[n][p] = c[m][p]
+inline void
+multiply(int m, int n, int p, float* a, float* b, float* c) // a[m][n] * b[n][p] = c[m][p]
 {
 	for (int i = 0; i < m; i++) {
 		for (int j = 0; j < p; j++) {
@@ -27,7 +28,8 @@ inline void multiply(int m, int n, int p, float* a, float* b, float* c) // a[m][
 	}
 }
 
-inline void rotateX(float angle, float* point, float* output) // rotate matrix for X
+inline void
+rotateX(float angle, float* point, float* output) // rotate matrix for X
 {
 	static float rotation[3][3];
 	rotation[0][0] = 1;
@@ -87,17 +89,26 @@ public:
 	virtual void draw(uint16_t x, uint16_t y, bool isErase)
 	{
 		for (uint8_t i = 0; i < 4; i++) {
-			s_surface->draw_line(points2d[i][0] + x, points2d[i][1] + y,
-			                     points2d[(i + 1) % 4][0] + x, points2d[(i + 1) % 4][1] + y,
-			                     (isErase) ? 0 : 0xffff0000, Z_ORDER_LEVEL_0);
+			s_surface->draw_line(
+			    points2d[i][0] + x, points2d[i][1] + y,
+			    points2d[(i + 1) % 4][0] + x,
+			    points2d[(i + 1) % 4][1] + y,
+			    (isErase) ? 0 : 0xffff0000, Z_ORDER_LEVEL_0
+			);
 
-			s_surface->draw_line(points2d[i + 4][0] + x, points2d[i + 4][1] + y,
-			                     points2d[((i + 1) % 4) + 4][0] + x, points2d[((i + 1) % 4) + 4][1] + y,
-			                     (isErase) ? 0 : 0xff00ff00, Z_ORDER_LEVEL_0);
+			s_surface->draw_line(
+			    points2d[i + 4][0] + x, points2d[i + 4][1] + y,
+			    points2d[((i + 1) % 4) + 4][0] + x,
+			    points2d[((i + 1) % 4) + 4][1] + y,
+			    (isErase) ? 0 : 0xff00ff00, Z_ORDER_LEVEL_0
+			);
 
-			s_surface->draw_line(points2d[i][0] + x, points2d[i][1] + y,
-			                     points2d[(i + 4)][0] + x, points2d[(i + 4)][1] + y,
-			                     (isErase) ? 0 : 0xffffff00, Z_ORDER_LEVEL_0);
+			s_surface->draw_line(
+			    points2d[i][0] + x, points2d[i][1] + y,
+			    points2d[(i + 4)][0] + x,
+			    points2d[(i + 4)][1] + y,
+			    (isErase) ? 0 : 0xffffff00, Z_ORDER_LEVEL_0
+			);
 		}
 	}
 	virtual void rotate()
@@ -118,14 +129,14 @@ private:
 };
 
 float Cube::points[8][3] = {
-        {-SHAPE_SIZE, -SHAPE_SIZE, -SHAPE_SIZE}, // x, y, z
-        { SHAPE_SIZE, -SHAPE_SIZE, -SHAPE_SIZE},
-        { SHAPE_SIZE,  SHAPE_SIZE, -SHAPE_SIZE},
-        {-SHAPE_SIZE,  SHAPE_SIZE, -SHAPE_SIZE},
-        {-SHAPE_SIZE, -SHAPE_SIZE,  SHAPE_SIZE},
-        { SHAPE_SIZE, -SHAPE_SIZE,  SHAPE_SIZE},
-        { SHAPE_SIZE,  SHAPE_SIZE,  SHAPE_SIZE},
-        {-SHAPE_SIZE,  SHAPE_SIZE,  SHAPE_SIZE}
+    {-SHAPE_SIZE, -SHAPE_SIZE, -SHAPE_SIZE}, // x, y, z
+    { SHAPE_SIZE, -SHAPE_SIZE, -SHAPE_SIZE},
+    { SHAPE_SIZE,  SHAPE_SIZE, -SHAPE_SIZE},
+    {-SHAPE_SIZE,  SHAPE_SIZE, -SHAPE_SIZE},
+    {-SHAPE_SIZE, -SHAPE_SIZE,  SHAPE_SIZE},
+    { SHAPE_SIZE, -SHAPE_SIZE,  SHAPE_SIZE},
+    { SHAPE_SIZE,  SHAPE_SIZE,  SHAPE_SIZE},
+    {-SHAPE_SIZE,  SHAPE_SIZE,  SHAPE_SIZE}
 };
 
 class Pyramid : public Shape
@@ -134,23 +145,56 @@ public:
 	Pyramid() { memset(points2d, 0, sizeof(points2d)); }
 	virtual void draw(uint16_t x, uint16_t y, bool isErase)
 	{
-		s_surface->draw_line(points2d[0][0] + x, points2d[0][1] + y, points2d[1][0] + x,
-		                     points2d[1][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
-		s_surface->draw_line(points2d[0][0] + x, points2d[0][1] + y, points2d[2][0] + x,
-		                     points2d[2][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
-		s_surface->draw_line(points2d[0][0] + x, points2d[0][1] + y, points2d[3][0] + x,
-		                     points2d[3][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
-		s_surface->draw_line(points2d[0][0] + x, points2d[0][1] + y, points2d[4][0] + x,
-		                     points2d[4][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
+		s_surface->draw_line(
+		    points2d[0][0] + x,
+		    points2d[0][1] + y,
+		    points2d[1][0] + x, points2d[1][1] + y,
+		    (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0
+		);
+		s_surface->draw_line(
+		    points2d[0][0] + x,
+		    points2d[0][1] + y,
+		    points2d[2][0] + x, points2d[2][1] + y,
+		    (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0
+		);
+		s_surface->draw_line(
+		    points2d[0][0] + x,
+		    points2d[0][1] + y,
+		    points2d[3][0] + x, points2d[3][1] + y,
+		    (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0
+		);
+		s_surface->draw_line(
+		    points2d[0][0] + x,
+		    points2d[0][1] + y,
+		    points2d[4][0] + x, points2d[4][1] + y,
+		    (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0
+		);
 
-		s_surface->draw_line(points2d[1][0] + x, points2d[1][1] + y, points2d[2][0] + x,
-		                     points2d[2][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
-		s_surface->draw_line(points2d[2][0] + x, points2d[2][1] + y, points2d[3][0] + x,
-		                     points2d[3][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
-		s_surface->draw_line(points2d[3][0] + x, points2d[3][1] + y, points2d[4][0] + x,
-		                     points2d[4][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
-		s_surface->draw_line(points2d[4][0] + x, points2d[4][1] + y, points2d[1][0] + x,
-		                     points2d[1][1] + y, (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0);
+		s_surface->draw_line(
+		    points2d[1][0] + x,
+		    points2d[1][1] + y,
+		    points2d[2][0] + x, points2d[2][1] + y,
+		    (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0
+		);
+		s_surface->draw_line(
+		    points2d[2][0] + x,
+		    points2d[2][1] + y,
+		    points2d[3][0] + x, points2d[3][1] + y,
+		    (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0
+		);
+		s_surface->draw_line(
+		    points2d[3][0] + x,
+		    points2d[3][1] + y,
+		    points2d[4][0] + x, points2d[4][1] + y,
+		    (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0
+		);
+		s_surface->draw_line(
+		    points2d[4][0] + x,
+		    points2d[4][1] + y,
+		    points2d[1][0] + x,
+		    points2d[1][1] + y,
+		    (isErase) ? 0 : 0xff007acc, Z_ORDER_LEVEL_0
+		);
 	}
 
 	virtual void rotate()
@@ -172,20 +216,21 @@ private:
 };
 
 float Pyramid::points[5][3] = {
-        {          0, -SHAPE_SIZE,           0}, // top
-        {-SHAPE_SIZE,  SHAPE_SIZE, -SHAPE_SIZE},
-        { SHAPE_SIZE,  SHAPE_SIZE, -SHAPE_SIZE},
-        { SHAPE_SIZE,  SHAPE_SIZE,  SHAPE_SIZE},
-        {-SHAPE_SIZE,  SHAPE_SIZE,  SHAPE_SIZE}
+    {          0, -SHAPE_SIZE,           0}, // top
+    {-SHAPE_SIZE,  SHAPE_SIZE, -SHAPE_SIZE},
+    { SHAPE_SIZE,  SHAPE_SIZE, -SHAPE_SIZE},
+    { SHAPE_SIZE,  SHAPE_SIZE,  SHAPE_SIZE},
+    {-SHAPE_SIZE,  SHAPE_SIZE,  SHAPE_SIZE}
 };
 
 // Demo
 void create_ui(
-        void* phy_fb,
-        uint16_t screen_width,
-        uint16_t screen_height,
-        int color_bytes,
-        EXTERNAL_GFX_OP* gfx_op)
+    void* phy_fb,
+    uint16_t screen_width,
+    uint16_t screen_height,
+    int color_bytes,
+    EXTERNAL_GFX_OP* gfx_op
+)
 {
 	if (phy_fb) {
 		static c_surface surface(UI_WIDTH, UI_HEIGHT, color_bytes, Z_ORDER_LEVEL_0);
@@ -220,19 +265,21 @@ void create_ui(
 
 //////////////////////// interface for all platform ////////////////////////
 extern "C" void startHello3D(
-        void* phy_fb,
-        uint16_t width,
-        uint16_t height,
-        int color_bytes,
-        EXTERNAL_GFX_OP* gfx_op)
+    void* phy_fb,
+    uint16_t width,
+    uint16_t height,
+    int color_bytes,
+    EXTERNAL_GFX_OP* gfx_op
+)
 {
 	create_ui(phy_fb, width, height, color_bytes, gfx_op);
 }
 
 extern "C" void* getUiOfHello3D(
-        int* width,
-        int* height,
-        bool force_update)
+    int* width,
+    int* height,
+    bool force_update
+)
 {
 	return s_display->get_updated_fb(width, height, force_update);
 }

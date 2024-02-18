@@ -36,28 +36,39 @@ namespace HAL::STM32F4xx
 		}
 
 		inline auto&
-		init(Pin_t pin, Mode_t mode, Speed_t speed,
-		     Otype_t otype, PuPd_t pupd)
+		init(
+		    Pin_t pin,
+		    Mode_t mode,
+		    Speed_t speed,
+		    Otype_t otype,
+		    PuPd_t pupd
+		)
 		{
-			return init(Init_t {pin, mode, speed, otype, pupd});
+			return init(
+			    Init_t {pin, mode, speed, otype, pupd}
+			);
 		}
 
 		inline auto&
-		as_output(Pin_t pin,
-		          Speed_t speed = GPIO_Low_Speed,
-		          Otype_t otype = GPIO_OType_PP,
-		          PuPd_t pupd   = GPIO_PuPd_UP)
+		as_output(
+		    Pin_t pin,
+		    Speed_t speed = GPIO_Low_Speed,
+		    Otype_t otype = GPIO_OType_PP,
+		    PuPd_t pupd   = GPIO_PuPd_UP
+		)
 		{
-			return init(pin, GPIO_Mode_OUT, speed, otype, pupd);
+			return init(
+			    pin, GPIO_Mode_OUT, speed, otype, pupd
+			);
 		}
 
 		inline auto&
 		as_input(Pin_t pin, PuPd_t pupd = GPIO_PuPd_NOPULL)
 		{
 			return init(Init_t {
-			        .GPIO_Pin  = pin,
-			        .GPIO_Mode = GPIO_Mode_IN,
-			        .GPIO_PuPd = pupd,
+			    .GPIO_Pin  = pin,
+			    .GPIO_Mode = GPIO_Mode_IN,
+			    .GPIO_PuPd = pupd,
 			});
 		}
 

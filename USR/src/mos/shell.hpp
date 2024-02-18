@@ -47,7 +47,8 @@ namespace MOS::Shell
 
 			// Check whether match or not
 			auto check = [&](Text_t str) {
-				return (str[xlen] == ' ' || str[xlen] == '\0') &&
+				return (str[xlen] == ' ' ||
+				        str[xlen] == '\0') &&
 				       strncmp(str, text, xlen) == 0;
 			};
 
@@ -113,13 +114,15 @@ namespace MOS::Shell
 		static inline void uname_cmd(Argv_t argv)
 		{
 			DisIntrGuard_t guard;
-			kprintf(" A_A       _\n"
-			        "o'' )_____//  Version @ %s\n"
-			        " `_/  MOS  )  Build   @ %s, %s\n"
-			        " (_(_/--(_/   Chip    @ %s, %s\n",
-			        MOS_VERSION,
-			        __TIME__, __DATE__,
-			        MOS_MCU, MOS_ARCH);
+			kprintf(
+			    " A_A       _\n"
+			    "o'' )_____//  Version @ %s\n"
+			    " `_/  MOS  )  Build   @ %s, %s\n"
+			    " (_(_/--(_/   Chip    @ %s, %s\n",
+			    MOS_VERSION,
+			    __TIME__, __DATE__,
+			    MOS_MCU, MOS_ARCH
+			);
 		}
 
 		static inline void reboot_cmd(Argv_t argv)
@@ -131,11 +134,11 @@ namespace MOS::Shell
 
 	// Add more commands here with {"text", CmdCall::callback}
 	static constexpr Command_t cmds[] = {
-	        {    "ls",     CmdCall::ls_cmd},
-	        {  "kill",   CmdCall::kill_cmd},
-	        {  "date",   CmdCall::date_cmd},
-	        { "uname",  CmdCall::uname_cmd},
-	        {"reboot", CmdCall::reboot_cmd},
+	    {    "ls",     CmdCall::ls_cmd},
+	    {  "kill",   CmdCall::kill_cmd},
+	    {  "date",   CmdCall::date_cmd},
+	    { "uname",  CmdCall::uname_cmd},
+	    {"reboot", CmdCall::reboot_cmd},
 	};
 
 	using SyncRxBuf_t = DataType::SyncRxBuf_t<Macro::RX_BUF_SIZE>;
