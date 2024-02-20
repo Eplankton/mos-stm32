@@ -71,7 +71,7 @@ src
 <img src="Pic/cat.gif" width="21%"> <img src="Pic/mac.gif" width="20.35%"> <img src="Pic/face.gif" width="20.35%">
 <img src="Pic/board.gif" width="39.1%"> <img src="Pic/guilite.gif" width="34.5%">
 
-`Concurrent Task Period & Time Sequence`
+`Concurrent Task Period & Time Sequence`<br>
 <img src="Pic/T0-T1.png" width="80%">
 <img src="Pic/tids.png" width="65%">
 

@@ -143,7 +143,7 @@ namespace MOS::Shell
 
 	using SyncRxBuf_t = DataType::SyncRxBuf_t<Macro::RX_BUF_SIZE>;
 
-	void launch(SyncRxBuf_t& rx_buf)
+	void launch(SyncRxBuf_t& input)
 	{
 		using Text_t = Command_t::Text_t;
 
@@ -160,12 +160,11 @@ namespace MOS::Shell
 		Task::print_all();
 
 		while (true) {
-			rx_buf.wait(); // Sync from ISR
-			rx_buf.pop();  // Parsing begins
-			auto rx = rx_buf.c_str();
+			input.wait();             // Sync from ISR
+			auto rx = input.as_str(); // Parsing begins
 			kprintf("> %s\n", rx);
 			parser(rx);
-			rx_buf.clear(); // Parsing ends
+			input.clear(); // Parsing ends
 		}
 	}
 }

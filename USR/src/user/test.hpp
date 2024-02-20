@@ -12,9 +12,9 @@ namespace MOS::Test
 
 	void MutexTest()
 	{
-		static Sync::Mutex_t mutex; // Take by 1-2-3... order
+		static Sync::Mutex_t mutex;
 
-		static auto mtx_test = [](void* argv) {
+		static auto mtx_test = [](uint32_t ticks) {
 			auto name = Task::current()->get_name();
 			while (true) {
 				mutex.exec([&] {
@@ -23,13 +23,19 @@ namespace MOS::Test
 						Task::delay(100);
 					}
 				});
-				Task::delay(5);
+				Task::delay(ticks);
 			}
 		};
 
-		Task::create(mtx_test, nullptr, 1, "Mtx1");
-		Task::create(mtx_test, nullptr, 2, "Mtx2");
-		Task::create(mtx_test, nullptr, 3, "Mtx3");
+		static auto launch = [](void* argv) {
+			Task::create(mtx_test, 10, 3, "Mtx3");
+			Task::delay(5);
+			Task::create(mtx_test, 20, 2, "Mtx2");
+			Task::delay(5);
+			Task::create(mtx_test, 30, 1, "Mtx1");
+		};
+
+		Task::create(launch, nullptr, Macro::PRI_MAX, "MtxTest");
 	}
 
 	void AsyncTest()
@@ -89,19 +95,14 @@ namespace MOS::Test
 		};
 
 		static auto launch = [](void* argv) {
-			const int data[] = {5, 6, 7, 8, 9};
 			Task::create(recv, nullptr, 4, "recv");
+			const int data[] = {5, 6, 7, 8, 9};
 			for (auto msg: data) {
-				Task::create(
-				    send,
-				    msg,
-				    msg,
-				    "send"
-				);
+				Task::create(send, msg, msg, "send");
 			}
 		};
 
-		Task::create(launch, nullptr, 0, "msgq");
+		Task::create(launch, nullptr, Macro::PRI_MAX, "msgq");
 	}
 }
 

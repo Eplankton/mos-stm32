@@ -24,9 +24,9 @@ namespace MOS::Alloc
 
 				// Whether a page is unused
 				auto is_unused = [](PageRaw_t raw) {
-					auto ptr = (void*) raw[0]; // ptr = tcb.node.prev
+					auto ptr = (void*) raw[0]; // ptr = tcb.link.prev
 					return ptr == nullptr ||   // Uninit-> first alloc
-					       ptr == raw;         // Deinit-> tcb.node is self-linked
+					       ptr == raw;         // Deinit-> tcb.link is self-linked
 				};
 
 				for (auto raw: page_pool) {

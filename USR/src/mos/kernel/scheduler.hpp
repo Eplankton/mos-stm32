@@ -60,6 +60,14 @@ namespace MOS::Scheduler
 	static inline void
 	launch(Fn_t hook = nullptr)
 	{
+		static uint32_t idle_pb[PAGE_SIZE];
+
+		Page_t idle_pg {
+		    .policy = Page_t::Policy::STATIC,
+		    .raw    = idle_pb,
+		    .size   = PAGE_SIZE,
+		};
+
 		// Default idle can be replaced by user-defined hook
 		auto idle = [](void* argv) {
 			while (true) {
@@ -72,7 +80,8 @@ namespace MOS::Scheduler
 		    hook ? hook : idle,
 		    nullptr,
 		    PRI_MIN,
-		    "idle"
+		    "idle",
+		    idle_pg
 		);
 
 		MOS_ASSERT(!ready_list.empty(), "Launch Failed!");

@@ -41,8 +41,8 @@ namespace MOS::DataType
 		get_policy() const volatile { return policy; }
 
 		MOS_INLINE inline bool
-		is_policy(Policy policy)
-		    const volatile { return get_policy() == policy; }
+		is_policy(Policy expected)
+		    const volatile { return get_policy() == expected; }
 
 		MOS_INLINE inline Word_t&
 		from_bottom(uint32_t offset = 0)

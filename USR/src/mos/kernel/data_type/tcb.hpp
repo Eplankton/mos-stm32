@@ -37,19 +37,22 @@ namespace MOS::DataType
 		using enum Status;
 		using enum Page_t::Policy;
 
-		// Don't change the offset of node and sp
-		Node_t node;
+		// Don't change the offset of link and sp
+		Node_t link;
 		StackPtr_t sp = nullptr;
 
 		// Add more members here
-		Tid_t tid         = -1;
-		TcbPtr_t parent   = nullptr;
-		Page_t page       = {ERROR, nullptr, 0};
-		Prior_t pri       = PRI_MIN;
-		Status status     = TERMINATED;
+		Page_t page     = {ERROR, nullptr, 0};
+		TcbPtr_t parent = nullptr;
+		Tid_t tid       = -1;
+		Status status   = TERMINATED;
+
 		Tick_t time_slice = TIME_SLICE,
 		       wake_point = -1,
 		       stamp      = -1;
+
+		Prior_t pri     = PRI_MIN,
+		        old_pri = PRI_NONE;
 
 		// For events like send/recv/...
 		Node_t event;
@@ -69,13 +72,13 @@ namespace MOS::DataType
 		MOS_INLINE inline TcbPtr_t
 		next() const volatile
 		{
-			return (TcbPtr_t) node.next;
+			return (TcbPtr_t) link.next;
 		}
 
 		MOS_INLINE inline TcbPtr_t
 		prev() const volatile
 		{
-			return (TcbPtr_t) node.prev;
+			return (TcbPtr_t) link.prev;
 		}
 
 		void deinit() volatile
@@ -155,6 +158,24 @@ namespace MOS::DataType
 		get_pri() const volatile
 		{
 			return pri;
+		}
+
+		MOS_INLINE inline void
+		store_pri(Prior_t new_pri) volatile
+		{
+			if (old_pri == PRI_NONE) {
+				old_pri = pri;
+				set_pri(new_pri);
+			}
+		}
+
+		MOS_INLINE inline void
+		restore_pri() volatile
+		{
+			if (old_pri != PRI_NONE) {
+				set_pri(old_pri);
+				old_pri = PRI_NONE;
+			}
 		}
 
 		MOS_INLINE inline void
@@ -296,8 +317,8 @@ namespace MOS::DataType
 		iter(TcbListIterFn auto&& fn) const
 		{
 			auto wrap = [](auto&& fn) {
-				return [&](const Node_t& node) {
-					fn((const TCB_t&) node);
+				return [&](const Node_t& link) {
+					fn((const TCB_t&) link);
 				};
 			};
 
@@ -308,8 +329,8 @@ namespace MOS::DataType
 		iter_mut(TcbListIterMutFn auto&& fn)
 		{
 			auto wrap = [](auto&& fn) {
-				return [&](Node_t& node) {
-					fn((TCB_t&) node);
+				return [&](Node_t& link) {
+					fn((TCB_t&) link);
 				};
 			};
 
@@ -330,7 +351,7 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		insert(TcbPtr_t tcb, TcbPtr_t pos)
 		{
-			List_t::insert(tcb->node, (NodePtr_t) pos);
+			List_t::insert(tcb->link, (NodePtr_t) pos);
 		}
 
 		inline void
@@ -342,16 +363,16 @@ namespace MOS::DataType
 				};
 			};
 
-			List_t::insert_in_order(tcb->node, wrap(cmp));
+			List_t::insert_in_order(tcb->link, wrap(cmp));
 		}
 
 		MOS_INLINE inline void
-		add(TcbPtr_t tcb) { List_t::add(tcb->node); }
+		add(TcbPtr_t tcb) { List_t::add(tcb->link); }
 
 		MOS_INLINE inline void
 		remove(TcbPtr_t tcb)
 		{
-			List_t::remove(tcb->node);
+			List_t::remove(tcb->link);
 		}
 
 		MOS_INLINE inline void

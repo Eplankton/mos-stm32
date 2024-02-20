@@ -16,7 +16,7 @@ namespace MOS::DataType
 		Cnt_t index = 0;
 
 		MOS_INLINE inline auto
-		c_str() const { return raw; }
+		get_raw() const { return raw; }
 
 		MOS_INLINE inline bool
 		full() const volatile { return index >= N; }
@@ -60,6 +60,13 @@ namespace MOS::DataType
 
 		MOS_INLINE inline void
 		signal_from_isr() { sema.up_from_isr(); }
+
+		MOS_FLATTEN inline auto
+		as_str()
+		{
+			this->pop();
+			return this->get_raw();
+		}
 
 	private:
 		Sync::Sema_t sema {0};

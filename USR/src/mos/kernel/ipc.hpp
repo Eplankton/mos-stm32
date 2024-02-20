@@ -34,7 +34,7 @@ namespace MOS::IPC
 				if (timeout == 0)
 					return false;
 				block_to(senders, timeout);
-				if (!check_on(senders)) // Resumed
+				if (!check_with(senders)) // Resumed
 					return false;
 			}
 
@@ -54,7 +54,7 @@ namespace MOS::IPC
 				if (timeout == 0)
 					return false;
 				block_to(receivers, timeout);
-				if (!check_on(receivers)) // Resumed
+				if (!check_with(receivers)) // Resumed
 					return false;
 			}
 
@@ -73,22 +73,23 @@ namespace MOS::IPC
 		Raw_t raw;
 
 		MOS_INLINE static inline auto
-		into_tcb(ConstNodePtr_t _event)
+		into_tcb(ConstNodePtr_t event)
 		{
-			return container_of(_event, TCB_t, event);
+			return container_of(event, TCB_t, event);
 		}
 
 		void block_to(EventList_t& dest, Tick_t timeout)
 		{
 			// Priority & WakePoint Compare
-			auto pri_wkpt_cmp = [](const auto& _lhs, const auto& _rhs) {
-				auto lhs = into_tcb(&_lhs),
-				     rhs = into_tcb(&_rhs);
+			auto pri_wkpt_cmp =
+			    [](const auto& _lhs, const auto& _rhs) {
+				    auto lhs = into_tcb(&_lhs),
+				         rhs = into_tcb(&_rhs);
 
-				// Compare pri first, then wkpt
-				return TCB_t::pri_cmp(lhs, rhs) &&
-				       TCB_t::wkpt_cmp(lhs, rhs);
-			};
+				    // Compare pri first, then wkpt
+				    return TCB_t::pri_cmp(lhs, rhs) &&
+				           TCB_t::wkpt_cmp(lhs, rhs);
+			    };
 
 			{
 				DisIntrGuard_t guard;
@@ -103,9 +104,9 @@ namespace MOS::IPC
 
 		void try_wake_up(EventList_t& src)
 		{
-			auto wake_up = [&](NodePtr_t event_node) {
-				src.remove(*event_node);
-				Task::wake_raw(into_tcb(event_node));
+			auto wake_up = [&](NodePtr_t event) {
+				src.remove(*event);
+				Task::wake_raw(into_tcb(event));
 			};
 
 			DisIntrGuard_t guard;
@@ -114,7 +115,7 @@ namespace MOS::IPC
 			}
 		}
 
-		bool check_on(EventList_t& src)
+		bool check_with(EventList_t& src)
 		{
 			DisIntrGuard_t guard;
 			auto cur = Task::current();

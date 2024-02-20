@@ -130,7 +130,7 @@ namespace MOS::App
 
 	Sync::Barrier_t bar {2};
 
-	// extern "C" bool f0 = 0, f1 = 0;
+	// MOS_DEBUG_INFO bool f0 = 0, f1 = 0;
 
 	void Task1(void* argv)
 	{

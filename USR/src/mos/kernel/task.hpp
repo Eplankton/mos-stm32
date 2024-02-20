@@ -205,8 +205,6 @@ namespace MOS::Task
 	)
 	{
 		MOS_ASSERT(fn != nullptr, "fn can't be null");
-		MOS_ASSERT(test_irq(), "Disabled Interrupt");
-		DisIntrGuard_t guard;
 
 		if (page.get_raw() == nullptr) {
 			MOS_MSG("Page Alloc Failed!");
@@ -266,12 +264,18 @@ namespace MOS::Task
 	    Name_t name, Page_t page
 	)
 	{
-		auto tcb = create_raw(
-		    fn, argv, pri, name, page
-		);
+		MOS_ASSERT(test_irq(), "Disabled Interrupt");
+		TcbPtr_t tcb = nullptr;
+
+		{
+			DisIntrGuard_t guard;
+			tcb = create_raw(fn, argv, pri, name, page);
+		}
+
 		if (TCB_t::pri_cmp(tcb, current())) {
 			yield();
 		}
+
 		return tcb;
 	}
 

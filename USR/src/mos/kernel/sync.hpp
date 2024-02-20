@@ -29,7 +29,7 @@ namespace MOS::Sync
 		MOS_INLINE
 		inline Sema_t(int32_t _cnt): cnt(_cnt) {}
 
-		// P
+		// `P-opr`
 		MOS_NO_INLINE void
 		down()
 		{
@@ -121,10 +121,21 @@ namespace MOS::Sync
 				return;
 			}
 
-			// Compare priority with ceiling
-			if (cur->get_pri() < ceiling) {
-				// If current priority is higher, set it as the new ceiling
+			// Compare with ceiling
+			if (pri_cmp(ceiling, cur->get_pri())) {
+				// Temporarily raise the priority
+				cur->store_pri(ceiling);
+			}
+			else {
+				// If current pri is higher, set it as the new ceiling
 				ceiling = cur->get_pri();
+
+				// Raise the pri of all tasks
+				if (owner != nullptr) {
+					owner->store_pri(ceiling);
+				}
+
+				donate_pri();
 			}
 
 			sema.cnt -= 1;
@@ -134,7 +145,7 @@ namespace MOS::Sync
 				return Task::yield();
 			}
 			else {
-				owner = Task::current();
+				owner = cur;
 				recursive += 1;
 			}
 		}
@@ -151,20 +162,24 @@ namespace MOS::Sync
 			recursive -= 1;
 
 			if (recursive > 0) {
-				// If the lock is still held by this owner
+				// Still held by this owner
 				return;
 			}
 
-			// If has waiting tasks
+			// Restore old_pri for owner
+			owner->restore_pri();
+
 			if (!sema.waiting_list.empty()) {
-				// Starvation Prevention
+				auto old_ceiling = ceiling;
+				find_ceiling();
+				if (pri_cmp(old_ceiling, ceiling))
+					donate_pri();
+
 				auto tcb = sema.waiting_list.begin();
 				Task::resume_raw(tcb, sema.waiting_list);
 
 				owner = tcb;
 				sema.cnt += 1;
-
-				update_ceiling();
 
 				if (Task::higher_exists()) {
 					return Task::yield();
@@ -196,16 +211,31 @@ namespace MOS::Sync
 		TcbPtr_t owner  = nullptr;
 		Prior_t ceiling = PRI_MIN;
 
+		MOS_INLINE static inline bool
+		pri_cmp(Prior_t lhs, Prior_t rhs)
+		{
+			return lhs < rhs;
+		}
+
 		MOS_INLINE inline void
-		update_ceiling()
+		donate_pri()
+		{
+			sema.waiting_list.iter_mut(
+			    [&](TCB_t& tcb) {
+				    tcb.store_pri(ceiling);
+			    }
+			);
+		}
+
+		MOS_INLINE inline void
+		find_ceiling()
 		{
 			ceiling = PRI_MIN;
 			sema.waiting_list.iter(
 			    [&](const TCB_t& tcb) {
-				    const auto pri = tcb.get_pri();
-				    if (pri < ceiling) {
+				    auto pri = tcb.get_pri();
+				    if (pri_cmp(pri, ceiling))
 					    ceiling = pri;
-				    }
 			    }
 			);
 		}
@@ -297,8 +327,8 @@ namespace MOS::Sync
 		    Invocable<bool> auto&& pred
 		)
 		{
-			mtx.unlock(); // Unlock first
-			while (!pred()) {
+			mtx.unlock();     // Unlock first
+			while (!pred()) { // Avoid false wakeup
 				block_this();
 			}
 			mtx.lock();
@@ -339,7 +369,6 @@ namespace MOS::Sync
 		MOS_INLINE inline void
 		wake_up()
 		{
-			DisIntrGuard_t guard;
 			Task::resume_raw(
 			    waiting_list.begin(),
 			    waiting_list
