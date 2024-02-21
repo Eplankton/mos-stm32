@@ -27,7 +27,12 @@ namespace MOS::DataType
 		}
 
 		inline void
-		push(void* dest, const void* src, const u32 size, const u32 N) volatile
+		push(
+		    void* dest,
+		    const void* src,
+		    const u32 size,
+		    const u32 N
+		) volatile
 		{
 			if (!full()) {
 				Utils::memcpy(dest, src, size);
@@ -59,7 +64,10 @@ namespace MOS::DataType
 		clear() volatile { m_head = m_tail = m_len = 0; }
 	};
 
-	template <typename T, uint32_t N, typename Base = QueueImpl_t>
+	template <
+	    typename T,
+	    uint32_t N,
+	    typename Base = QueueImpl_t>
 	class Queue_t : public Base
 	{
 	protected:

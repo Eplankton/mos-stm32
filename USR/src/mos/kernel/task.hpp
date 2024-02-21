@@ -168,26 +168,36 @@ namespace MOS::Task
 	template <typename Fn, typename ArgvType>
 	concept LambdaInvocable = requires(Fn fn, ArgvType argv) {
 		{ fn.operator()(argv) } -> Same<void>;
+	} || requires(Fn fn) { 
+		{ fn.operator()() } -> Same<void>;
 	};
 	// clang-format on
 
-	template <typename Fn, typename ArgvType>
+	template <typename Argv>
+	concept ArgvPtr = Same<deref_t<Argv>*, Argv>;
+
+	template <typename Fn, typename Argv>
 	concept AsLambdaFn =
-	    LambdaInvocable<Fn, ArgvType> ||
-	    LambdaInvocable<Fn, deref_t<ArgvType>*> ||
-	    LambdaInvocable<Fn, deref_t<ArgvType>&>;
+	    (ArgvPtr<Argv> &&
+	     (LambdaInvocable<Fn, deref_t<Argv>*> ||
+	      LambdaInvocable<Fn, deref_t<Argv>&>) ) ||
+	    (!ArgvPtr<Argv> && LambdaInvocable<Fn, Argv>);
 
 	template <typename Fn, typename ArgvType>
 	concept AsFnPtr =
-	    Invocable<Fn, void, ArgvType> ||
-	    Invocable<Fn, void, deref_t<ArgvType>*> ||
-	    Invocable<Fn, void, deref_t<ArgvType>&>;
+	    (ArgvPtr<ArgvType> &&
+	     (Invocable<Fn, void, deref_t<ArgvType>*> ||
+	      Invocable<Fn, void, deref_t<ArgvType>&>) ) ||
+	    (!ArgvPtr<ArgvType> &&
+	     (Invocable<Fn, void> || Invocable<Fn, void, ArgvType>) );
 
 	MOS_INLINE static inline constexpr Fn_t
 	type_check(auto fn, auto argv)
 	{
-		if constexpr (AsLambdaFn<decltype(fn), decltype(argv)>) {
-			return (Fn_t) ((uint32_t) + fn); // '+fn' convert lambda into FnPtr
+		if constexpr (
+		    AsLambdaFn<decltype(fn), decltype(argv)>
+		) { // '+fn' convert lambda into FnPtr
+			return (Fn_t) ((uint32_t) + fn);
 		}
 		else {
 			static_assert(

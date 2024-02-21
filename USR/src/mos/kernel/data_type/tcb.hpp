@@ -17,7 +17,7 @@ namespace MOS::DataType
 		using TcbPtr_t      = SelfPtr_t;
 		using ConstTcbPtr_t = const TCB_t*;
 		using StackPtr_t    = uint32_t*;
-		using Node_t        = ListNode_t;
+		using Node_t        = List_t::Node_t;
 		using Tid_t         = int16_t;
 		using Prior_t       = int8_t;
 		using Tick_t        = uint32_t;

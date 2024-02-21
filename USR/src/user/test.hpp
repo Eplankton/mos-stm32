@@ -27,7 +27,7 @@ namespace MOS::Test
 			}
 		};
 
-		static auto launch = [](void* argv) {
+		static auto launch = [] {
 			Task::create(mtx_test, 10, 3, "Mtx3");
 			Task::delay(5);
 			Task::create(mtx_test, 20, 2, "Mtx2");
@@ -42,7 +42,7 @@ namespace MOS::Test
 	{
 		using UserGlobal::leds;
 
-		static auto T1 = [](void* argv) {
+		static auto T1 = [] {
 			for (auto _: Range(0, 20)) {
 				leds[1].toggle(); // green
 				Task::delay(250);
@@ -51,7 +51,7 @@ namespace MOS::Test
 			kprintf("Async T1 exits...\n");
 		};
 
-		static auto T0 = [](void* argv) {
+		static auto T0 = [] {
 			auto future = Task::async(T1, nullptr, "T1");
 
 			for (auto _: Range(0, 10)) {
@@ -70,20 +70,21 @@ namespace MOS::Test
 		Task::create(T0, nullptr, 2, "T0");
 	}
 
-	void MsgQueueTest()
+	void MsgTest()
 	{
 		using MsgQueue_t = IPC::MsgQueue_t<int, 3>;
+		using Task::Prior_t;
 
 		static MsgQueue_t msg_q;
 
-		static auto send = [](int msg) {
+		static auto producer = [](int& msg) {
 			while (true) {
-				msg_q.send(msg);
+				msg_q.send(msg++);
 				Task::delay(50);
 			}
 		};
 
-		static auto recv = [](void* argv) {
+		static auto consumer = [] {
 			while (true) {
 				int msg  = -1;
 				auto res = msg_q.recv(msg, 100);
@@ -94,15 +95,22 @@ namespace MOS::Test
 			}
 		};
 
-		static auto launch = [](void* argv) {
-			Task::create(recv, nullptr, 4, "recv");
-			const int data[] = {5, 6, 7, 8, 9};
-			for (auto msg: data) {
-				Task::create(send, msg, msg, "send");
+		static auto launch = [] {
+			// Create a Consumer
+			Task::create(consumer, nullptr, 4, "recv");
+
+			// Data Sequences
+			static int data[] = {5, 6, 7, 8, 9};
+
+			// Create some Producers
+			for (auto& i: data) {
+				Task::create(
+				    producer, &i, (Prior_t) i, "send"
+				);
 			}
 		};
 
-		Task::create(launch, nullptr, Macro::PRI_MAX, "msgq");
+		Task::create(launch, nullptr, Macro::PRI_MAX, "MsgTest");
 	}
 }
 

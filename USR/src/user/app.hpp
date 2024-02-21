@@ -54,14 +54,14 @@ namespace MOS::App
 		);
 	}
 
-	void GUI(void* argv)
+	void GUI()
 	{
 		using namespace Gui;
 		EXTERNAL_GFX_OP gfx_op {gfx_draw_pixel, nullptr};
 		startHello3D(nullptr, lcd.width, lcd.height, 1, &gfx_op);
 	}
 
-	void LCD(void* argv)
+	void LCD()
 	{
 		using Sync::Mutex_t;
 		using UserGlobal::lcd;
@@ -69,20 +69,20 @@ namespace MOS::App
 		// A mutex wrapper of lcd
 		static Mutex_t lcd_mtx {lcd};
 
-		auto GIF = [](void* argv) {
+		auto GIF = [] {
 			while (true) {
-				for (auto frame: face_gif) {
+				for (auto frame: mac_gif) {
 					lcd_mtx.lock().get().draw_img(
 					    0, 0,
 					    128, 128,
 					    frame
 					);
-					Task::delay(125);
+					Task::delay(250);
 				}
 			}
 		};
 
-		auto Slogan = [](void* argv) {
+		auto Slogan = [] {
 			constexpr Color rgb[] = {
 			    Color::RED,
 			    Color::GREEN,
@@ -96,7 +96,7 @@ namespace MOS::App
 					    "Hello, World!",
 					    color
 					);
-					Task::delay(250);
+					Task::delay(125);
 				}
 			}
 		};
@@ -106,7 +106,7 @@ namespace MOS::App
 		Task::create(Slogan, nullptr, pri, "Slogan");
 	}
 
-	void Calendar(void* argv)
+	void Calendar()
 	{
 		using HAL::STM32F4xx::RTC_t;
 
@@ -132,7 +132,7 @@ namespace MOS::App
 
 	// MOS_DEBUG_INFO bool f0 = 0, f1 = 0;
 
-	void Task1(void* argv)
+	void Task1()
 	{
 		using UserGlobal::leds;
 		bar.wait();
@@ -144,7 +144,7 @@ namespace MOS::App
 		kprintf("T1 exits...\n");
 	}
 
-	void Task0(void* argv)
+	void Task0()
 	{
 		using UserGlobal::leds;
 		Task::create(Task1, nullptr, 1, "T1");

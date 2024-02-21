@@ -23,14 +23,14 @@ namespace MOS::Alloc
 				using KernelGlobal::page_pool;
 
 				// Whether a page is unused
-				auto is_unused = [](PageRaw_t raw) {
+				auto unused = [](PageRaw_t raw) {
 					auto ptr = (void*) raw[0]; // ptr = tcb.link.prev
 					return ptr == nullptr ||   // Uninit-> first alloc
 					       ptr == raw;         // Deinit-> tcb.link is self-linked
 				};
 
 				for (auto raw: page_pool) {
-					if (is_unused(raw)) {
+					if (unused(raw)) {
 						return raw;
 					}
 				}

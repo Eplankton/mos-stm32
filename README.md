@@ -106,7 +106,7 @@ namespace MOS::UserGlobal
 }
 ```
 ```C++
-namespace MOS::Bsp
+namespace MOS::BSP
 {
     using namespace Driver;
     using namespace UserGlobal;
@@ -171,7 +171,7 @@ int main(void)
     using UserGlobal::rx_buf;
 
     // Init hardware and clocks
-    Bsp::config();
+    BSP::config();
 
     // Create Shell with rx_buf
     Task::create(Shell::launch, &rx_buf, 1, "Shell");

@@ -6,7 +6,7 @@
 #include "src/mos/kernel/task.hpp"
 #include "src/user/global.hpp"
 
-namespace MOS::Bsp
+namespace MOS::BSP
 {
 	using namespace HAL::STM32F4xx;
 
@@ -210,7 +210,7 @@ namespace MOS::ISR
 			using Utils::Range;
 
 			// To simulate a burst task
-			static auto K1_IRQ = [](void* argv) {
+			static auto K1_IRQ = [] {
 				for (auto _: Range(0, 10)) {
 					leds[2].toggle();
 					Task::print_name();

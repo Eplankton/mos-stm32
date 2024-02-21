@@ -16,7 +16,7 @@ int main(void)
 	using UserGlobal::rx_buf;
 
 	// Init hardware and clocks
-	Bsp::config();
+	BSP::config();
 
 	// Create Calendar with RTC
 	Task::create(App::Calendar, nullptr, 0, "Calendar");
@@ -32,13 +32,13 @@ int main(void)
 
 	/* User Tasks */
 	Task::create(App::Task0, nullptr, 2, "T0", page);
-	Task::create(App::GUI, nullptr, 3, "GUI", 256);
-	// Task::create(App::LCD, nullptr, 3, "LCD");
+	// Task::create(App::GUI, nullptr, 3, "GUI", 256);
+	Task::create(App::LCD, nullptr, 3, "LCD");
 
 	/* Test examples */
 	// Test::MutexTest();
 	// Test::AsyncTest();
-	Test::MsgQueueTest();
+	Test::MsgTest();
 
 	// Start scheduling, never return
 	Scheduler::launch();
