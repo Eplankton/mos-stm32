@@ -35,7 +35,7 @@ namespace MOS::Test
 			Task::create(mtx_test, 30, 1, "Mtx1");
 		};
 
-		Task::create(launch, nullptr, Macro::PRI_MAX, "MtxTest");
+		Task::create(launch, nullptr, Macro::PRI_MAX, "MutexTest");
 	}
 
 	void AsyncTest()
@@ -70,7 +70,7 @@ namespace MOS::Test
 		Task::create(T0, nullptr, 2, "T0");
 	}
 
-	void MsgTest()
+	void MsgQueueTest()
 	{
 		using MsgQueue_t = IPC::MsgQueue_t<int, 3>;
 		using Task::Prior_t;
@@ -110,7 +110,7 @@ namespace MOS::Test
 			}
 		};
 
-		Task::create(launch, nullptr, Macro::PRI_MAX, "MsgTest");
+		Task::create(launch, nullptr, Macro::PRI_MAX, "MsgQueueTest");
 	}
 }
 

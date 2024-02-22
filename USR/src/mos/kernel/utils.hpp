@@ -111,11 +111,11 @@ namespace MOS::Utils
 	}
 
 	inline void*
-	memset(void* ptr, int32_t value, size_t n)
+	memset(void* ptr, uint8_t value, size_t n)
 	{
 		auto raw = (uint8_t*) ptr;
 		for (size_t i = 0; i < n; i++) {
-			raw[i] = (uint8_t) value;
+			raw[i] = value;
 		}
 		return ptr;
 	}

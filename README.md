@@ -141,7 +141,7 @@ namespace MOS::App
 {
     Sync::Barrier_t bar {2};
 
-    void Task1(void* argv)
+    void Task1()
     {
         using UserGlobal::leds;
         bar.wait();
@@ -152,7 +152,7 @@ namespace MOS::App
         kprintf("T1 exits...\n");
     }
 
-    void Task0(void* argv)
+    void Task0()
     {
         using UserGlobal::leds;
         Task::create(Task1, nullptr, 1, "T1");
@@ -165,7 +165,7 @@ namespace MOS::App
 }
 ```
 ```C++
-int main(void)
+int main()
 {
     using namespace MOS;
     using UserGlobal::rx_buf;
@@ -182,6 +182,7 @@ int main(void)
     /* Test examples */
     Test::MutexTest();
     Test::AsyncTest();
+    ...
     
     // Start scheduling, never return
     Scheduler::launch();
@@ -246,7 +247,7 @@ o'' )_____//   Version @ x.x.x(...)
 1. Tids from BitMap_t
 2. (Experimental) Task::Async::{Future_t, async}
 3. IPC::MsgQueue_t, Message Queue
-4. Task::create allows generic fn signature as /* void fn(auto argv) */
+4. Task::create allows generic fn signature as /* void fn(auto argv) */ with type check
 
 📌 Plan
 1. IPC::pipe/channel

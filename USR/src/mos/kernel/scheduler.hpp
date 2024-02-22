@@ -40,7 +40,7 @@ namespace MOS::Scheduler
 	using enum Policy;
 
 	MOS_INLINE inline bool
-	is_ok() { return sched_status == SchedStatus::OK; }
+	is_ready() { return sched_status == SchedStatus::OK; }
 
 	// This will execute only once for the first task
 	__attribute__((naked)) inline void
@@ -181,7 +181,7 @@ namespace MOS::ISR
 	{
 		DisIntrGuard_t guard;
 		Task::inc_ticks();
-		if (Scheduler::is_ok()) {
+		if (Scheduler::is_ready()) {
 			return Task::nop_and_yield();
 		}
 	}

@@ -148,7 +148,7 @@ namespace MOS::Shell
 		using Text_t = Command_t::Text_t;
 
 		auto parser = [](Text_t str) {
-			for (const auto& cmd: cmds) {
+			for (const auto cmd: cmds) {
 				if (auto argv = cmd.match(str)) {
 					return cmd.run(argv);
 				}
@@ -160,11 +160,15 @@ namespace MOS::Shell
 		Task::print_all();
 
 		while (true) {
-			input.wait();             // Sync from ISR
-			auto rx = input.as_str(); // Parsing begins
+			input.wait(); // Sync from ISR
+
+			// Parsing begins
+			auto rx = input.as_str();
 			kprintf("> %s\n", rx);
 			parser(rx);
-			input.clear(); // Parsing ends
+			// Parsing ends
+
+			input.clear(); // Clear Rx buffer
 		}
 	}
 }

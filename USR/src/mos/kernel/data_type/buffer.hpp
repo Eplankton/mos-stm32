@@ -13,36 +13,41 @@ namespace MOS::DataType
 		using Cnt_t = volatile int32_t;
 
 		Raw_t raw;
-		Cnt_t index = 0;
+		Cnt_t len = 0;
 
 		MOS_INLINE inline auto
 		get_raw() const { return raw; }
 
 		MOS_INLINE inline bool
-		full() const volatile { return index >= N; }
+		full() const volatile { return len >= N; }
 
 		MOS_INLINE inline bool
-		empty() const volatile { return index == 0; }
+		empty() const volatile { return len == 0; }
 
 		MOS_INLINE inline void
-		add(T data) volatile { raw[index++] = data; }
+		add(T data) volatile { raw[len++] = data; }
 
 		MOS_INLINE inline char
-		back() const volatile { return empty() ? '\0' : raw[index - 1]; }
+		back() const volatile
+		{
+			return empty() ? '\0' : raw[len - 1];
+		}
 
 		MOS_INLINE inline void
 		pop() volatile
 		{
 			if (!empty()) {
-				raw[--index] = '\0';
+				raw[--len] = '\0';
 			}
 		}
 
 		MOS_INLINE inline void
 		clear() volatile
 		{
-			Utils::memset((void*) raw, 0, sizeof(raw));
-			index = 0;
+			if (!empty()) {
+				Utils::memset((void*) raw, 0, sizeof(raw));
+				len = 0;
+			}
 		}
 	};
 
@@ -61,10 +66,9 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		signal_from_isr() { sema.up_from_isr(); }
 
-		MOS_FLATTEN inline auto
-		as_str()
+		MOS_INLINE inline auto
+		as_str() const
 		{
-			this->pop();
 			return this->get_raw();
 		}
 

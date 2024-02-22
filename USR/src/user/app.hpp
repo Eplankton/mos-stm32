@@ -71,13 +71,13 @@ namespace MOS::App
 
 		auto GIF = [] {
 			while (true) {
-				for (auto frame: mac_gif) {
+				for (auto frame: cat_gif) {
 					lcd_mtx.lock().get().draw_img(
 					    0, 0,
 					    128, 128,
 					    frame
 					);
-					Task::delay(250);
+					Task::delay(25);
 				}
 			}
 		};

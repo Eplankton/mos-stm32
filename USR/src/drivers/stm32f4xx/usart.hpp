@@ -150,6 +150,14 @@ namespace HAL::STM32F4xx
 		}
 
 		inline auto
+		handle_it(IT_t it, auto&& fn) const
+		{
+			if (get_it_status(it) != RESET) {
+				fn();
+			}
+		}
+
+		inline auto
 		get_flag_status(Flag_t flag) const
 		{
 			return USART_GetFlagStatus((Raw_t) this, flag);

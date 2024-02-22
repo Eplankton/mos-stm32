@@ -235,19 +235,19 @@ namespace MOS::ISR
 			using UserGlobal::uart;
 			using UserGlobal::rx_buf;
 
-			if (uart.get_it_status(USART_IT_RXNE) != RESET) {
+			uart.handle_it(USART_IT_RXNE, [] {
 				if (!rx_buf.full()) {
 					char8_t data = uart.recv_data();
-					rx_buf.add(data);
-					if (data == '\n') { // Cmd received
+					if (data == '\n') //  cmd received
 						rx_buf.signal_from_isr();
-					}
+					else
+						rx_buf.add(data);
 				}
 				else {
 					rx_buf.clear();
 					MOS_MSG("Oops! Command too long!");
 				}
-			}
+			});
 		}
 	}
 }

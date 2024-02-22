@@ -31,19 +31,14 @@ namespace MOS::IPC
 		bool send(const T& msg, Tick_t timeout = 0)
 		{
 			if (raw.full()) {
-				if (timeout == 0)
+				if (timeout == 0 ||
+				    !block_to(senders, timeout)) {
 					return false;
-				block_to(senders, timeout);
-				if (!check_with(senders)) // Resumed
-					return false;
+				}
 			}
 
 			raw.push(msg);
 			try_wake_up(receivers);
-
-			if (Task::higher_exists()) {
-				Task::yield();
-			}
 
 			return true;
 		}
@@ -51,34 +46,42 @@ namespace MOS::IPC
 		bool recv(T& buf, Tick_t timeout = 0)
 		{
 			if (raw.empty()) {
-				if (timeout == 0)
+				if (timeout == 0 ||
+				    !block_to(receivers, timeout)) {
 					return false;
-				block_to(receivers, timeout);
-				if (!check_with(receivers)) // Resumed
-					return false;
+				}
 			}
 
 			buf = raw.serve();
 			try_wake_up(senders);
 
-			if (Task::higher_exists()) {
-				Task::yield();
-			}
-
 			return true;
 		}
 
 	private:
-		EventList_t senders, receivers;
 		Raw_t raw;
+		EventList_t senders, receivers;
 
-		MOS_INLINE static inline auto
+		MOS_INLINE static constexpr inline auto
 		into_tcb(ConstNodePtr_t event)
 		{
 			return container_of(event, TCB_t, event);
 		}
 
-		void block_to(EventList_t& dest, Tick_t timeout)
+		bool check_for(EventList_t& src)
+		{
+			DisIntrGuard_t guard;
+			auto cur = Task::current();
+			if (cur->in_event()) {
+				// If still in event-linked
+				// -> Timeout(Awakened by Scheduler)
+				src.remove(cur->event);
+				return false;
+			}
+			return true;
+		}
+
+		bool block_to(EventList_t& dest, Tick_t timeout)
 		{
 			// Priority & WakePoint Compare
 			auto pri_wkpt_cmp =
@@ -99,33 +102,27 @@ namespace MOS::IPC
 				);
 			}
 
+			// Sleep until timeout
 			Task::delay(timeout);
+
+			// After being awakened, check for timeout
+			return check_for(dest);
 		}
 
 		void try_wake_up(EventList_t& src)
 		{
 			auto wake_up = [&](NodePtr_t event) {
-				src.remove(*event);
 				Task::wake_raw(into_tcb(event));
+				src.remove(*event);
 			};
 
 			DisIntrGuard_t guard;
 			if (!src.empty()) {
 				wake_up(src.begin());
+				if (Task::higher_exists()) {
+					return Task::yield();
+				}
 			}
-		}
-
-		bool check_with(EventList_t& src)
-		{
-			DisIntrGuard_t guard;
-			auto cur = Task::current();
-			if (cur->in_event()) {
-				// If still in event-linked
-				// -> Timeout(Awakened by Scheduler)
-				src.remove(cur->event);
-				return false;
-			}
-			return true;
 		}
 	};
 }
