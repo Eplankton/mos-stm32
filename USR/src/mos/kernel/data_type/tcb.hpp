@@ -10,7 +10,7 @@ namespace MOS::DataType
 	using namespace Macro;
 
 	// Task Control Block
-	struct __attribute__((packed)) TCB_t
+	struct MOS_PACKED TCB_t
 	{
 		using Self_t        = TCB_t;
 		using SelfPtr_t     = TCB_t*;
@@ -54,7 +54,7 @@ namespace MOS::DataType
 		Prior_t pri     = PRI_MIN,
 		        old_pri = PRI_NONE;
 
-		// For events like send/recv/...
+		// For events like Send/Recv/...
 		Node_t event;
 
 		// Only for debug
@@ -89,7 +89,7 @@ namespace MOS::DataType
 			    // Ignore the size
 			};
 
-			// Use inplace new
+			// inplace new
 			new ((void*) this) TCB_t {};
 			inactive.recycle();
 		}
@@ -160,7 +160,7 @@ namespace MOS::DataType
 			return pri;
 		}
 
-		MOS_INLINE inline void
+		MOS_INLINE inline void // Used in Mutex
 		store_pri(Prior_t new_pri) volatile
 		{
 			if (old_pri == PRI_NONE) {
@@ -169,7 +169,7 @@ namespace MOS::DataType
 			}
 		}
 
-		MOS_INLINE inline void
+		MOS_INLINE inline void // Used in Mutex
 		restore_pri() volatile
 		{
 			if (old_pri != PRI_NONE) {

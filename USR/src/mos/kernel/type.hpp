@@ -2,6 +2,7 @@
 #define _MOS_TYPE_
 
 #include <stdint.h>
+#include <stdatomic.h>
 
 // Primitive data types
 namespace MOS

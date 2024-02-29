@@ -41,8 +41,7 @@ namespace MOS::DataType
 			}
 		}
 
-		MOS_INLINE inline void
-		clear() volatile
+		void clear() volatile
 		{
 			if (!empty()) {
 				Utils::memset((void*) raw, 0, sizeof(raw));
@@ -73,7 +72,8 @@ namespace MOS::DataType
 		}
 
 	private:
-		Sync::Sema_t sema {0};
+		using Sema_t = Kernel::Sync::Sema_t;
+		Sema_t sema {0};
 	};
 }
 

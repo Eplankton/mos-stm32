@@ -6,67 +6,81 @@
 #include "src/mos/kernel/task.hpp"
 #include "src/user/global.hpp"
 
-namespace MOS::BSP
+namespace MOS::User::BSP
 {
 	using namespace HAL::STM32F4xx;
 
 	// For printf_
-	extern "C" void _putchar(char ch)
+	extern "C" void
+	MOS_PUTCHAR(char ch)
 	{
-		using UserGlobal::uart;
-		uart.send_data(ch);
-		uart.wait_flag(USART_FLAG_TXE);
+		using Global::stdio;
+		stdio.send_data(ch);
+		stdio.wait_flag(USART_FLAG_TXE);
 	}
 
-	static inline void LED_Config()
+	static inline void
+	LED_Config()
 	{
-		using UserGlobal::leds;
+		using Global::leds;
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOB);
 		for (auto& led: leds) {
 			led.init();
 		}
 	}
 
-	static inline void NVIC_GroupConfig()
+	static inline void
+	NVIC_GroupConfig()
 	{
 		NVIC_t::group_config(NVIC_PriorityGroup_2);
 	}
 
-	static inline void SysTick_Config()
+	static inline void
+	SysTick_Config()
 	{
 		SysTick_t::config(Macro::SYSTICK);
 	}
 
-	static inline void K1_IRQ_Config()
+	static inline void
+	K1_IRQ_Config()
 	{
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOC);
 		RCC_t::APB2::enable(RCC_APB2Periph_SYSCFG);
+
 		SYSCFG_t::exti_line_config( // K1 -> PC13
 		    EXTI_PortSourceGPIOC,
 		    EXTI_PinSource13
 		);
+
 		EXTI_t::init( // K1 Intr Config
 		    EXTI_Line13,
 		    EXTI_Mode_Interrupt,
 		    EXTI_Trigger_Rising, ENABLE
 		);
+
 		NVIC_t::init(EXTI15_10_IRQn, 1, 1, ENABLE);
 	}
 
-	static inline void USART_Config()
+	static inline void
+	USART_Config()
 	{
-		using UserGlobal::uart;
-
 		RCC_t::AHB1::enable(RCC_AHB1Periph_GPIOD);
-		RCC_t::APB1::enable(RCC_APB1Periph_USART3);
+		RCC_t::APB1::enable(
+		    RCC_APB1Periph_USART2 |
+		    RCC_APB1Periph_USART3
+		);
+
+		NVIC_t::init(USART2_IRQn, 1, 1, ENABLE);
 		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
 
-		uart.init( // 38400-8-1-N
-		        38400,
+		// stdio uart config
+		Global::stdio
+		    .init( // 57600-8-1-N
+		        57600,
 		        USART_WordLength_8b,
 		        USART_StopBits_1,
 		        USART_Parity_No
-		)
+		    )
 		    .rx_config( // RX -> PD9
 		        GPIOD,
 		        GPIO_t::get_pin_src(9),
@@ -79,11 +93,33 @@ namespace MOS::BSP
 		    )
 		    .it_enable(USART_IT_RXNE)
 		    .enable();
+
+		// esp32-wifi uart config
+		Global::esp32
+		    .init( // 115200-8-1-N
+		        115200,
+		        USART_WordLength_8b,
+		        USART_StopBits_1,
+		        USART_Parity_No
+		    )
+		    .rx_config( // RX -> PD6
+		        GPIOD,
+		        GPIO_t::get_pin_src(6),
+		        GPIO_AF_USART2
+		    )
+		    .tx_config( // TX -> PD5
+		        GPIOD,
+		        GPIO_t::get_pin_src(5),
+		        GPIO_AF_USART2
+		    )
+		    .it_enable(USART_IT_RXNE)
+		    .enable();
 	}
 
-	static inline void LCD_Config()
+	static inline void
+	LCD_Config()
 	{
-		using UserGlobal::lcd;
+		using Global::lcd;
 
 		RCC_t::APB2::enable(RCC_APB2Periph_SPI1);
 		RCC_t::AHB1::enable(
@@ -103,10 +139,12 @@ namespace MOS::BSP
 		        GPIO_t::get_pin_src(7),
 		        GPIO_AF_SPI1
 		    );
+
 		lcd.init();
 	}
 
-	static inline void RTC_Config()
+	static inline void
+	RTC_Config()
 	{
 		constexpr auto ASYHCHPREDIV = 0x7F;        // 异步分频因子
 		constexpr auto SYHCHPREDIV  = 0xFF;        // 同步分频因子
@@ -188,7 +226,8 @@ namespace MOS::BSP
 		}
 	}
 
-	static inline void config()
+	static inline void
+	config()
 	{
 		NVIC_GroupConfig();
 		USART_Config();
@@ -202,17 +241,19 @@ namespace MOS::BSP
 
 namespace MOS::ISR
 {
+	using namespace Kernel;
+
 	extern "C" {
 		void EXTI15_10_IRQHandler() // K1 IRQ Handler
 		{
 			using HAL::STM32F4xx::EXTI_t;
-			using UserGlobal::leds;
+			using User::Global::leds;
 			using Utils::Range;
 
 			// To simulate a burst task
-			static auto K1_IRQ = [] {
+			static auto k1_irq = [] {
 				for (auto _: Range(0, 10)) {
-					leds[2].toggle();
+					leds[2].toggle(); // blue
 					Task::print_name();
 					Task::delay(250);
 				}
@@ -222,7 +263,7 @@ namespace MOS::ISR
 				static uint32_t k1_cnt = 0;
 				MOS_MSG("K1 Cnt = %d", ++k1_cnt);
 				Task::create_from_isr(
-				    K1_IRQ,
+				    k1_irq,
 				    nullptr,
 				    Task::current()->get_pri(),
 				    "K1"
@@ -230,21 +271,40 @@ namespace MOS::ISR
 			});
 		}
 
-		void USART3_IRQHandler() // UART3 IRQ Handler
+		void USART2_IRQHandler() // ESP32C3 WiFi I/O
 		{
-			using UserGlobal::uart;
-			using UserGlobal::rx_buf;
+			using User::Global::esp32;
+			using User::Global::wifi_buf;
 
-			uart.handle_it(USART_IT_RXNE, [] {
-				if (!rx_buf.full()) {
-					char8_t data = uart.recv_data();
-					if (data == '\n') //  cmd received
-						rx_buf.signal_from_isr();
+			esp32.handle_it(USART_IT_RXNE, [] {
+				char8_t data = esp32.recv_data();
+				if (!wifi_buf.full()) {
+					if (data == '\n') // data received
+						wifi_buf.signal_from_isr();
 					else
-						rx_buf.add(data);
+						wifi_buf.add(data);
 				}
 				else {
-					rx_buf.clear();
+					wifi_buf.clear();
+				}
+			});
+		}
+
+		void USART3_IRQHandler() // Shell I/O
+		{
+			using User::Global::stdio;
+			using User::Global::io_buf;
+
+			stdio.handle_it(USART_IT_RXNE, [] {
+				char8_t data = stdio.recv_data();
+				if (!io_buf.full()) {
+					if (data == '\n') // cmd received
+						io_buf.signal_from_isr();
+					else
+						io_buf.add(data);
+				}
+				else {
+					io_buf.clear();
 					MOS_MSG("Oops! Command too long!");
 				}
 			});

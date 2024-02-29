@@ -11,7 +11,8 @@
 int main()
 {
 	using namespace MOS;
-	using UserGlobal::rx_buf;
+	using namespace Kernel;
+	using namespace User;
 
 	// Init hardware and clocks
 	BSP::config();
@@ -19,13 +20,18 @@ int main()
 	// Create Calendar with RTC
 	Task::create(App::Calendar, nullptr, 0, "Calendar");
 
-	// Create Shell with rx_buf
-	Task::create(Shell::launch, &rx_buf, 1, "Shell", 280);
+	// Create Shell with io_buf
+	Task::create(
+	    Shell::launch,
+	    &User::Global::io_buf,
+	    1, "Shell"
+	);
 
 	/* User Tasks */
 	Task::create(App::Task0, nullptr, 2, "T0");
 	// Task::create(App::GUI, nullptr, 3, "GUI", 256);
 	Task::create(App::LCD, nullptr, 3, "LCD");
+	Task::create(App::Wifi, nullptr, 3, "wifi");
 
 	/* Test examples */
 	// Test::MutexTest();

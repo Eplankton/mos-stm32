@@ -6,8 +6,9 @@
 #include "src/mos/kernel/ipc.hpp"
 #include "global.hpp"
 
-namespace MOS::Test
+namespace MOS::User::Test
 {
+	using namespace Kernel;
 	using namespace Utils;
 
 	void MutexTest()
@@ -40,7 +41,7 @@ namespace MOS::Test
 
 	void AsyncTest()
 	{
-		using UserGlobal::leds;
+		using Global::leds;
 
 		static auto T1 = [] {
 			for (auto _: Range(0, 20)) {
@@ -89,7 +90,7 @@ namespace MOS::Test
 				int msg  = -1;
 				auto res = msg_q.recv(msg, 100);
 
-				DisIntrGuard_t guard;
+				IntrGuard_t guard;
 				kprintf(res ? "" : "Timeout!\n");
 				// kprintf(res ? "%d\n" : "Timeout!\n", msg);
 			}
@@ -99,7 +100,7 @@ namespace MOS::Test
 			// Create a Consumer
 			Task::create(consumer, nullptr, 4, "recv");
 
-			// Data Sequences
+			// Mutable Data Sequences
 			static int data[] = {5, 6, 7, 8, 9};
 
 			// Create some Producers

@@ -15,7 +15,8 @@
 
 namespace MOS::Shell
 {
-	using Utils::DisIntrGuard_t;
+	using namespace Kernel;
+	using Utils::IntrGuard_t;
 	using Utils::strlen;
 	using Utils::strncmp;
 
@@ -35,7 +36,7 @@ namespace MOS::Shell
 		MOS_INLINE inline void
 		run(Argv_t argv) const { callback(argv); }
 
-		inline Argv_t match(Text_t str) const
+		Argv_t match(Text_t str) const
 		{
 			const auto xlen = len(); // The length of a command
 
@@ -53,14 +54,7 @@ namespace MOS::Shell
 			};
 
 			str = skip(str);
-
-			if (check(str)) {
-				// Return first argument
-				return skip(str + xlen);
-			}
-			else {
-				return nullptr;
-			}
+			return check(str) ? skip(str + xlen) : nullptr;
 		}
 	};
 
@@ -68,7 +62,8 @@ namespace MOS::Shell
 	{
 		using Argv_t = Command_t::Argv_t;
 
-		static inline void ls_cmd(Argv_t argv)
+		static inline void
+		ls_cmd(Argv_t argv)
 		{
 			auto name = argv;
 			if (*name != '\0') {
@@ -84,7 +79,8 @@ namespace MOS::Shell
 			}
 		}
 
-		static inline void kill_cmd(Argv_t argv)
+		static inline void
+		kill_cmd(Argv_t argv)
 		{
 			auto name = argv;
 			if (*name != '\0') {
@@ -101,7 +97,8 @@ namespace MOS::Shell
 			}
 		}
 
-		static inline void date_cmd(Argv_t argv)
+		static inline void
+		date_cmd(Argv_t argv)
 		{
 			if (auto tcb = Task::find("Calendar")) {
 				Task::resume(tcb);
@@ -111,9 +108,10 @@ namespace MOS::Shell
 			}
 		}
 
-		static inline void uname_cmd(Argv_t argv)
+		static inline void
+		uname_cmd(Argv_t argv)
 		{
-			DisIntrGuard_t guard;
+			IntrGuard_t guard;
 			kprintf(
 			    " A_A       _\n"
 			    "o'' )_____//  Version @ %s\n"
@@ -125,7 +123,8 @@ namespace MOS::Shell
 			);
 		}
 
-		static inline void reboot_cmd(Argv_t argv)
+		static inline void
+		reboot_cmd(Argv_t argv)
 		{
 			MOS_MSG("Reboot!\n\n");
 			MOS_REBOOT();
@@ -141,19 +140,21 @@ namespace MOS::Shell
 	    {"reboot", CmdCall::reboot_cmd},
 	};
 
-	using SyncRxBuf_t = DataType::SyncRxBuf_t<Macro::RX_BUF_SIZE>;
+	using SyncRxBuf_t = DataType::SyncRxBuf_t<16>;
 
 	void launch(SyncRxBuf_t& input)
 	{
 		using Text_t = Command_t::Text_t;
 
 		auto parser = [](Text_t str) {
-			for (const auto cmd: cmds) {
-				if (auto argv = cmd.match(str)) {
-					return cmd.run(argv);
+			if (str[0] != '\0') {
+				for (auto& cmd: cmds) {
+					if (auto argv = cmd.match(str)) {
+						return cmd.run(argv);
+					}
 				}
+				MOS_MSG("Unknown command '%s'", str);
 			}
-			MOS_MSG("Unknown command '%s'", str);
 		};
 
 		CmdCall::uname_cmd(nullptr);

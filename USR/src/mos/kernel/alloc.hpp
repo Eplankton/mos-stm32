@@ -4,9 +4,9 @@
 // #include <stdlib.h>
 #include "global.hpp"
 
-namespace MOS::Alloc
+namespace MOS::Kernel::Alloc
 {
-	using Utils::DisIntrGuard_t;
+	using Utils::IntrGuard_t;
 	using Page_t    = DataType::Page_t;
 	using PageRaw_t = Page_t::Raw_t;
 	using PgSz_t    = Page_t::Size_t;
@@ -17,19 +17,19 @@ namespace MOS::Alloc
 	inline PageRaw_t // -1(0xFFFFFFFF) as invalid
 	palloc(Page_t::Policy policy, PgSz_t pg_sz = -1)
 	{
-		DisIntrGuard_t guard;
+		IntrGuard_t guard;
 		switch (policy) {
 			case POOL: {
-				using KernelGlobal::page_pool;
+				using Global::page_pool;
 
 				// Whether a page is unused
 				auto unused = [](PageRaw_t raw) {
 					auto ptr = (void*) raw[0]; // ptr = tcb.link.prev
-					return ptr == nullptr ||   // Uninit-> first alloc
-					       ptr == raw;         // Deinit-> tcb.link is self-linked
+					return ptr == nullptr ||   // Uninit -> first alloc
+					       ptr == raw;         // Deinit -> tcb is self-linked
 				};
 
-				for (auto raw: page_pool) {
+				for (const auto raw: page_pool) {
 					if (unused(raw)) {
 						return raw;
 					}

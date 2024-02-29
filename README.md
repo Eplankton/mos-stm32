@@ -27,7 +27,7 @@ src
 ├── mos
 │   ├── config.h             System Configuration
 │   ├── arch                 Arch-related
-│   │   └── cpu.hpp          asm for context_switch
+│   │   └── cpu.hpp          asm for init/context_switch
 │   │
 │   ├── kernel               Kernel(Arch-independent)
 │   │   ├── macro.hpp        Kernel Constant Macros
@@ -36,7 +36,7 @@ src
 │   │   ├── data_type.hpp    Basic Data Structures
 │   │   ├── alloc.hpp        Static/Dynamic Allocator
 │   │   ├── global.hpp       Kernel Globals
-│   │   ├── printf.c         Thread-safe printf
+│   │   ├── printf.c         Thread-safe printf (by mpaland)
 │   │   ├── task.hpp         Task control
 │   │   ├── sync.hpp         Sync primitives
 │   │   ├── scheduler.hpp    Scheduler and Policy
@@ -89,27 +89,25 @@ src
 #include "drivers/device/led.hpp"
 ```
 ```C++
-namespace MOS::UserGlobal
+namespace MOS::User::Global
 {
     using namespace HAL::STM32F4xx;
     using namespace Driver::Device;
     using namespace DataType;
 
-    // Serial Input/Output
-    auto& uart = STM32F4xx::convert(USARTx);
-
-    // Shell Rx Buffer
-    DataType::SyncRxBuf_t rx_buf;
+    // Shell I/O UART and Buffer
+    auto& stdio = STM32F4xx::convert(USARTx);
+    DataType::SyncRxBuf_t<16> io_buf;
 
     // LED red, green, blue
     Device::LED_t leds[] = {...};
 }
 ```
 ```C++
-namespace MOS::BSP
+namespace MOS::User::BSP
 {
     using namespace Driver;
-    using namespace UserGlobal;
+    using namespace Global;
 
     void LED_Config()
     {
@@ -121,11 +119,11 @@ namespace MOS::BSP
     void USART_Config()
     {
         // Simplified
-        uart.init(9600-8-1-N)
-            .rx_config(PXa) // RX -> PXa
-            .tx_config(PYb) // TX -> PYb
-            .it_enable(RXNE) // Enable RXNE interrupt
-            .enable();
+        stdio.init(9600-8-1-N)
+             .rx_config(PXa) // RX -> PXa
+             .tx_config(PYb) // TX -> PYb
+             .it_enable(RXNE) // Enable RXNE interrupt
+             .enable();
     }
 
     void config()
@@ -137,13 +135,13 @@ namespace MOS::BSP
 }
 ```
 ```C++
-namespace MOS::App
+namespace MOS::User::App
 {
     Sync::Barrier_t bar {2};
 
     void Task1()
     {
-        using UserGlobal::leds;
+        using Global::leds;
         bar.wait();
         for (auto _: Range(0, 20)) {
            leds[1].toggle(); // green
@@ -154,7 +152,7 @@ namespace MOS::App
 
     void Task0()
     {
-        using UserGlobal::leds;
+        using Global::leds;
         Task::create(Task1, nullptr, 1, "T1");
         bar.wait();
         while (true) {
@@ -168,16 +166,18 @@ namespace MOS::App
 int main()
 {
     using namespace MOS;
-    using UserGlobal::rx_buf;
+    using namespace Kernel;
+    using namespace User;
 
     // Init hardware and clocks
     BSP::config();
 
-    // Create Shell with rx_buf
-    Task::create(Shell::launch, &rx_buf, 1, "Shell");
+    // Create Shell with io_buf
+    Task::create(Shell::launch, &io_buf, 1, "Shell");
     
     /* User Tasks */
     Task::create(App::Task0, nullptr, 2, "T0");
+    ...
 
     /* Test examples */
     Test::MutexTest();
@@ -245,27 +245,30 @@ o'' )_____//   Version @ x.x.x(...)
 
 ✅ Done
 1. Tids from BitMap_t
-2. (Experimental) Task::Async::{Future_t, async}
+2. (Experimental) Task::Async::{Future_t, async/await}
 3. IPC::MsgQueue_t, Message Queue
 4. Task::create allows generic fn signature as /* void fn(auto argv) */ with type check
+5. Add ESP32C3 as WiFi Module
+6. (Experimental) Introduce <stdatomic.h>
 
 📌 Plan
 1. IPC::pipe/channel
 2. Soft/Hardware Timers
-3. Basic formal verification on Scheduler
+3. Basic Formal Verification on Scheduler
 4. DMA_t Driver
 5. More scheduler algorithms
 6. FPU support
 7. Result<T, E>, Option<T>
+8. Simple File System
 ```
 
 ### References 🛸
-1. [How to build a Real-Time Operating System(RTOS)](https://medium.com/@dheeptuck/building-a-real-time-operating-system-rtos-ground-up-a70640c64e93)
-2. [PeriodicScheduler_Semaphore](https://github.com/Dungyichao/PeriodicScheduler_Semaphore)
-3. [STM32F4-LCD_ST7735s](https://github.com/Dungyichao/STM32F4-LCD_ST7735s)
-4. [A printf/sprintf Implementation for Embedded Systems](https://github.com/mpaland/printf)
-5. [GuiLite](https://github.com/idea4good/GuiLite)
-6. [STMViewer](https://github.com/klonyyy/STMViewer)
+- [How to build a Real-Time Operating System(RTOS)](https://medium.com/@dheeptuck/building-a-real-time-operating-system-rtos-ground-up-a70640c64e93)
+- [PeriodicScheduler_Semaphore](https://github.com/Dungyichao/PeriodicScheduler_Semaphore)
+- [STM32F4-LCD_ST7735s](https://github.com/Dungyichao/STM32F4-LCD_ST7735s)
+- [A printf/sprintf Implementation for Embedded Systems](https://github.com/mpaland/printf)
+- [GuiLite](https://github.com/idea4good/GuiLite)
+- [STMViewer](https://github.com/klonyyy/STMViewer)
 
 ```
 Wake up, Neo...

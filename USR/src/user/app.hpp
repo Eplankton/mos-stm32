@@ -1,23 +1,27 @@
 #ifndef _MOS_USER_APP_
 #define _MOS_USER_APP_
 
+// Import Kernel Module
+#include "src/mos/kernel.hpp"
+
+#include "src/user/global.hpp"
+#include "src/user/gui/GuiLite.h"
+
 // GIFs
 #include "src/user/img/face_gif/frames.h"
 #include "src/user/img/mac_gif/frames.h"
 #include "src/user/img/cat_gif/frames.h"
 
-#include "src/mos/kernel.hpp"
-#include "src/user/global.hpp"
-#include "src/user/gui/GuiLite.h"
-
-namespace MOS::App
+namespace MOS::User::App
 {
 	using namespace Utils;
+	using namespace Kernel;
+
 	using Color = Driver::Device::ST7735S_t::Color;
 
 	namespace Gui
 	{
-		using UserGlobal::lcd;
+		using Global::lcd;
 
 		extern "C" void
 		gui_delay_ms(uint32_t ms) { Task::delay(ms); }
@@ -58,13 +62,16 @@ namespace MOS::App
 	{
 		using namespace Gui;
 		EXTERNAL_GFX_OP gfx_op {gfx_draw_pixel, nullptr};
-		startHello3D(nullptr, lcd.width, lcd.height, 1, &gfx_op);
+		startHello3D(
+		    nullptr, lcd.width, lcd.height,
+		    1, &gfx_op
+		);
 	}
 
 	void LCD()
 	{
 		using Sync::Mutex_t;
-		using UserGlobal::lcd;
+		using Global::lcd;
 
 		// A mutex wrapper of lcd
 		static Mutex_t lcd_mtx {lcd};
@@ -73,9 +80,7 @@ namespace MOS::App
 			while (true) {
 				for (auto frame: cat_gif) {
 					lcd_mtx.lock().get().draw_img(
-					    0, 0,
-					    128, 128,
-					    frame
+					    0, 0, 128, 128, frame
 					);
 					Task::delay(25);
 				}
@@ -92,11 +97,9 @@ namespace MOS::App
 			while (true) {
 				for (auto color: rgb) {
 					lcd_mtx.lock().get().show_str(
-					    0, 128,
-					    "Hello, World!",
-					    color
+					    5, 132, "hello, world!", color
 					);
-					Task::delay(125);
+					Task::delay(250);
 				}
 			}
 		};
@@ -111,7 +114,7 @@ namespace MOS::App
 		using HAL::STM32F4xx::RTC_t;
 
 		auto print_rtc_info = [] {
-			DisIntrGuard_t guard;
+			IntrGuard_t guard;
 			const auto date = RTC_t::get_date();
 			const auto time = RTC_t::get_time();
 			MOS_MSG(
@@ -128,13 +131,12 @@ namespace MOS::App
 		}
 	}
 
-	Sync::Barrier_t bar {2};
-
 	// MOS_DEBUG_INFO bool f0 = 0, f1 = 0;
+	Sync::Barrier_t bar {2};
 
 	void Task1()
 	{
-		using UserGlobal::leds;
+		using Global::leds;
 		bar.wait();
 		for (auto _: Range(0, 20)) {
 			// f1 = !f1;
@@ -146,13 +148,26 @@ namespace MOS::App
 
 	void Task0()
 	{
-		using UserGlobal::leds;
+		using Global::leds;
 		Task::create(Task1, nullptr, 1, "T1");
 		bar.wait();
 		while (true) {
 			// f0 = !f0;
 			leds[0].toggle();
 			Task::delay(500);
+		}
+	}
+
+	void Wifi()
+	{
+		using Global::wifi_buf;
+		while (true) {
+			wifi_buf.wait();
+			auto rx = wifi_buf.as_str();
+			if (atoi(rx) % 10 == 0) {
+				kprintf("[esp32] -> %s\n", rx);
+			}
+			wifi_buf.clear();
 		}
 	}
 }

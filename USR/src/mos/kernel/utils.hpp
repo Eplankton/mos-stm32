@@ -13,12 +13,17 @@
 #define MOS_FLATTEN   __attribute__((flatten))
 #define MOS_INLINE    __attribute__((always_inline))
 #define MOS_NO_INLINE __attribute__((noinline))
+#define MOS_NAKED     __attribute__((naked))
+#define MOS_USED      __attribute__((used))
+#define MOS_PACKED    __attribute__((packed))
 
 #if (MOS_CONF_PRINTF)
 #include "printf.h"
+#define MOS_PUTCHAR          _putchar
 #define kprintf(format, ...) printf_(format, ##__VA_ARGS__)
 #define MOS_MSG(format, ...) kprintf("[MOS]: " format "\n", ##__VA_ARGS__)
 #else
+#define MOS_PUTCHAR          ((void) 0)
 #define kprintf(format, ...) ((void) 0)
 #define MOS_MSG(format, ...) ((void) 0)
 #endif
@@ -32,7 +37,7 @@ mos_assert_failed(void* file, uint32_t line, const char* msg)
 {
 	MOS_MSG("%s, %d: %s", file, line, msg);
 	while (true) {
-		asm volatile("");
+		MOS_NOP();
 	}
 }
 
@@ -46,7 +51,7 @@ namespace MOS::Utils
 	portable_delay(volatile uint32_t n)
 	{
 		while (n--) {
-			asm volatile("");
+			MOS_NOP();
 		}
 	}
 
@@ -72,10 +77,7 @@ namespace MOS::Utils
 	}
 
 	inline int
-	strcmp(
-	    const char* str1,
-	    const char* str2
-	) noexcept
+	strcmp(const char* str1, const char* str2) noexcept
 	{
 		while (*str1 && (*str1 == *str2)) {
 			++str1;
@@ -86,8 +88,7 @@ namespace MOS::Utils
 
 	inline int
 	strncmp(
-	    const char* str1,
-	    const char* str2, size_t n
+	    const char* str1, const char* str2, size_t n
 	) noexcept
 	{
 		for (size_t i = 0; i < n; i++) {
@@ -126,8 +127,9 @@ namespace MOS::Utils
 		const Raw_t st, ed, n;
 
 		MOS_INLINE
-		inline Range(Raw_t _st, Raw_t _ed, Raw_t _n = 1)
-		    : st(_st), ed(_ed), n(_n) {}
+		inline Range(
+		    Raw_t _st, Raw_t _ed, Raw_t _n = 1
+		): st(_st), ed(_ed), n(_n) {}
 
 		struct Iter_t
 		{
@@ -165,13 +167,29 @@ namespace MOS::Utils
 		rend() const { return {st - n, -n}; }
 	};
 
-	struct DisIntrGuard_t
+	// Enter/Exit Global Critical Section
+	struct IntrGuard_t
 	{
-		MOS_INLINE
-		inline DisIntrGuard_t() { MOS_DISABLE_IRQ(); }
+		using NestCnt_t = volatile int32_t;
 
 		MOS_INLINE
-		inline ~DisIntrGuard_t() { MOS_ENABLE_IRQ(); }
+		inline IntrGuard_t()
+		{
+			MOS_DISABLE_IRQ();
+			cnt += 1;
+		}
+
+		MOS_INLINE
+		inline ~IntrGuard_t()
+		{
+			cnt -= 1;
+			if (cnt <= 0) {
+				MOS_ENABLE_IRQ();
+			}
+		}
+
+	private:
+		static inline NestCnt_t cnt = 0;
 	};
 
 	template <typename T>

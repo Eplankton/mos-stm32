@@ -47,7 +47,7 @@
         "clangd.arguments": [
             "--header-insertion=never"
         ],
-        "clangd.path": "c:\\Users\\Wike Chao\\AppData\\Roaming\\Code\\User\\globalStorage\\llvm-vs-code-extensions.vscode-clangd\\install\\17.0.3\\clangd_17.0.3\\bin\\clangd.exe",
+        "clangd.path": "C:\\Program Files (x86)\\LLVM\\bin\\clangd.exe",
         "editor.inlayHints.enabled": "offUnlessPressed",
         "editor.inlayHints.padding": true,
         "EIDE.ARM.GCC.InstallDirectory": "C:\\Program Files (x86)\\Arm-GNU-Toolchain\\12.2",

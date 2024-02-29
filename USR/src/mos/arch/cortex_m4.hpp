@@ -5,7 +5,9 @@
 #include "core_cm4.h"
 
 #define MOS_REBOOT()              NVIC_SystemReset()
+#define MOS_TRIGGER_SVC_INTR()    asm volatile("SVC      0")
 #define MOS_TRIGGER_PENDSV_INTR() SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk
+#define MOS_SVC_HANDLER           SVC_Handler
 #define MOS_PENDSV_HANDLER        PendSV_Handler
 #define MOS_SYSTICK_HANDLER       SysTick_Handler
 #define MOS_TEST_IRQ()            __get_PRIMASK() == 0
@@ -15,55 +17,36 @@
 #define MOS_DSB()                 __DSB()
 #define MOS_ISB()                 __ISB()
 
-#define ARCH_INIT_ASM                                                               \
-	"CPSID   I\n"            /* Disable irq to enter critical section */            \
-	"LDR     R0, =cur_tcb\n" /* R0 contains the address of cur_tcb */               \
-	"LDR     R2, [R0]\n"     /* R2 contains the address in cur_tcb */               \
-	"LDR     R4, [R2,#8]\n"  /* Load the SP reg with the stacked SP value */        \
-	"MOV     SP, R4\n"       /* Move SP to R4 */                                    \
-	"POP     {R4-R7}\n"      /* Pop registers R8-R11(user saved context) */         \
-	"MOV     R8, R4\n"       /* Move R4-R7 to R8-R11 */                             \
-	"MOV     R9, R5\n"                                                              \
-	"MOV     R10, R6\n"                                                             \
-	"MOV     R11, R7\n"                                                             \
-	"POP     {R4-R7}\n"  /* Pop registers R4-R7(user saved context) */              \
-	"POP     {R0-R3}\n"  /* Start poping the stacked exception frame. */            \
-	"ADD     SP,SP,#4\n" /* Skip R12 */                                             \
-	"POP     {LR}\n"     /* Pop the saved LR */                                     \
-	"POP     {R4}\n"     /* Pop the saved PC into R4 to jump into the first task */ \
-	"ADD     SP,SP,#4\n" /* Skip xPSR */                                            \
-	"CPSIE   I\n"        /* Enable irq to leave critical section */                 \
-	"BX      R4\n"       /* Branch instruction to exit this routine. */
+// From FreeRTOS -> https://www.freertos.org
+#define ARCH_INIT_ASM                                                        \
+	"CPSID   I\n" /* Disable interrupts */                                   \
+	"LDR     R3, =cur_tcb\n"                                                 \
+	"LDR     R1, [R3]\n"                                                     \
+	"LDR     R0, [R1,#8]\n"   /* R0 = cur_tcb.sp */                          \
+	"LDMIA   R0!, {R4-R11}\n" /* Pop registers R4-R11(user saved context) */ \
+	"MSR     PSP, R0\n"       /* PSP = cur_tcb.sp(new) */                    \
+	"MOV     R0, #0\n"                                                       \
+	"ORR     LR, #0xD\n" /* Enter Thread Mode: 0xFFFF'FFFD */                \
+	"CPSIE   I\n"        /* Enable interrupts */                             \
+	"BX      LR\n"
 
-#define ARCH_CONTEXT_SWITCH_ASM                                                                                          \
-	"CPSID   I\n"       /* Disable interrupts */                                                                         \
-	"PUSH    {R4-R7}\n" /* Push registers R4-R7 */                                                                       \
-	"MOV     R4, R8\n"  /* Push registers R8-R11 */                                                                      \
-	"MOV     R5, R9\n"                                                                                                   \
-	"MOV     R6, R10\n"                                                                                                  \
-	"MOV     R7, R11\n"                                                                                                  \
-	"PUSH    {R4-R7}\n"                                                                                                  \
-	"LDR     R0, =cur_tcb\n" /* R0 = &cur_tcb */                                                                         \
-	"LDR     R1, [R0]\n"     /* R1 = *R0 = cur_tcb */                                                                    \
-	"MOV     R4, SP\n"       /* R4 = SP */                                                                               \
-	"STR     R4, [R1,#8]\n"  /* Store the value of the stack pointer (copied to R4) to cur_tcb.sp */                     \
-	""                       /* The process of saving the context of the current task ends here */                       \
-	""                       /* Step 2: Update cur_tcb, load the new task context from its stack to the CPU registers */ \
-	"PUSH    {LR}\n"         /* Save the context values of R0, LR */                                                     \
-	"BL      next_tcb\n"     /* Choose next tcb to schedule */                                                           \
-	"POP     {LR}\n"         /* Restore the values of LR */                                                              \
-	"LDR     R0, =cur_tcb\n" /* Reload cur_tcb */                                                                        \
-	"LDR     R1, [R0]\n"                                                                                                 \
-	"LDR     R4, [R1,#8]\n" /* Load the content of next task's sp */                                                     \
-	"MOV     SP, R4\n"      /* Use R4 to load the new task's sp to SP */                                                 \
-	"POP     {R4-R7}\n"     /* Pop registers R8-R11 */                                                                   \
-	"MOV     R8, R4\n"                                                                                                   \
-	"MOV     R9, R5\n"                                                                                                   \
-	"MOV     R10, R6\n"                                                                                                  \
-	"MOV     R11, R7\n"                                                                                                  \
-	"POP     {R4-R7}\n" /* Pop registers R4-R7 */                                                                        \
-	"CPSIE   I\n"       /* Enable interrupts */                                                                          \
-	"BX      LR"        /* Return from interrupt */
+// From FreeRTOS -> https://www.freertos.org
+#define ARCH_CONTEXT_SWITCH_ASM                          \
+	"CPSID   I\n" /* Disable interrupts */               \
+	"MRS     R0, PSP\n"                                  \
+	"LDR     R3, =cur_tcb\n"                             \
+	"LDR     R2, [R3]\n"                                 \
+	"STMDB   R0!, {R4-R11}\n" /* Save core registers. */ \
+	"STR     R0, [R2,#8]\n"   /* Get cur_tcb.sp */       \
+	"STMDB   SP!, {R3,LR}\n"                             \
+	"BL      next_tcb\n"                                 \
+	"ldmia   SP!, {R3,LR}\n"                             \
+	"LDR     R1, [R3]\n"                                 \
+	"LDR     R0, [R1,#8]\n"   /* Get cur_tcb.sp(new) */  \
+	"LDMIA   R0!, {R4-R11}\n" /* Pop core registers. */  \
+	"MSR     PSP, R0\n"                                  \
+	"CPSIE   I\n" /* Enable interrupts */                \
+	"BX      LR\n"
 
 #define ARCH_JUMP_TO_CONTEXT_SWITCH "B    context_switch"
 

@@ -4,7 +4,7 @@
 #include "../arch/cpu.hpp"
 #include "task.hpp"
 
-namespace MOS::Scheduler
+namespace MOS::Kernel::Scheduler
 {
 	enum class SchedStatus : bool
 	{
@@ -28,8 +28,7 @@ namespace MOS::Scheduler
 		PreemptPri,
 	};
 
-	using namespace Macro;
-	using namespace KernelGlobal;
+	using namespace Global;
 
 	using DataType::TCB_t;
 	using TcbPtr_t = TCB_t::TcbPtr_t;
@@ -43,29 +42,56 @@ namespace MOS::Scheduler
 	is_ready() { return sched_status == SchedStatus::OK; }
 
 	// This will execute only once for the first task
-	__attribute__((naked)) inline void
-	init()
-	{
-		asm volatile(ARCH_INIT_ASM);
-	}
+	MOS_NAKED inline void
+	init() { MOS_TRIGGER_SVC_INTR(); }
 
 	// Don't change this name which used in asm("")
-	extern "C" __attribute__((naked, used)) inline void
+	extern "C" MOS_USED MOS_NAKED inline void
 	context_switch(void)
 	{
 		asm volatile(ARCH_CONTEXT_SWITCH_ASM);
+
+		// asm volatile("CPSID   I"); /* Disable interrupts */
+
+		// asm volatile("MRS     R0, PSP");
+		// asm volatile("LDR     R3, =cur_tcb");
+		// asm volatile("LDR     R2, [R3]");
+
+		// // asm volatile("tst r14, #0x10                  \n" /* Is using FPU context? */
+		// //              "it eq                           \n"
+		// //              "vstmdbeq r0!, {s16-s31}         \n");
+
+		// asm volatile("STMDB   R0!, {R4-R11}"); /* Save core registers. */
+		// asm volatile("STR     R0, [R2,#8]");   /* Get tcb.sp */
+
+		// asm volatile("STMDB   SP!, {R3,LR}");
+		// asm volatile("BL      next_tcb");
+		// asm volatile("ldmia   SP!, {R3,LR}");
+
+		// asm volatile("LDR     R1, [R3]");
+		// asm volatile("LDR     R0, [R1,#8]");   /* Get tcb.sp */
+		// asm volatile("LDMIA   R0!, {R4-R11}"); /* Pop core registers. */
+
+		// // asm volatile("tst r14, #0x10         \n" /* Is using FPU context? */
+		// //              "it eq                  \n"
+		// //              "vldmiaeq r0!, {s16-s31}");
+
+		// asm volatile("MSR     PSP, R0");
+
+		// asm volatile("CPSIE   I"); /* Enable interrupts */
+		// asm volatile("BX      LR");
 	}
 
 	// Start scheduling
 	static inline void
 	launch(Fn_t hook = nullptr)
 	{
-		static uint32_t idle_pb[PAGE_SIZE];
+		static uint32_t idle_page_block[PAGE_SIZE / 2];
 
-		Page_t idle_pg {
+		Page_t idle_page {
 		    .policy = Page_t::Policy::STATIC,
-		    .raw    = idle_pb,
-		    .size   = PAGE_SIZE,
+		    .raw    = idle_page_block,
+		    .size   = sizeof(idle_page_block) / sizeof(uint32_t),
 		};
 
 		// Default idle can be replaced by user-defined hook
@@ -78,10 +104,8 @@ namespace MOS::Scheduler
 		// Create idle task with hook
 		Task::create(
 		    hook ? hook : idle,
-		    nullptr,
-		    PRI_MIN,
-		    "idle",
-		    idle_pg
+		    nullptr, PRI_MIN,
+		    "idle", idle_page
 		);
 
 		MOS_ASSERT(!ready_list.empty(), "Launch Failed!");
@@ -159,7 +183,7 @@ namespace MOS::Scheduler
 	}
 
 	// Don't change this function name used in asm("")
-	extern "C" __attribute__((used, always_inline)) inline void
+	extern "C" MOS_USED MOS_INLINE inline void
 	next_tcb()
 	{
 		next_tcb<Policy::MOS_CONF_SCHED_POLICY>();
@@ -168,21 +192,30 @@ namespace MOS::Scheduler
 
 namespace MOS::ISR
 {
-	using Utils::DisIntrGuard_t;
+	extern "C" {
+		MOS_NAKED void
+		MOS_SVC_HANDLER()
+		{
+			asm volatile(ARCH_INIT_ASM);
+		};
 
-	extern "C" __attribute__((naked)) void
-	MOS_PENDSV_HANDLER()
-	{
-		asm volatile(ARCH_JUMP_TO_CONTEXT_SWITCH);
-	}
+		MOS_NAKED void
+		MOS_PENDSV_HANDLER()
+		{
+			asm volatile(ARCH_JUMP_TO_CONTEXT_SWITCH);
+		}
 
-	extern "C" void
-	MOS_SYSTICK_HANDLER()
-	{
-		DisIntrGuard_t guard;
-		Task::inc_ticks();
-		if (Scheduler::is_ready()) {
-			return Task::nop_and_yield();
+		void MOS_SYSTICK_HANDLER()
+		{
+			using namespace Kernel;
+			using Utils::IntrGuard_t;
+
+			IntrGuard_t guard;
+			Task::inc_ticks();
+			if (Scheduler::is_ready()) {
+				Task::dec_tmslc();
+				return Task::yield();
+			}
 		}
 	}
 }

@@ -11,19 +11,19 @@
 // Buffer
 #include "src/mos/kernel/data_type/buffer.hpp"
 
-namespace MOS::UserGlobal
+namespace MOS::User::Global
 {
 	using namespace HAL::STM32F4xx;
 	using namespace Driver::Device;
 	using namespace DataType;
 
-	using SyncRxBuf_t = SyncRxBuf_t<Macro::RX_BUF_SIZE>;
+	// Serial Input/Output UART
+	auto& stdio = convert(USART3);
+	SyncRxBuf_t<16> io_buf;
 
-	// Serial Input/Output
-	auto& uart = convert(USART3);
-
-	// Sync Rx Buffer
-	SyncRxBuf_t rx_buf;
+	// ESP32C3 WiFi Module UART
+	auto& esp32 = convert(USART2);
+	SyncRxBuf_t<8> wifi_buf;
 
 	// RGB LEDs
 	LED_t leds[] = {

@@ -15,16 +15,19 @@ namespace MOS::DataType
 		SelfPtr_t prev = this, next = this;
 	};
 
-	using Concepts::Invocable;
+	namespace // private cmp checker
+	{
+		using Concepts::Invocable;
 
-	template <typename Fn, typename Ret = void>
-	concept ListIterFn = Invocable<Fn, Ret, const ListNode_t&>;
+		template <typename Fn, typename Ret = void>
+		concept ListIterFn = Invocable<Fn, Ret, const ListNode_t&>;
 
-	template <typename Fn, typename Ret = void>
-	concept ListIterMutFn = Invocable<Fn, Ret, ListNode_t&>;
+		template <typename Fn, typename Ret = void>
+		concept ListIterMutFn = Invocable<Fn, Ret, ListNode_t&>;
 
-	template <typename Fn>
-	concept NodeCmpFn = Invocable<Fn, bool, const ListNode_t&, const ListNode_t&>;
+		template <typename Fn>
+		concept NodeCmpFn = Invocable<Fn, bool, const ListNode_t&, const ListNode_t&>;
+	}
 
 	using List_t = struct ListImpl_t
 	{

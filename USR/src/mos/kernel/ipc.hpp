@@ -4,7 +4,7 @@
 #include "data_type/queue.hpp"
 #include "task.hpp"
 
-namespace MOS::IPC
+namespace MOS::Kernel::IPC
 {
 	using namespace Macro;
 	using namespace Utils;
@@ -59,8 +59,8 @@ namespace MOS::IPC
 		}
 
 	private:
-		Raw_t raw;
 		EventList_t senders, receivers;
+		Raw_t raw;
 
 		MOS_INLINE static constexpr inline auto
 		into_tcb(ConstNodePtr_t event)
@@ -68,9 +68,10 @@ namespace MOS::IPC
 			return container_of(event, TCB_t, event);
 		}
 
-		bool check_for(EventList_t& src)
+		static bool
+		check_for(EventList_t& src)
 		{
-			DisIntrGuard_t guard;
+			IntrGuard_t guard;
 			auto cur = Task::current();
 			if (cur->in_event()) {
 				// If still in event-linked
@@ -81,7 +82,8 @@ namespace MOS::IPC
 			return true;
 		}
 
-		bool block_to(EventList_t& dest, Tick_t timeout)
+		static bool
+		block_to(EventList_t& dest, Tick_t timeout)
 		{
 			// Priority & WakePoint Compare
 			auto pri_wkpt_cmp =
@@ -95,7 +97,7 @@ namespace MOS::IPC
 			    };
 
 			{
-				DisIntrGuard_t guard;
+				IntrGuard_t guard;
 				dest.insert_in_order(
 				    Task::current()->event,
 				    pri_wkpt_cmp
@@ -109,14 +111,15 @@ namespace MOS::IPC
 			return check_for(dest);
 		}
 
-		void try_wake_up(EventList_t& src)
+		static void
+		try_wake_up(EventList_t& src)
 		{
 			auto wake_up = [&](NodePtr_t event) {
 				Task::wake_raw(into_tcb(event));
 				src.remove(*event);
 			};
 
-			DisIntrGuard_t guard;
+			IntrGuard_t guard;
 			if (!src.empty()) {
 				wake_up(src.begin());
 				if (Task::higher_exists()) {
