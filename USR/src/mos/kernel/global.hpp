@@ -1,7 +1,6 @@
 #ifndef _MOS_KERNEL_GLOBAL_
 #define _MOS_KERNEL_GLOBAL_
 
-#include "macro.hpp"
 #include "data_type/tcb.hpp"
 #include "data_type/bitmap.hpp"
 

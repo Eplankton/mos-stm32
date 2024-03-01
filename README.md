@@ -168,12 +168,13 @@ int main()
     using namespace MOS;
     using namespace Kernel;
     using namespace User;
+    namespace UG = User::Global;
 
     // Init hardware and clocks
     BSP::config();
 
     // Create Shell with io_buf
-    Task::create(Shell::launch, &io_buf, 1, "Shell");
+    Task::create(Shell::launch, &UG::io_buf, 1, "Shell");
     
     /* User Tasks */
     Task::create(App::Task0, nullptr, 2, "T0");

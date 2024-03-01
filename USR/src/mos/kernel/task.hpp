@@ -146,7 +146,7 @@ namespace MOS::Kernel::Task
 		// Set the stacked PC
 		tcb->set_pc((uint32_t) tcb->fn);
 
-		// Call terminate(current()) automatically
+		// Call terminate() automatically
 		tcb->set_lr((uint32_t) exit);
 
 		// Set arguments
@@ -228,19 +228,19 @@ namespace MOS::Kernel::Task
 		         pri, name, page
 		     );
 
-		// Load empty context
+		// Load Context
 		setup_context(tcb);
 
-		// Give Tid
+		// Set Tid
 		tcb->set_tid(tid_alloc());
 
 		// Set Time Stamp
 		tcb->set_stamp(os_ticks);
 
-		// Set parent
+		// Set Parent
 		tcb->set_parent(cur);
 
-		// Set tcb to be READY
+		// Set tcb into READY
 		tcb->set_status(READY);
 
 		// Add to ready_list

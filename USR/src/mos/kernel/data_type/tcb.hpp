@@ -42,10 +42,10 @@ namespace MOS::DataType
 		StackPtr_t sp = nullptr;
 
 		// Add more members here
+		Status status   = TERMINATED;
+		Tid_t tid       = -1;
 		Page_t page     = {ERROR, nullptr, 0};
 		TcbPtr_t parent = nullptr;
-		Tid_t tid       = -1;
-		Status status   = TERMINATED;
 
 		Tick_t time_slice = TIME_SLICE,
 		       wake_point = -1,
@@ -307,10 +307,10 @@ namespace MOS::DataType
 		using List_t::size;
 		using List_t::empty;
 
-		MOS_INLINE inline TcbPtr_t
+		MOS_INLINE inline auto
 		begin() const { return (TcbPtr_t) List_t::begin(); }
 
-		MOS_INLINE inline TcbPtr_t
+		MOS_INLINE inline auto
 		end() const { return (TcbPtr_t) List_t::end(); }
 
 		MOS_INLINE inline void

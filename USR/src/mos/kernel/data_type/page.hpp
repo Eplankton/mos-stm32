@@ -5,7 +5,7 @@
 
 namespace MOS::DataType
 {
-	struct Page_t
+	struct MOS_PACKED Page_t
 	{
 		using Word_t = uint32_t;
 		using Raw_t  = Word_t*;

@@ -140,7 +140,8 @@ namespace MOS::Shell
 	    {"reboot", CmdCall::reboot_cmd},
 	};
 
-	using SyncRxBuf_t = DataType::SyncRxBuf_t<16>;
+	using SyncRxBuf_t =
+	    DataType::SyncRxBuf_t<Macro::SHELL_BUF_SIZE>;
 
 	void launch(SyncRxBuf_t& input)
 	{

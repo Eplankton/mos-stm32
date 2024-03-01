@@ -19,7 +19,7 @@ namespace MOS::User::Global
 
 	// Serial Input/Output UART
 	auto& stdio = convert(USART3);
-	SyncRxBuf_t<16> io_buf;
+	SyncRxBuf_t<SHELL_BUF_SIZE> io_buf;
 
 	// ESP32C3 WiFi Module UART
 	auto& esp32 = convert(USART2);

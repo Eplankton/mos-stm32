@@ -241,17 +241,37 @@ namespace MOS::User::BSP
 
 namespace MOS::ISR
 {
-	using namespace Kernel;
+	template <size_t N>
+	MOS_INLINE static inline void
+	sync_uart_recv(
+	    HAL::STM32F4xx::USART_t& uart,
+	    DataType::SyncRxBuf_t<N>& buf,
+	    auto&& oops
+	)
+	{
+		char8_t data = uart.recv_data();
+		if (!buf.full()) {
+			if (data == '\n') // data received
+				buf.signal_from_isr();
+			else
+				buf.add(data);
+		}
+		else {
+			buf.clear();
+			oops();
+		}
+	}
 
 	extern "C" {
 		void EXTI15_10_IRQHandler() // K1 IRQ Handler
 		{
+			using namespace Kernel;
 			using HAL::STM32F4xx::EXTI_t;
 			using User::Global::leds;
 			using Utils::Range;
 
 			// To simulate a burst task
-			static auto k1_irq = [] {
+			static auto k1_burst = [] {
 				for (auto _: Range(0, 10)) {
 					leds[2].toggle(); // blue
 					Task::print_name();
@@ -263,7 +283,7 @@ namespace MOS::ISR
 				static uint32_t k1_cnt = 0;
 				MOS_MSG("K1 Cnt = %d", ++k1_cnt);
 				Task::create_from_isr(
-				    k1_irq,
+				    k1_burst,
 				    nullptr,
 				    Task::current()->get_pri(),
 				    "K1"
@@ -271,22 +291,13 @@ namespace MOS::ISR
 			});
 		}
 
-		void USART2_IRQHandler() // ESP32C3 WiFi I/O
+		void USART2_IRQHandler() // ESP32C3 WiFi Module I/O
 		{
 			using User::Global::esp32;
 			using User::Global::wifi_buf;
 
 			esp32.handle_it(USART_IT_RXNE, [] {
-				char8_t data = esp32.recv_data();
-				if (!wifi_buf.full()) {
-					if (data == '\n') // data received
-						wifi_buf.signal_from_isr();
-					else
-						wifi_buf.add(data);
-				}
-				else {
-					wifi_buf.clear();
-				}
+				sync_uart_recv(esp32, wifi_buf, [] {});
 			});
 		}
 
@@ -296,17 +307,9 @@ namespace MOS::ISR
 			using User::Global::io_buf;
 
 			stdio.handle_it(USART_IT_RXNE, [] {
-				char8_t data = stdio.recv_data();
-				if (!io_buf.full()) {
-					if (data == '\n') // cmd received
-						io_buf.signal_from_isr();
-					else
-						io_buf.add(data);
-				}
-				else {
-					io_buf.clear();
+				sync_uart_recv(stdio, io_buf, [] {
 					MOS_MSG("Oops! Command too long!");
-				}
+				});
 			});
 		}
 	}
