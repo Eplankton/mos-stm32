@@ -13,6 +13,9 @@ namespace MOS::DataType
 
 		// Self-linked as default
 		SelfPtr_t prev = this, next = this;
+
+		MOS_INLINE inline void
+		deinit() volatile { new ((void*) this) Self_t {}; }
 	};
 
 	namespace // private cmp checker
@@ -106,8 +109,7 @@ namespace MOS::DataType
 			     next  = node.next;
 			prev->next = next;
 			next->prev = prev;
-			node.next  = &node;
-			node.prev  = &node;
+			node.deinit();
 			len -= 1;
 		}
 

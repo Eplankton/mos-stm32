@@ -82,7 +82,7 @@ namespace MOS::User::App
 					lcd_mtx.lock().get().draw_img(
 					    0, 0, 128, 128, frame
 					);
-					Task::delay(25);
+					Task::delay(25_ms);
 				}
 			}
 		};
@@ -99,7 +99,7 @@ namespace MOS::User::App
 					lcd_mtx.lock().get().show_str(
 					    5, 132, "hello, world!", color
 					);
-					Task::delay(250);
+					Task::delay(250_ms);
 				}
 			}
 		};
@@ -141,7 +141,7 @@ namespace MOS::User::App
 		for (auto _: Range(0, 20)) {
 			// f1 = !f1;
 			leds[1].toggle();
-			Task::delay(250);
+			Task::delay(250_ms);
 		}
 		kprintf("T1 exits...\n");
 	}
@@ -154,7 +154,7 @@ namespace MOS::User::App
 		while (true) {
 			// f0 = !f0;
 			leds[0].toggle();
-			Task::delay(500);
+			Task::delay(500_ms);
 		}
 	}
 

@@ -153,14 +153,6 @@ namespace MOS::Kernel::Scheduler
 			return switch_to(st);
 		}
 
-		if constexpr (policy == RoundRobin) {
-			if (cr->time_slice <= 0) {
-				cr->time_slice = TIME_SLICE;
-				cr->set_status(READY);
-				return switch_to(nx == ed ? st : nx);
-			}
-		}
-
 		if constexpr (policy == PreemptPri) {
 			// If there's a task with higher priority
 			if (TCB_t::pri_cmp(st, cr)) {

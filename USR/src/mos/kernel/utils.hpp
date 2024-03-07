@@ -211,4 +211,16 @@ namespace MOS::Utils
 MOS_INLINE inline void*
 operator new(size_t, void* addr) noexcept { return addr; }
 
+MOS_INLINE inline constexpr uint32_t
+operator"" _ms(uint64_t raw) noexcept
+{
+	return raw * MOS_CONF_SYSTICK / 1000;
+}
+
+MOS_INLINE inline constexpr uint32_t
+operator"" _s(uint64_t raw) noexcept
+{
+	return raw * MOS_CONF_SYSTICK;
+}
+
 #endif

@@ -36,7 +36,7 @@ src
 │   │   ├── data_type.hpp    Basic Data Structures
 │   │   ├── alloc.hpp        Static/Dynamic Allocator
 │   │   ├── global.hpp       Kernel Globals
-│   │   ├── printf.c         Thread-safe printf (by mpaland)
+│   │   ├── printf.h/.c      Thread-safe printf (by mpaland)
 │   │   ├── task.hpp         Task control
 │   │   ├── sync.hpp         Sync primitives
 │   │   ├── scheduler.hpp    Scheduler and Policy
@@ -145,7 +145,7 @@ namespace MOS::User::App
         bar.wait();
         for (auto _: Range(0, 20)) {
            leds[1].toggle(); // green
-           Task::delay(250);
+           Task::delay(250_ms);
         }
         kprintf("T1 exits...\n");
     }
@@ -157,7 +157,7 @@ namespace MOS::User::App
         bar.wait();
         while (true) {
             leds[0].toggle(); // red
-            Task::delay(500);
+            Task::delay(500_ms);
         }
     }
 }
@@ -168,13 +168,13 @@ int main()
     using namespace MOS;
     using namespace Kernel;
     using namespace User;
-    namespace UG = User::Global;
+    namespace UsrGlb = User::Global;
 
     // Init hardware and clocks
     BSP::config();
 
     // Create Shell with io_buf
-    Task::create(Shell::launch, &UG::io_buf, 1, "Shell");
+    Task::create(Shell::launch, &UsrGlb::io_buf, 1, "Shell");
     
     /* User Tasks */
     Task::create(App::Task0, nullptr, 2, "T0");
@@ -250,7 +250,8 @@ o'' )_____//   Version @ x.x.x(...)
 3. IPC::MsgQueue_t, Message Queue
 4. Task::create allows generic fn signature as /* void fn(auto argv) */ with type check
 5. Add ESP32C3 as WiFi Module
-6. (Experimental) Introduce <stdatomic.h>
+6. (Experimental) Atomic Type in <stdatomic.h>
+7. (Experimental) Utils::IntrGuard_t, Nested Interrupt Lock Guard
 
 📌 Plan
 1. IPC::pipe/channel
@@ -260,7 +261,7 @@ o'' )_____//   Version @ x.x.x(...)
 5. More scheduler algorithms
 6. FPU support
 7. Result<T, E>, Option<T>
-8. Simple File System
+8. Basic File System
 ```
 
 ### References 🛸

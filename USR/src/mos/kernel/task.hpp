@@ -73,8 +73,8 @@ namespace MOS::Kernel::Task
 			// Remove from zombie_list
 			zombie_list.remove(tcb);
 
-			// Reset tcb to default
-			tcb->deinit();
+			// Release resources
+			tcb->release();
 		}
 		return yield();
 	}
@@ -87,7 +87,8 @@ namespace MOS::Kernel::Task
 	terminate_raw(TcbPtr_t tcb)
 	{
 		// Remove the task from where it belongs to
-		if (tcb->is_status(RUNNING) || tcb->is_status(READY)) {
+		if (tcb->is_status(RUNNING) ||
+		    tcb->is_status(READY)) {
 			ready_list.remove(tcb);
 		}
 		else if (tcb->is_sleeping()) {
@@ -97,7 +98,7 @@ namespace MOS::Kernel::Task
 			blocked_list.remove(tcb);
 		}
 
-		// Mark tcb as TERMINATED and add to zombie_list
+		// Mark tcb as TERMINATED
 		tcb->set_status(TERMINATED);
 
 		// Clear the bit in tids
@@ -108,15 +109,18 @@ namespace MOS::Kernel::Task
 
 		// Only DYNAMIC pages need delayed recycling
 		if (tcb->page.is_policy(DYNAMIC)) {
+			// Add to zombie_list
 			zombie_list.add(tcb);
 		}
 		else {
-			// Otherwise for POOL or STATIC, just deinit immediately
-			tcb->deinit();
+			// Otherwise for POOL or STATIC
+			// just release immediately
+			tcb->release();
 		}
 	}
 
-	inline void terminate(TcbPtr_t tcb = current())
+	inline void
+	terminate(TcbPtr_t tcb = current())
 	{
 		MOS_ASSERT(test_irq(), "Disabled Interrupt");
 		IntrGuard_t guard;
@@ -137,7 +141,9 @@ namespace MOS::Kernel::Task
 		// A descending stack consists of 16 registers as context.
 		// high -> low, descending stack
 		// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
-		tcb->set_sp((uint32_t) &tcb->page.from_bottom(16));
+		tcb->set_sp(
+		    (uint32_t) &tcb->page.from_bottom(16)
+		);
 
 		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the Thumb state.
 		// V6-m and V7-m cores can only support Thumb state so it should always be set to '1'.
@@ -155,13 +161,25 @@ namespace MOS::Kernel::Task
 		return tcb;
 	}
 
-	namespace // private type checker
+	namespace // private checker concepts
 	{
+		template <typename Fn, typename ArgvRef>
+		concept LambdaArgvCheck =
+		    Same<
+		        decltype(&Fn::operator()),
+		        void (Fn::*)(ArgvRef) const> ||
+		    Same<
+		        decltype(&Fn::operator()),
+		        void (Fn::*)(const_ref_t<ArgvRef>) const>;
+
 		// clang-format off
-		template <typename Fn, typename ArgvType>
-		concept LambdaInvocable = requires(Fn fn, ArgvType argv) {
-			{ fn.operator()(argv) } -> Same<void>;
-		} || requires(Fn fn) { 
+		template <typename Fn, typename Argv>
+		concept LambdaInvocable =
+		(LambdaArgvCheck<Fn, Argv> &&
+			requires(Fn fn, Argv argv) {
+				{ fn.operator()(argv) } -> Same<void>;
+		}) ||
+		requires(Fn fn) {
 			{ fn.operator()() } -> Same<void>;
 		};
 		// clang-format on
@@ -173,13 +191,13 @@ namespace MOS::Kernel::Task
 		      LambdaInvocable<Fn, deref_t<Argv>&>) ) ||
 		    (!Pointer<Argv> && LambdaInvocable<Fn, Argv>);
 
-		template <typename Fn, typename ArgvType>
+		template <typename Fn, typename Argv>
 		concept AsFnPtr =
-		    (Pointer<ArgvType> &&
-		     (Invocable<Fn, void, deref_t<ArgvType>*> ||
-		      Invocable<Fn, void, deref_t<ArgvType>&>) ) ||
-		    (!Pointer<ArgvType> &&
-		     (Invocable<Fn, void> || Invocable<Fn, void, ArgvType>) );
+		    (Pointer<Argv> &&
+		     (Invocable<Fn, void, deref_t<Argv>*> ||
+		      Invocable<Fn, void, deref_t<Argv>&>) ) ||
+		    (!Pointer<Argv> &&
+		     (Invocable<Fn, void> || Invocable<Fn, void, Argv>) );
 
 		MOS_INLINE static inline constexpr auto
 		type_check(auto fn, auto argv)

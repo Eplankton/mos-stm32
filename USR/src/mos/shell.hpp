@@ -62,39 +62,78 @@ namespace MOS::Shell
 	{
 		using Argv_t = Command_t::Argv_t;
 
+		MOS_INLINE static inline void
+		bad_argv_err()
+		{
+			MOS_MSG("Invalid Arguments");
+		}
+
 		static inline void
-		ls_cmd(Argv_t argv)
+		task_ctrl_cmd(
+		    Argv_t argv, auto&& ok, auto&& err
+		)
 		{
 			auto name = argv;
 			if (*name != '\0') {
 				if (auto tcb = Task::find(name)) {
-					// todo!()
+					ok(tcb);
 				}
 				else {
 					MOS_MSG("Unknown task '%s'", name);
 				}
 			}
 			else { // No arguments provided
-				Task::print_all();
+				err();
 			}
+		}
+
+		static inline void
+		ls_cmd(Argv_t argv)
+		{
+			task_ctrl_cmd(
+			    argv,
+			    [](auto tcb) { /* Todo */ },
+			    [] { Task::print_all(); }
+			);
 		}
 
 		static inline void
 		kill_cmd(Argv_t argv)
 		{
-			auto name = argv;
-			if (*name != '\0') {
-				if (auto tcb = Task::find(name)) {
-					Task::terminate(tcb);
-					MOS_MSG("Task '%s' terminated", name);
-				}
-				else {
-					MOS_MSG("Unknown task '%s'", name);
-				}
-			}
-			else {
-				MOS_MSG("Invalid Arguments");
-			}
+			task_ctrl_cmd(
+			    argv,
+			    [](auto tcb) {
+				    MOS_MSG("Task '%s' terminated", tcb->get_name());
+				    Task::terminate(tcb);
+			    },
+			    bad_argv_err
+			);
+		}
+
+		static inline void
+		block_cmd(Argv_t argv)
+		{
+			task_ctrl_cmd(
+			    argv,
+			    [](auto tcb) {
+				    MOS_MSG("Task '%s' blocked", tcb->get_name());
+				    Task::block(tcb);
+			    },
+			    bad_argv_err
+			);
+		}
+
+		static inline void
+		resume_cmd(Argv_t argv)
+		{
+			task_ctrl_cmd(
+			    argv,
+			    [](auto tcb) {
+				    MOS_MSG("Task '%s' resumed", tcb->get_name());
+				    Task::resume(tcb);
+			    },
+			    bad_argv_err
+			);
 		}
 
 		static inline void
@@ -135,21 +174,23 @@ namespace MOS::Shell
 	static constexpr Command_t cmds[] = {
 	    {    "ls",     CmdCall::ls_cmd},
 	    {  "kill",   CmdCall::kill_cmd},
+	    { "block",  CmdCall::block_cmd},
+	    {"resume", CmdCall::resume_cmd},
 	    {  "date",   CmdCall::date_cmd},
 	    { "uname",  CmdCall::uname_cmd},
 	    {"reboot", CmdCall::reboot_cmd},
 	};
 
-	using SyncRxBuf_t =
-	    DataType::SyncRxBuf_t<Macro::SHELL_BUF_SIZE>;
+	using SyncRxBuf_t = DataType::SyncRxBuf_t<Macro::SHELL_BUF_SIZE>;
 
 	void launch(SyncRxBuf_t& input)
 	{
 		using Text_t = Command_t::Text_t;
 
-		auto parser = [](Text_t str) {
+		static auto parse = [](Text_t str) {
+			kprintf("> %s\n", str); // Echo
 			if (str[0] != '\0') {
-				for (auto& cmd: cmds) {
+				for (auto& cmd: cmds) { // Search
 					if (auto argv = cmd.match(str)) {
 						return cmd.run(argv);
 					}
@@ -162,15 +203,9 @@ namespace MOS::Shell
 		Task::print_all();
 
 		while (true) {
-			input.wait(); // Sync from ISR
-
-			// Parsing begins
-			auto rx = input.as_str();
-			kprintf("> %s\n", rx);
-			parser(rx);
-			// Parsing ends
-
-			input.clear(); // Clear Rx buffer
+			input.wait();
+			parse(input.as_str());
+			input.clear();
 		}
 	}
 }

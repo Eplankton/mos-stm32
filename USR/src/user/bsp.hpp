@@ -119,14 +119,14 @@ namespace MOS::User::BSP
 	static inline void
 	LCD_Config()
 	{
-		using Global::lcd;
-
 		RCC_t::APB2::enable(RCC_APB2Periph_SPI1);
 		RCC_t::AHB1::enable(
 		    RCC_AHB1Periph_GPIOA |
 		    RCC_AHB1Periph_GPIOB |
 		    RCC_AHB1Periph_GPIOD
 		);
+
+		using Global::lcd;
 
 		lcd.spi
 		    .sclk_config( // SCLK -> PA5
@@ -160,16 +160,16 @@ namespace MOS::User::BSP
 		};
 
 		constexpr RTC_t::Time_t boot_time {
-		    .RTC_Hours   = 2,
-		    .RTC_Minutes = 15,
+		    .RTC_Hours   = 0,
+		    .RTC_Minutes = 0,
 		    .RTC_Seconds = 0,
 		    .RTC_H12     = RTC_H12_AM,
 		};
 
 		constexpr RTC_t::Date_t boot_date {
-		    .RTC_WeekDay = 7,
+		    .RTC_WeekDay = 1,
 		    .RTC_Month   = 1,
-		    .RTC_Date    = 14,
+		    .RTC_Date    = 1,
 		    .RTC_Year    = 24,
 		};
 
@@ -243,23 +243,25 @@ namespace MOS::ISR
 {
 	template <size_t N>
 	MOS_INLINE static inline void
-	sync_uart_recv(
+	uart_it_rxne_sync(
 	    HAL::STM32F4xx::USART_t& uart,
 	    DataType::SyncRxBuf_t<N>& buf,
 	    auto&& oops
 	)
 	{
-		char8_t data = uart.recv_data();
-		if (!buf.full()) {
-			if (data == '\n') // data received
-				buf.signal_from_isr();
-			else
-				buf.add(data);
-		}
-		else {
-			buf.clear();
-			oops();
-		}
+		uart.handle_it(USART_IT_RXNE, [&] {
+			char8_t data = uart.recv_data();
+			if (!buf.full()) {
+				if (data == '\n') // data received
+					buf.signal_from_isr();
+				else
+					buf.add(data);
+			}
+			else {
+				buf.clear();
+				oops();
+			}
+		});
 	}
 
 	extern "C" {
@@ -275,7 +277,7 @@ namespace MOS::ISR
 				for (auto _: Range(0, 10)) {
 					leds[2].toggle(); // blue
 					Task::print_name();
-					Task::delay(250);
+					Task::delay(250_ms);
 				}
 			};
 
@@ -296,9 +298,7 @@ namespace MOS::ISR
 			using User::Global::esp32;
 			using User::Global::wifi_buf;
 
-			esp32.handle_it(USART_IT_RXNE, [] {
-				sync_uart_recv(esp32, wifi_buf, [] {});
-			});
+			uart_it_rxne_sync(esp32, wifi_buf, [] {});
 		}
 
 		void USART3_IRQHandler() // Shell I/O
@@ -306,11 +306,10 @@ namespace MOS::ISR
 			using User::Global::stdio;
 			using User::Global::io_buf;
 
-			stdio.handle_it(USART_IT_RXNE, [] {
-				sync_uart_recv(stdio, io_buf, [] {
-					MOS_MSG("Oops! Command too long!");
-				});
-			});
+			uart_it_rxne_sync(
+			    stdio, io_buf,
+			    [] { MOS_MSG("Oops! Cmd too long!"); }
+			);
 		}
 	}
 }

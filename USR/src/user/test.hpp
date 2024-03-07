@@ -21,7 +21,7 @@ namespace MOS::User::Test
 				mutex.exec([&] {
 					for (auto _: Range(0, 5)) {
 						kprintf("%s is working...\n", name);
-						Task::delay(100);
+						Task::delay(100_ms);
 					}
 				});
 				Task::delay(ticks);
@@ -29,11 +29,11 @@ namespace MOS::User::Test
 		};
 
 		static auto launch = [] {
-			Task::create(mtx_test, 10, 3, "Mtx3");
-			Task::delay(5);
-			Task::create(mtx_test, 20, 2, "Mtx2");
-			Task::delay(5);
-			Task::create(mtx_test, 30, 1, "Mtx1");
+			Task::create(mtx_test, 10_ms, 3, "Mtx3");
+			Task::delay(5_ms);
+			Task::create(mtx_test, 20_ms, 2, "Mtx2");
+			Task::delay(5_ms);
+			Task::create(mtx_test, 30_ms, 1, "Mtx1");
 		};
 
 		Task::create(launch, nullptr, Macro::PRI_MAX, "MutexTest");
@@ -46,9 +46,9 @@ namespace MOS::User::Test
 		static auto T1 = [] {
 			for (auto _: Range(0, 20)) {
 				leds[1].toggle(); // green
-				Task::delay(250);
+				Task::delay(250_ms);
 			}
-			Task::delay(1000);
+			Task::delay(1000_ms);
 			kprintf("Async T1 exits...\n");
 		};
 
@@ -57,14 +57,14 @@ namespace MOS::User::Test
 
 			for (auto _: Range(0, 10)) {
 				leds[2].toggle(); // blue
-				Task::delay(500);
+				Task::delay(500_ms);
 			}
 
 			future.await();
 
 			while (true) {
 				leds[0].toggle(); // red
-				Task::delay(500);
+				Task::delay(500_ms);
 			}
 		};
 
@@ -73,22 +73,19 @@ namespace MOS::User::Test
 
 	void MsgQueueTest()
 	{
-		using MsgQueue_t = IPC::MsgQueue_t<int, 3>;
-		using Task::Prior_t;
-
-		static MsgQueue_t msg_q;
+		static IPC::MsgQueue_t<int, 3> msg_q;
 
 		static auto producer = [](int& msg) {
 			while (true) {
 				msg_q.send(msg++);
-				Task::delay(50);
+				Task::delay(50_ms);
 			}
 		};
 
 		static auto consumer = [] {
 			while (true) {
 				int msg  = -1;
-				auto res = msg_q.recv(msg, 100);
+				auto res = msg_q.recv(msg, 100_ms);
 
 				IntrGuard_t guard;
 				kprintf(res ? "" : "Timeout!\n");
@@ -106,12 +103,14 @@ namespace MOS::User::Test
 			// Create some Producers
 			for (auto& i: data) {
 				Task::create(
-				    producer, &i, (Prior_t) i, "send"
+				    producer, &i, (Task::Prior_t) i, "send"
 				);
 			}
 		};
 
-		Task::create(launch, nullptr, Macro::PRI_MAX, "MsgQueueTest");
+		Task::create(
+		    launch, nullptr, Macro::PRI_MAX, "MsgQueueTest"
+		);
 	}
 }
 

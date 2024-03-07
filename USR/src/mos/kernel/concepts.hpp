@@ -178,6 +178,27 @@ namespace MOS::Concepts
 	template <typename Ref>
 	using deref_t = typename deref<Ref>::type;
 
+	template <typename T>
+	struct const_ref
+	{
+		// None
+	};
+
+	template <typename T>
+	struct const_ref<T&>
+	{
+		using type = const T&;
+	};
+
+	template <typename T>
+	struct const_ref<T*>
+	{
+		using type = const T*;
+	};
+
+	template <typename Ref>
+	using const_ref_t = const const_ref<Ref>::type;
+
 	template <typename>
 	struct is_numeric
 	{

@@ -81,17 +81,11 @@ namespace MOS::DataType
 			return (TcbPtr_t) link.prev;
 		}
 
-		void deinit() volatile
+		inline void
+		release() volatile
 		{
-			Page_t inactive {
-			    .policy = page.get_policy(),
-			    .raw    = page.get_raw(),
-			    // Ignore the size
-			};
-
-			// inplace new
-			new ((void*) this) TCB_t {};
-			inactive.recycle();
+			link.deinit();
+			page.recycle();
 		}
 
 		MOS_INLINE inline void

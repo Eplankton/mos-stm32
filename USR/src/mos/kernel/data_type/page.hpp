@@ -23,11 +23,12 @@ namespace MOS::DataType
 		Size_t size = 0;
 
 		MOS_INLINE inline void
-		recycle()
+		recycle() volatile
 		{
 			using enum Policy;
 			if (policy == DYNAMIC) {
 				delete[] raw;
+				raw = nullptr;
 			}
 		}
 
