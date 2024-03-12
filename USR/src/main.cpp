@@ -8,8 +8,6 @@
 #include "user/app.hpp"
 #include "user/test.hpp"
 
-#include "user/sdcard/sdcard_test.hpp"
-
 int main()
 {
 	using namespace MOS;
@@ -28,11 +26,9 @@ int main()
 
 	/* User Tasks */
 	Task::create(App::Task0, nullptr, 2, "T0");
-	Task::create(App::GUI, nullptr, 3, "GUI", 256);
-	// Task::create(App::LCD, nullptr, 3, "LCD");
+	// Task::create(App::GUI, nullptr, 3, "GUI", 256);
+	Task::create(App::LCD, nullptr, 3, "LCD");
 	Task::create(App::Wifi, nullptr, 3, "wifi");
-
-	// Task::create(SD_Test, nullptr, 0, "SD", 700);
 
 	/* Test examples */
 	// Test::MutexTest();

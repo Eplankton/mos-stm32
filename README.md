@@ -210,59 +210,57 @@ o'' )_____//   Version @ x.x.x(...)
 ```
 
 ### Version 🧾
-```
-📦 Version 0.0.1
+---
+📦 Version `0.0.1`
 
 ✅ Done
-1. Basic Scheduler and Task control
+- Basic Scheduler and Task control
 
 📌 Plan
-1. Timers, RoundRobin
-2. Inter-process communication(IPC), pipes, message queues
-3. Sync, semaphore, mutex, lock
-4. Porting simple shells
-5. Mutable page size, memory allocator
-6. SPI driver and LVGL library
-7. Port to other platform like ESP32-C3(RISC-V)
-```
-```
-📦 Version 0.0.2
+- Timers, RoundRobin
+- Inter-process communication `IPC`, pipes, message queues
+- Sync, semaphore, mutex, lock
+- Porting simple shells
+- Mutable page size, memory allocator
+- `SPI` driver and `LVGL` library
+- Port to other platform like `ESP32-C3(RISC-V)`
+---
+📦 Version `0.0.2`
 
 ✅ Done
-1. Sync::{Sema_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}, where Mutex_t adopts Priority Ceiling Protocol
-2. Scheduler::Policy::PreemptPri, under same priority -> RoundRobin
-3. Task::terminate will be implicitly called when task exits
-4. Shell::{Command, CmdCall, launch}
-5. HAL::STM32F4xx::SPI_t and Driver::ST7735S_t, support GuiLite
-6. KernelGlobal::os_ticks and Task::delay for blocking delay
-7. Refactor the project into {kernel, arch, drivers}
-8. Support GCC and STM32CubeMX HAL
-9. HAL::STM32F4xx::RTC_t, CmdCall::date_cmd and App::Calendar
-10. idle uses KernelGlobal::zombie_list to recycle inactive pages
-11. Three basic page allocator policies, Page_t::Policy::{POOL, DYNAMIC, STATIC}
-```
-```
-📦 Version 0.0.3
+- `Sync::{Sema_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}`, where `Mutex_t` adopts Priority Ceiling Protocol
+- `Scheduler::Policy::PreemptPri`, under same priority -> `RoundRobin`
+- `Task::terminate` will be implicitly called when task exits
+- `Shell::{Command, CmdCall, launch}`
+- `HAL::STM32F4xx::SPI_t` and `Driver::ST7735S_t`, support `GuiLite`
+- `Kernel::Global::os_ticks` and `Task::delay` for blocking delay
+- Refactor the project into `{kernel, arch, drivers}`
+- Support `GCC` and `STM32CubeMX HAL`
+- `HAL::STM32F4xx::RTC_t`, `CmdCall::date_cmd` and `App::Calendar`
+- `idle` uses `Kernel::Global::zombie_list` to recycle inactive pages
+- Three basic page allocator policies, `Page_t::Policy::{POOL, DYNAMIC, STATIC}`
+---
+📦 Version `0.0.3`
 
 ✅ Done
-1. Tids from BitMap_t
-2. (Experimental) Task::Async::{Future_t, async/await}
-3. IPC::MsgQueue_t, Message Queue
-4. Task::create allows generic fn signature as /* void fn(auto argv) */ with type check
-5. Add ESP32C3 as WiFi Module
-6. (Experimental) Atomic Type in <stdatomic.h>
-7. (Experimental) Utils::IntrGuard_t, Nested Interrupt Lock Guard
+- `Tids` from `BitMap_t`
+- (Experimental) `Task::Async::{Future_t, async/await}`
+- `IPC::MsgQueue_t`, Message Queue
+- `Task::create` allows generic fn signature as `void fn(auto argv)` with type check
+- Add `ESP32C3` as `WiFi` Module
+- (Experimental) Atomic Type in `<stdatomic.h>`
+- (Experimental) `Utils::IntrGuard_t`, Nested Interrupt Lock Guard
 
 📌 Plan
-1. IPC::pipe/channel
-2. Soft/Hardware Timers
-3. Basic Formal Verification on Scheduler
-4. DMA_t Driver
-5. More scheduler algorithms
-6. FPU support
-7. Result<T, E>, Option<T>
-8. Basic File System
-```
+- `IPC::pipe/channel`
+- Soft/Hardware Timers
+- Basic Formal Verification on `Scheduler`
+- `DMA_t` Driver
+- More scheduler algorithms
+- `FPU` support
+- `Result<T, E>, Option<T>`
+- Basic File System
+---
 
 ### References 🛸
 - [How to build a Real-Time Operating System(RTOS)](https://medium.com/@dheeptuck/building-a-real-time-operating-system-rtos-ground-up-a70640c64e93)

@@ -133,7 +133,8 @@ namespace MOS::Kernel::Scheduler
 	}
 
 	template <Policy policy>
-	static inline void next_tcb()
+	static inline void
+	next_tcb()
 	{
 		auto switch_to = [](TcbPtr_t tcb) {
 			tcb->set_status(RUNNING);
