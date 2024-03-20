@@ -236,6 +236,15 @@
                 "path": "../USR/src/stm32f4xx_it.cpp"
               },
               {
+                "path": "../USR/src/user/FatFS/diskio.cpp"
+              },
+              {
+                "path": "../USR/src/user/FatFS/ff.cpp"
+              },
+              {
+                "path": "../USR/src/user/FatFS/option/unicode.c"
+              },
+              {
                 "path": "../USR/src/user/gui/Hello3D.cpp"
               }
             ],
@@ -265,7 +274,8 @@
         "<virtual_root>/USR/src/delay.cpp",
         "<virtual_root>/USR/src/etst.cpp",
         "<virtual_root>/INIT/gcc_startup_stm32f429xx.s",
-        "<virtual_root>/INIT/keil_startup_stm32f429_439xx.s"
+        "<virtual_root>/INIT/keil_startup_stm32f429_439xx.s",
+        "<virtual_root>/USR/src/cc936.c"
       ],
       "toolchain": "AC6",
       "compileConfig": {

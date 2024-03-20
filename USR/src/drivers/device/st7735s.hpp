@@ -351,7 +351,7 @@ namespace Driver::Device
 
 		void init(void)
 		{
-			spi.init(SPI_t::Init_t {
+			spi.init({
 			    .SPI_Direction         = SPI_Direction_1Line_Tx,
 			    .SPI_Mode              = SPI_Mode_Master,
 			    .SPI_DataSize          = SPI_DataSize_8b,

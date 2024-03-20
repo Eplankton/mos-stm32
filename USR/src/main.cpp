@@ -7,6 +7,7 @@
 #include "user/bsp.hpp"
 #include "user/app.hpp"
 #include "user/test.hpp"
+#include "user/fatfs.hpp"
 
 int main()
 {
@@ -21,6 +22,9 @@ int main()
 	// Create Calendar with RTC
 	Task::create(App::Calendar, nullptr, 0, "Calendar");
 
+	// Create FatFs on SD card
+	Task::create(FatFs::launch, nullptr, 0, "FatFs");
+
 	// Create Shell with io_buf
 	Task::create(Shell::launch, &UsrGlb::io_buf, 1, "Shell");
 
@@ -33,7 +37,7 @@ int main()
 	/* Test examples */
 	// Test::MutexTest();
 	// Test::AsyncTest();
-	Test::MsgQueueTest();
+	// Test::MsgQueueTest();
 
 	// Start scheduling, never return
 	Scheduler::launch();

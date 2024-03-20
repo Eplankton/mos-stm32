@@ -144,6 +144,40 @@ namespace MOS::User::BSP
 	}
 
 	static inline void
+	SD_Config()
+	{
+		RCC_t::APB2::enable(RCC_APB2Periph_SPI5);
+		RCC_t::AHB1::enable(
+		    RCC_AHB1Periph_GPIOE |
+		    RCC_AHB1Periph_GPIOF
+		);
+
+		using Global::sd;
+
+		sd.spi
+		    .sclk_config( // SCLK -> PF7
+		        GPIOF,
+		        GPIO_t::get_pin_src(7),
+		        GPIO_AF_SPI5,
+		        GPIO_High_Speed
+		    )
+		    .miso_config( // MISO -> PF8
+		        GPIOF,
+		        GPIO_t::get_pin_src(8),
+		        GPIO_AF_SPI5,
+		        GPIO_High_Speed
+		    )
+		    .mosi_config( // MOSI -> PF9
+		        GPIOF,
+		        GPIO_t::get_pin_src(9),
+		        GPIO_AF_SPI5,
+		        GPIO_High_Speed
+		    );
+
+		sd.init();
+	}
+
+	static inline void
 	RTC_Config()
 	{
 		constexpr auto ASYHCHPREDIV = 0x7F;        // 异步分频因子
@@ -234,6 +268,7 @@ namespace MOS::User::BSP
 		LED_Config();
 		K1_IRQ_Config();
 		LCD_Config();
+		SD_Config();
 		RTC_Config();
 		SysTick_Config();
 	}

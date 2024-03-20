@@ -88,6 +88,22 @@ namespace HAL::STM32F4xx
 		}
 
 		inline auto&
+		miso_config(
+		    GPIO_t::Raw_t miso_port,
+		    PinSrc_t miso_src,
+		    AF_t miso_af,
+		    Speed_t miso_speed = GPIO_High_Speed
+		)
+		{
+			return attach(
+			    miso_port,
+			    miso_src,
+			    miso_af,
+			    miso_speed
+			);
+		}
+
+		inline auto&
 		cmd(State_t new_state)
 		{
 			SPI_Cmd(this, new_state);
@@ -117,6 +133,12 @@ namespace HAL::STM32F4xx
 		{
 			SPI_SendData(this, data);
 			return *this;
+		}
+
+		__attribute__((noinline)) auto
+		recv_data() const
+		{
+			return SPI_ReceiveData((Raw_t) this);
 		}
 
 		__attribute__((noinline)) void

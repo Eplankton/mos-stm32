@@ -246,10 +246,12 @@ o'' )_____//   Version @ x.x.x(...)
 - `Tids` from `BitMap_t`
 - (Experimental) `Task::Async::{Future_t, async/await}`
 - `IPC::MsgQueue_t`, Message Queue
-- `Task::create` allows generic fn signature as `void fn(auto argv)` with type check
+- `Task::create` allows generic `fn` signature as `void fn(auto argv)` with type check
 - Add `ESP32C3` as `WiFi` Module
 - (Experimental) Atomic Type in `<stdatomic.h>`
 - (Experimental) `Utils::IntrGuard_t`, Nested Interrupt Lock Guard
+- Add `Driver::Device::SD_t` with `SPI` driver
+- Add `FatFs` File System
 
 📌 Plan
 - `IPC::pipe/channel`
@@ -259,7 +261,6 @@ o'' )_____//   Version @ x.x.x(...)
 - More scheduler algorithms
 - `FPU` support
 - `Result<T, E>, Option<T>`
-- Basic File System
 ---
 
 ### References 🛸
@@ -269,6 +270,7 @@ o'' )_____//   Version @ x.x.x(...)
 - [A printf/sprintf Implementation for Embedded Systems](https://github.com/mpaland/printf)
 - [GuiLite](https://github.com/idea4good/GuiLite)
 - [STMViewer](https://github.com/klonyyy/STMViewer)
+- [FatFs](http://elm-chan.org/fsw/ff)
 
 ```
 Wake up, Neo...

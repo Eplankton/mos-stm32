@@ -7,6 +7,7 @@
 // Devices
 #include "src/drivers/device/st7735s.hpp"
 #include "src/drivers/device/led.hpp"
+#include "src/drivers/device/sd.hpp"
 
 // Buffer
 #include "src/mos/kernel/data_type/buffer.hpp"
@@ -40,6 +41,14 @@ namespace MOS::User::Global
 	    {GPIOD, GPIO_Pin_14}, // CS(SS)     -> PD14
 	    {GPIOB,  GPIO_Pin_8}, // RESET(RES) -> PB8
 	    {GPIOB,  GPIO_Pin_9}, // DC(RS)     -> PB9
+	};
+
+	extern "C" SD_t sd {
+	    SPI5,
+	    {GPIOF, GPIO_Pin_7}, // PF7 -> SCLK
+	    {GPIOF, GPIO_Pin_8}, // PF8 -> MISO
+	    {GPIOF, GPIO_Pin_9}, // PF9 -> MOSI
+	    {GPIOE, GPIO_Pin_3}, // PE3 -> CS
 	};
 }
 
