@@ -5,16 +5,15 @@
 // User Application
 #include "user/global.hpp"
 #include "user/bsp.hpp"
+#include "user/fatfs.hpp"
 #include "user/app.hpp"
 #include "user/test.hpp"
-#include "user/fatfs.hpp"
 
 int main()
 {
 	using namespace MOS;
 	using namespace Kernel;
 	using namespace User;
-	namespace UsrGlb = User::Global;
 
 	// Init hardware and clocks
 	BSP::config();
@@ -23,10 +22,10 @@ int main()
 	Task::create(App::Calendar, nullptr, 0, "Calendar");
 
 	// Create FatFs on SD card
-	Task::create(FatFs::launch, nullptr, 0, "FatFs");
+	Task::create(FatFs::test, nullptr, 0, "FatFs");
 
 	// Create Shell with io_buf
-	Task::create(Shell::launch, &UsrGlb::io_buf, 1, "Shell");
+	Task::create(Shell::launch, &User::Global::io_buf, 1, "Shell");
 
 	/* User Tasks */
 	Task::create(App::Task0, nullptr, 2, "T0");
@@ -36,7 +35,6 @@ int main()
 
 	/* Test examples */
 	// Test::MutexTest();
-	// Test::AsyncTest();
 	// Test::MsgQueueTest();
 
 	// Start scheduling, never return

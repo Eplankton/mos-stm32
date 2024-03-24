@@ -8,7 +8,7 @@ o'' )_____//    [MOS-STM32]
  `_/  MOS  )    Mini RTOS on STM32F4, Cortex-M
  (_(_/--(_/     MOS <=> Mini-RTOS
 
-- Board: Nucleo-144 F429ZI
+- Board: NUCLEO-144 F429ZI
 - MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
 ```
 
@@ -18,46 +18,46 @@ o'' )_____//    [MOS-STM32]
 ### Architecture 🔍
 [USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
 <img src="Pic/mos-arch.svg">
-```    
+```C++
 src
-├── drivers                  Hardware Drivers(SPL/HAL/LL/...)
-│   ├── stm32f4xx            STM32F4xx on-chip periphs(USART, I2C, SPI, ...)
-│   └── device               Other components(LED, LCD, ...)
+├── drivers                  // Hardware Drivers(SPL/HAL/LL/...)
+│   ├── stm32f4xx            // STM32F4xx on-chip Periphs(USART, I2C, SPI, ...)
+│   └── device               // Other components(LED, LCD, ...)
 │
 ├── mos
-│   ├── config.h             System Configuration
-│   ├── arch                 Arch-related
-│   │   └── cpu.hpp          asm for init/context_switch
+│   ├── config.h             // System Configuration
+│   ├── arch                 // Arch-related
+│   │   └── cpu.hpp          // asm for init/context_switch
 │   │
-│   ├── kernel               Kernel(Arch-independent)
-│   │   ├── macro.hpp        Kernel Constant Macros
-│   │   ├── type.hpp         Basic Types
-│   │   ├── concepts.hpp     Type Constraints(Optional)
-│   │   ├── data_type.hpp    Basic Data Structures
-│   │   ├── alloc.hpp        Static/Dynamic Allocator
-│   │   ├── global.hpp       Kernel Globals
-│   │   ├── printf.h/.c      Thread-safe printf (by mpaland)
-│   │   ├── task.hpp         Task control
-│   │   ├── sync.hpp         Sync primitives
-│   │   ├── scheduler.hpp    Scheduler and Policy
-│   │   ├── ipc.hpp          Inter-Process Communication
-│   │   └── utils.hpp        Utils
+│   ├── kernel               // Kernel(Arch-independent)
+│   │   ├── macro.hpp        // Kernel Constant Macros
+│   │   ├── type.hpp         // Basic Types
+│   │   ├── concepts.hpp     // Type Constraints(Optional)
+│   │   ├── data_type.hpp    // Basic Data Structures
+│   │   ├── alloc.hpp        // Static/Dynamic Allocator
+│   │   ├── global.hpp       // Kernel Globals
+│   │   ├── printf.h/.c      // Thread-safe printf (by mpaland)
+│   │   ├── task.hpp         // Task control
+│   │   ├── sync.hpp         // Sync primitives
+│   │   ├── scheduler.hpp    // Scheduler and Policy
+│   │   ├── ipc.hpp          // Inter-Process Communication
+│   │   └── utils.hpp        // Utils
 │   │
-│   ├── kernel.hpp           Import Kernel Modules
-│   └── shell.hpp            Simple Shell
+│   ├── kernel.hpp           // Import Kernel Modules
+│   └── shell.hpp            // Simple Shell
 │
-├── user                     User program
-│   ├── gui                  GUI-related
-│   │   ├── GuiLite.h        GuiLite Framework
-│   │   └── UICode.cpp       User Interface
+├── user                     // User program
+│   ├── gui                  // GUI-related
+│   │   ├── GuiLite.h        // GuiLite Framework
+│   │   └── UICode.cpp       // User Interface
 │   │
-│   ├── global.hpp           User Globals
-│   ├── bsp.hpp              Board Support Package
-│   ├── app.hpp              Applications
-│   └── test.hpp             Test
+│   ├── global.hpp           // User Globals
+│   ├── bsp.hpp              // Board Support Package
+│   ├── app.hpp              // Applications
+│   └── test.hpp             // Test
 │
-├── main.cpp                 Entry main()
-└── stm32f4xx_it.cpp         Interrput SubRoutine(Partly)
+├── main.cpp                 // Entry main()
+└── stm32f4xx_it.cpp         // Interrput SubRoutine(Partly)
 ```
 
 ### Example 🍎
@@ -120,8 +120,8 @@ namespace MOS::User::BSP
     {
         // Simplified
         stdio.init(9600-8-1-N)
-             .rx_config(PXa) // RX -> PXa
-             .tx_config(PYb) // TX -> PYb
+             .rx_config(PXa)  // RX -> PXa
+             .tx_config(PYb)  // TX -> PYb
              .it_enable(RXNE) // Enable RXNE interrupt
              .enable();
     }
@@ -168,13 +168,12 @@ int main()
     using namespace MOS;
     using namespace Kernel;
     using namespace User;
-    namespace UsrGlb = User::Global;
 
     // Init hardware and clocks
     BSP::config();
 
     // Create Shell with io_buf
-    Task::create(Shell::launch, &UsrGlb::io_buf, 1, "Shell");
+    Task::create(Shell::launch, &User::Global::io_buf, 1, "Shell");
     
     /* User Tasks */
     Task::create(App::Task0, nullptr, 2, "T0");
@@ -211,13 +210,13 @@ o'' )_____//   Version @ x.x.x(...)
 
 ### Version 🧾
 ---
-📦 Version `0.0.1`
+📦 `0.0.1`
 
 ✅ Done
-- Basic Scheduler and Task control
+- Basic Scheduler and Task control, memory management
 
 📌 Plan
-- Timers, RoundRobin
+- Timers, `RoundRobin`
 - Inter-process communication `IPC`, pipes, message queues
 - Sync, semaphore, mutex, lock
 - Porting simple shells
@@ -225,7 +224,7 @@ o'' )_____//   Version @ x.x.x(...)
 - `SPI` driver and `LVGL` library
 - Port to other platform like `ESP32-C3(RISC-V)`
 ---
-📦 Version `0.0.2`
+📦 `0.0.2`
 
 ✅ Done
 - `Sync::{Sema_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}`, where `Mutex_t` adopts Priority Ceiling Protocol
@@ -240,7 +239,7 @@ o'' )_____//   Version @ x.x.x(...)
 - `idle` uses `Kernel::Global::zombie_list` to recycle inactive pages
 - Three basic page allocator policies, `Page_t::Policy::{POOL, DYNAMIC, STATIC}`
 ---
-📦 Version `0.0.3`
+📦 `0.0.3`
 
 ✅ Done
 - `Tids` from `BitMap_t`
@@ -261,6 +260,7 @@ o'' )_____//   Version @ x.x.x(...)
 - More scheduler algorithms
 - `FPU` support
 - `Result<T, E>, Option<T>`
+- `Async::{Future_t, async/await}`，Async Stackless Coroutine
 ---
 
 ### References 🛸

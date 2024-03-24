@@ -43,7 +43,8 @@ namespace MOS::User::Global
 	    {GPIOB,  GPIO_Pin_9}, // DC(RS)     -> PB9
 	};
 
-	extern "C" SD_t sd {
+	// SD Card with SPI Driver
+	SD_t sd {
 	    SPI5,
 	    {GPIOF, GPIO_Pin_7}, // PF7 -> SCLK
 	    {GPIOF, GPIO_Pin_8}, // PF8 -> MISO

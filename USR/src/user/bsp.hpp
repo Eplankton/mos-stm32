@@ -174,7 +174,7 @@ namespace MOS::User::BSP
 		        GPIO_High_Speed
 		    );
 
-		sd.init();
+		// The 'sd.init()' will be called by FatFs
 	}
 
 	static inline void

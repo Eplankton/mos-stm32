@@ -52,7 +52,8 @@
         "editor.inlayHints.padding": true,
         "EIDE.ARM.GCC.InstallDirectory": "C:\\Program Files (x86)\\Arm-GNU-Toolchain\\12.2",
         "C_Cpp.hover": "disabled",
-        "C_Cpp.intelliSenseEngineFallback": "disabled"
+        "C_Cpp.intelliSenseEngineFallback": "disabled",
+        "vscode-serial-monitor.outputFontSize": 15.5
     },
     "extensions": {
         "recommendations": [

@@ -9,11 +9,14 @@
 
 #include "diskio.h" /* FatFs lower layer API */
 #include "ff.h"
-
-#include "src/drivers/device/sd.hpp"
+#include "../../drivers/device/sd.hpp"
 
 using Driver::Device::SD_t;
-extern SD_t sd;
+namespace MOS::User::Global
+{
+	extern SD_t sd;
+}
+using MOS::User::Global::sd;
 
 /* 为每个设备定义一个物理编号 */
 #define ATA       0 // 预留SD卡使用

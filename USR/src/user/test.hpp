@@ -39,38 +39,6 @@ namespace MOS::User::Test
 		Task::create(launch, nullptr, Macro::PRI_MAX, "MutexTest");
 	}
 
-	void AsyncTest()
-	{
-		using Global::leds;
-
-		static auto T1 = [] {
-			for (auto _: Range(0, 20)) {
-				leds[1].toggle(); // green
-				Task::delay(250_ms);
-			}
-			Task::delay(1000_ms);
-			kprintf("Async T1 exits...\n");
-		};
-
-		static auto T0 = [] {
-			auto future = Task::async(T1, nullptr, "T1");
-
-			for (auto _: Range(0, 10)) {
-				leds[2].toggle(); // blue
-				Task::delay(500_ms);
-			}
-
-			future.await();
-
-			while (true) {
-				leds[0].toggle(); // red
-				Task::delay(500_ms);
-			}
-		};
-
-		Task::create(T0, nullptr, 2, "T0");
-	}
-
 	void MsgQueueTest()
 	{
 		static IPC::MsgQueue_t<int, 3> msg_q;
