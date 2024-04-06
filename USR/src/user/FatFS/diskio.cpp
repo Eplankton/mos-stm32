@@ -55,13 +55,10 @@ DSTATUS disk_initialize(
 	DSTATUS status = STA_NOINIT;
 	switch (pdrv) {
 		case ATA: /* SD CARD */
-			if (sd.init() == SD_t::RESPONSE_NO_ERROR) {
+			if (sd.init() == SD_t::RESPONSE_NO_ERROR)
 				status &= ~STA_NOINIT;
-			}
-			else {
+			else
 				status = STA_NOINIT;
-			}
-
 			break;
 
 		case SPI_FLASH: /* SPI Flash */

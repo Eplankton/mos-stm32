@@ -39,8 +39,7 @@ namespace MOS::Kernel::Sync
 			cnt -= 1;
 			if (cnt < 0) {
 				Task::block_to_raw(
-				    Task::current(),
-				    waiting_list
+				    Task::current(), waiting_list
 				);
 				return Task::yield();
 			}
@@ -68,8 +67,7 @@ namespace MOS::Kernel::Sync
 		{
 			if (cnt < 0) {
 				Task::resume_raw(
-				    waiting_list.begin(),
-				    waiting_list
+				    waiting_list.begin(), waiting_list
 				);
 			}
 			cnt += 1;

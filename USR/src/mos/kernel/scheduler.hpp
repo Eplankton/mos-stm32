@@ -8,9 +8,9 @@ namespace MOS::Kernel::Scheduler
 {
 	enum class SchedStatus : bool
 	{
-		OK  = true,
-		ERR = !OK,
-	} static sched_status = SchedStatus::ERR;
+		Ok  = true,
+		Err = !Ok,
+	} static sched_status = SchedStatus::Err;
 
 	enum class Policy : int8_t
 	{
@@ -39,7 +39,7 @@ namespace MOS::Kernel::Scheduler
 	using enum Policy;
 
 	MOS_INLINE inline bool
-	is_ready() { return sched_status == SchedStatus::OK; }
+	is_ready() { return sched_status == SchedStatus::Ok; }
 
 	// This will execute only once for the first task
 	MOS_NAKED inline void
@@ -86,12 +86,12 @@ namespace MOS::Kernel::Scheduler
 	static inline void
 	launch(Fn_t hook = nullptr)
 	{
-		static uint32_t idle_page_block[PAGE_SIZE / 2];
+		static uint32_t init_block[PAGE_SIZE / 2];
 
 		Page_t idle_page {
 		    .policy = Page_t::Policy::STATIC,
-		    .raw    = idle_page_block,
-		    .size   = sizeof(idle_page_block) / sizeof(uint32_t),
+		    .raw    = init_block,
+		    .size   = sizeof(init_block) / sizeof(uint32_t),
 		};
 
 		// Default idle can be replaced by user-defined hook
@@ -104,8 +104,7 @@ namespace MOS::Kernel::Scheduler
 		// Create idle task with hook
 		Task::create(
 		    hook ? hook : idle,
-		    nullptr, PRI_MIN,
-		    "idle", idle_page
+		    nullptr, PRI_MIN, "idle", idle_page
 		);
 
 		MOS_ASSERT(!ready_list.empty(), "Launch Failed!");
@@ -114,7 +113,7 @@ namespace MOS::Kernel::Scheduler
 		cur_tcb->set_status(RUNNING);
 
 		debug_tcbs.mark(cur_tcb); // For debug only
-		sched_status = SchedStatus::OK;
+		sched_status = SchedStatus::Ok;
 
 		init();
 	}

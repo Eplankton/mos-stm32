@@ -5,8 +5,8 @@
 // User Application
 #include "user/global.hpp"
 #include "user/bsp.hpp"
-#include "user/fatfs.hpp"
 #include "user/app.hpp"
+#include "user/fatfs.hpp"
 #include "user/test.hpp"
 
 int main()
@@ -14,6 +14,7 @@ int main()
 	using namespace MOS;
 	using namespace Kernel;
 	using namespace User;
+	using namespace User::Global;
 
 	// Init hardware and clocks
 	BSP::config();
@@ -21,17 +22,17 @@ int main()
 	// Create Calendar with RTC
 	Task::create(App::Calendar, nullptr, 0, "Calendar");
 
-	// Create FatFs on SD card
-	Task::create(FatFs::test, nullptr, 0, "FatFs");
-
 	// Create Shell with io_buf
-	Task::create(Shell::launch, &User::Global::io_buf, 1, "Shell");
+	Task::create(Shell::launch, &io_buf, 1, "Shell");
+
+	// Create FatFs on SD card
+	Task::create(FatFs::test, nullptr, 2, "FatFs");
 
 	/* User Tasks */
-	Task::create(App::Task0, nullptr, 2, "T0");
-	// Task::create(App::GUI, nullptr, 3, "GUI", 256);
-	Task::create(App::LCD, nullptr, 3, "LCD");
-	Task::create(App::Wifi, nullptr, 3, "wifi");
+	Task::create(App::LED_0, &leds, 2, "L0");
+	// Task::create(App::GUI, nullptr, 3, "gui", 256);
+	Task::create(App::LCD, &lcd, 3, "LCD");
+	Task::create(App::WiFi, &wifi_buf, 3, "WiFi");
 
 	/* Test examples */
 	// Test::MutexTest();
@@ -39,8 +40,4 @@ int main()
 
 	// Start scheduling, never return
 	Scheduler::launch();
-
-	while (true) {
-		// Never run to here
-	}
 }

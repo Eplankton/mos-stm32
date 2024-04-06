@@ -16,8 +16,9 @@ namespace MOS::User::App
 {
 	using namespace Utils;
 	using namespace Kernel;
+	using namespace Driver;
 
-	using Color = Driver::Device::ST7735S_t::Color;
+	using Color = Device::ST7735S_t::Color;
 
 	namespace Gui
 	{
@@ -68,10 +69,9 @@ namespace MOS::User::App
 		);
 	}
 
-	void LCD()
+	void LCD(Device::ST7735S_t& lcd)
 	{
 		using Sync::Mutex_t;
-		using Global::lcd;
 
 		// A mutex wrapper of lcd
 		static Mutex_t lcd_mtx {lcd};
@@ -134,22 +134,27 @@ namespace MOS::User::App
 	// MOS_DEBUG_INFO bool f0 = 0, f1 = 0;
 	Sync::Barrier_t bar {2};
 
-	void Task1()
+	void LED_1(Device::LED_t leds[])
 	{
-		using Global::leds;
 		bar.wait();
 		for (auto _: Range(0, 20)) {
 			// f1 = !f1;
 			leds[1].toggle();
 			Task::delay(250_ms);
 		}
-		kprintf("T1 exits...\n");
+		kprintf(
+		    "%s exits...\n",
+		    Task::current()->get_name()
+		);
 	}
 
-	void Task0()
+	void LED_0(Device::LED_t leds[])
 	{
-		using Global::leds;
-		Task::create(Task1, nullptr, 1, "T1");
+		Task::create(
+		    LED_1, leds,
+		    Task::current()->get_pri(),
+		    "L1"
+		);
 		bar.wait();
 		while (true) {
 			// f0 = !f0;
@@ -158,16 +163,15 @@ namespace MOS::User::App
 		}
 	}
 
-	void Wifi()
+	void WiFi(DataType::SyncRxBuf_t<8>& buf)
 	{
-		using Global::wifi_buf;
 		while (true) {
-			wifi_buf.wait();
-			auto rx = wifi_buf.as_str();
+			buf.wait();
+			auto rx = buf.as_str();
 			if (atoi(rx) % 10 == 0) {
 				kprintf("[esp32] -> %s\n", rx);
 			}
-			wifi_buf.clear();
+			buf.clear();
 		}
 	}
 }

@@ -5,7 +5,7 @@
 ```
  A_A       _
 o'' )_____//    [MOS-STM32]
- `_/  MOS  )    Mini RTOS on STM32F4, Cortex-M
+ `_/  MOS  )    Mini RTOS on Cortex-M
  (_(_/--(_/     MOS <=> Mini-RTOS
 
 - Board: NUCLEO-144 F429ZI
@@ -21,7 +21,7 @@ o'' )_____//    [MOS-STM32]
 ```C++
 src
 ├── drivers                  // Hardware Drivers(SPL/HAL/LL/...)
-│   ├── stm32f4xx            // STM32F4xx on-chip Periphs(USART, I2C, SPI, ...)
+│   ├── stm32f4xx            // stm32f4xx On-Chip Peripherals(USART, I2C, SPI, ...)
 │   └── device               // Other components(LED, LCD, ...)
 │
 ├── mos
@@ -84,7 +84,7 @@ src
 #include "mos/kernel.hpp"
 #include "mos/shell.hpp"
 
-// HAL and device 
+// HAL and Device 
 #include "drivers/stm32f4xx/hal.hpp"
 #include "drivers/device/led.hpp"
 ```
@@ -139,21 +139,19 @@ namespace MOS::User::App
 {
     Sync::Barrier_t bar {2};
 
-    void Task1()
+    void LED_1(LED_t leds[])
     {
-        using Global::leds;
         bar.wait();
         for (auto _: Range(0, 20)) {
            leds[1].toggle(); // green
            Task::delay(250_ms);
         }
-        kprintf("T1 exits...\n");
+        kprintf("L1 exits...\n");
     }
 
-    void Task0()
+    void LED_0(LED_t leds[])
     {
-        using Global::leds;
-        Task::create(Task1, nullptr, 1, "T1");
+        Task::create(LED_1, leds, 1, "L1");
         bar.wait();
         while (true) {
             leds[0].toggle(); // red
@@ -168,15 +166,23 @@ int main()
     using namespace MOS;
     using namespace Kernel;
     using namespace User;
+    using namespace User::Global;
 
     // Init hardware and clocks
     BSP::config();
 
+    // Create Calendar with RTC
+    Task::create(
+        App::Calendar, nullptr, 0, "Calendar"
+    );
+
     // Create Shell with io_buf
-    Task::create(Shell::launch, &User::Global::io_buf, 1, "Shell");
-    
+    Task::create(
+        Shell::launch, &io_buf, 1, "Shell"
+    );
+
     /* User Tasks */
-    Task::create(App::Task0, nullptr, 2, "T0");
+    Task::create(App::LED_0, &leds, 2, "L0");
     ...
 
     /* Test examples */
@@ -186,10 +192,6 @@ int main()
     
     // Start scheduling, never return
     Scheduler::launch();
-
-    while (true) {
-        // Never run to here
-    }
 }
 ```
 
@@ -204,7 +206,7 @@ o'' )_____//   Version @ x.x.x(...)
 -----------------------------------------
  #0    idle      15      READY       10%
  #1    Shell      1      BLOCKED     21%
- #2    T0         2      RUNNING      9%
+ #2    L0         2      RUNNING      9%
 -----------------------------------------
 ```
 
@@ -250,17 +252,17 @@ o'' )_____//   Version @ x.x.x(...)
 - (Experimental) Atomic Type in `<stdatomic.h>`
 - (Experimental) `Utils::IntrGuard_t`, Nested Interrupt Lock Guard
 - Add `Driver::Device::SD_t` with `SPI` driver
-- Add `FatFs` File System
+- Add `FatFs` as File System
 
 📌 Plan
 - `IPC::pipe/channel`
 - Soft/Hardware Timers
 - Basic Formal Verification on `Scheduler`
 - `DMA_t` Driver
-- More scheduler algorithms
+- More real-time scheduling algorithms
 - `FPU` support
 - `Result<T, E>, Option<T>`
-- `Async::{Future_t, async/await}`，Async Stackless Coroutine
+- Async Stackless Coroutine `Async::{Future_t, async/await}`
 ---
 
 ### References 🛸

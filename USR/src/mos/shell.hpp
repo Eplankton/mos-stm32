@@ -143,7 +143,7 @@ namespace MOS::Shell
 				Task::resume(tcb);
 			}
 			else {
-				MOS_MSG("Calendar not found!");
+				MOS_MSG("sys-rtc not found!");
 			}
 		}
 

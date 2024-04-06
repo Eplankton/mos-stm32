@@ -36,7 +36,7 @@ namespace MOS::User::Test
 			Task::create(mtx_test, 30_ms, 1, "Mtx1");
 		};
 
-		Task::create(launch, nullptr, Macro::PRI_MAX, "MutexTest");
+		Task::create(launch, nullptr, Macro::PRI_MAX, "MtxTest");
 	}
 
 	void MsgQueueTest()

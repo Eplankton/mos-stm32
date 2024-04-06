@@ -1,7 +1,7 @@
 #ifndef _MOS_FATFS_
 #define _MOS_FATFS_
 
-#include "src/mos/kernel/task.hpp"
+#include "src/mos/kernel/utils.hpp"
 #include "fatfs/ff.h"
 
 namespace MOS::FatFs
@@ -63,7 +63,8 @@ namespace MOS::FatFs
 			res = f_write(
 			    &file,
 			    w_buf,
-			    sizeof(w_buf), &fnum
+			    sizeof(w_buf),
+			    &fnum
 			);
 
 			/* 实测SPI_SD驱动下写入大于512字节的数据在SD卡里打开会显示乱码，如需写入大量数据使用f_write_co替代上面f_write即可 */
@@ -74,8 +75,6 @@ namespace MOS::FatFs
 			else {
 				MOS_MSG("Bad:(%d)", res);
 			}
-
-			f_close(&file); /* 不再读写，关闭文件 */
 		}
 		else {
 			MOS_MSG("File open failed!");
@@ -109,8 +108,8 @@ namespace MOS::FatFs
 			    &fnum
 			);
 
-			// 实测SPI_SD驱动下读取大于512字节的数据在SD卡里打开会显示乱码
-			// 如需读取大量数据使用f_read_co替代上面f_read即可
+			// 实测 SPI_SD 驱动下读取大于 512 字节的数据在 SD 卡里打开会显示乱码
+			// 如需读取大量数据使用 f_read_co 替代上面 f_read 即可
 			// res_sd = f_read_co(&fnew, ReadBuffer, sizeof(ReadBuffer), &fnum);
 			if (res == FR_OK) {
 				MOS_MSG("R= %d B -> \"%s\"", fnum, r_buf);
@@ -128,7 +127,7 @@ namespace MOS::FatFs
 
 	void test()
 	{
-		static FATFS fatfs; /* FatFs文件系统对象 */
+		static FATFS fatfs; /* FatFs 文件系统对象 */
 		kprintf("--------< FatFs R/W Test >--------\n");
 		mnt_or_fmt(fatfs);
 		w_test(fatfs);
