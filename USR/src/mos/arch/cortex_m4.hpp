@@ -48,6 +48,6 @@
 	"cpsie   i\n" /* Enable interrupts */                \
 	"bx      lr\n"
 
-#define ARCH_JUMP_TO_CONTEXT_SWITCH "B    context_switch"
+#define ARCH_JUMP_TO_CONTEXT_SWITCH "b    context_switch"
 
 #endif

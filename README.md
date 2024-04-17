@@ -19,45 +19,47 @@ o'' )_____//    [MOS-STM32]
 [USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
 <img src="Pic/mos-arch.svg">
 ```C++
-src
-├── drivers                  // Hardware Drivers(SPL/HAL/LL/...)
-│   ├── stm32f4xx            // stm32f4xx On-Chip Peripherals(USART, I2C, SPI, ...)
-│   └── device               // Other components(LED, LCD, ...)
-│
-├── mos
-│   ├── config.h             // System Configuration
-│   ├── arch                 // Arch-related
-│   │   └── cpu.hpp          // asm for init/context_switch
-│   │
-│   ├── kernel               // Kernel(Arch-independent)
-│   │   ├── macro.hpp        // Kernel Constant Macros
-│   │   ├── type.hpp         // Basic Types
-│   │   ├── concepts.hpp     // Type Constraints(Optional)
-│   │   ├── data_type.hpp    // Basic Data Structures
-│   │   ├── alloc.hpp        // Static/Dynamic Allocator
-│   │   ├── global.hpp       // Kernel Globals
-│   │   ├── printf.h/.c      // Thread-safe printf (by mpaland)
-│   │   ├── task.hpp         // Task control
-│   │   ├── sync.hpp         // Sync primitives
-│   │   ├── scheduler.hpp    // Scheduler and Policy
-│   │   ├── ipc.hpp          // Inter-Process Communication
-│   │   └── utils.hpp        // Utils
-│   │
-│   ├── kernel.hpp           // Import Kernel Modules
-│   └── shell.hpp            // Simple Shell
-│
-├── user                     // User program
-│   ├── gui                  // GUI-related
-│   │   ├── GuiLite.h        // GuiLite Framework
-│   │   └── UICode.cpp       // User Interface
-│   │
-│   ├── global.hpp           // User Globals
-│   ├── bsp.hpp              // Board Support Package
-│   ├── app.hpp              // Applications
-│   └── test.hpp             // Test
-│
-├── main.cpp                 // Entry main()
-└── stm32f4xx_it.cpp         // Interrput SubRoutine(Partly)
+.
+├── vendor              // Hardware Abstraction Layer(SPL/HAL/LL/...)
+└── src
+    ├── drivers         // Hardware Driver Portable Interface
+    │   ├── stm32f4xx   // STM32F4xx On-Chip Peripherals(USART, I2C, SPI, ...)
+    │   └── device      // Other components(LED, LCD, ...)
+    │
+    ├── mos
+    │   ├── config.h             // System Configuration
+    │   ├── arch                 // Arch-related
+    │   │   └── cpu.hpp          // asm for init/context_switch
+    │   │
+    │   ├── kernel               // Kernel(Arch-independent)
+    │   │   ├── macro.hpp        // Kernel Constant Macros
+    │   │   ├── type.hpp         // Basic Types
+    │   │   ├── concepts.hpp     // Type Constraints(Optional)
+    │   │   ├── data_type.hpp    // Basic Data Structures
+    │   │   ├── alloc.hpp        // Static/Dynamic Allocator
+    │   │   ├── global.hpp       // Kernel Globals
+    │   │   ├── printf.h/.c      // Thread-safe printf (by mpaland)
+    │   │   ├── task.hpp         // Task control
+    │   │   ├── sync.hpp         // Sync primitives
+    │   │   ├── scheduler.hpp    // Scheduler and Policy
+    │   │   ├── ipc.hpp          // Inter-Process Communication
+    │   │   └── utils.hpp        // Utils
+    │   │
+    │   ├── kernel.hpp           // Import Kernel Modules
+    │   └── shell.hpp            // Simple Shell
+    │
+    ├── user
+    │   ├── gui                  // GUI-related
+    │   │   ├── GuiLite.h        // GuiLite Framework
+    │   │   └── UICode.cpp       // User Interface
+    │   │
+    │   ├── global.hpp           // User Globals
+    │   ├── bsp.hpp              // Board Support Package
+    │   ├── app.hpp              // User Applications
+    │   └── test.hpp             // Test
+    │
+    ├── main.cpp                 // Entry main()
+    └── stm32f4xx_it.cpp         // Interrput SubRoutine(Partly)
 ```
 
 ### Example 🍎
@@ -125,13 +127,7 @@ namespace MOS::User::BSP
              .it_enable(RXNE) // Enable RXNE interrupt
              .enable();
     }
-
-    void config()
-    {
-        LED_Config();
-        USART_Config();
-        ...
-    }
+    ...
 }
 ```
 ```C++
@@ -139,7 +135,7 @@ namespace MOS::User::App
 {
     Sync::Barrier_t bar {2};
 
-    void LED_1(LED_t leds[])
+    void LED_1(Device::LED_t leds[])
     {
         bar.wait();
         for (auto _: Range(0, 20)) {
@@ -149,9 +145,14 @@ namespace MOS::User::App
         kprintf("L1 exits...\n");
     }
 
-    void LED_0(LED_t leds[])
+    void LED_0(Device::LED_t leds[])
     {
-        Task::create(LED_1, leds, 1, "L1");
+        Task::create(
+            LED_1, 
+            leds, 
+            Task::current()->get_pri(),
+            "L1"
+        );
         bar.wait();
         while (true) {
             leds[0].toggle(); // red
@@ -168,16 +169,13 @@ int main()
     using namespace User;
     using namespace User::Global;
 
-    // Init hardware and clocks
-    BSP::config();
+    BSP::config(); // Init hardware and clocks
 
-    // Create Calendar with RTC
-    Task::create(
+    Task::create( // Create Calendar with RTC
         App::Calendar, nullptr, 0, "Calendar"
     );
 
-    // Create Shell with io_buf
-    Task::create(
+    Task::create( // Create Shell with io_buf
         Shell::launch, &io_buf, 1, "Shell"
     );
 
@@ -187,7 +185,7 @@ int main()
 
     /* Test examples */
     Test::MutexTest();
-    Test::AsyncTest();
+    Test::MsgQueueTest();
     ...
     
     // Start scheduling, never return
@@ -197,10 +195,10 @@ int main()
 
 ### Boot Up ⚡
 ```
- A_A       _
-o'' )_____//   Version @ x.x.x(...)
- `_/  MOS  )   Build   @ TIME, DATE
- (_(_/--(_/    Chip    @ MCU, ARCH
+ A_A       _   Version @ x.x.x(...)
+o'' )_____//   Build   @ TIME, DATE
+ `_/  MOS  )   Chip    @ MCU, ARCH
+ (_(_/--(_/    2023-2024 Copyright by Eplankton
 
  Tid   Name   Priority   Status   Stack%
 -----------------------------------------
@@ -212,57 +210,60 @@ o'' )_____//   Version @ x.x.x(...)
 
 ### Version 🧾
 ---
-📦 `0.0.1`
+📦 `v0.1`
 
 ✅ Done
-- Basic Scheduler and Task control, memory management
+> - Basic Scheduler and Task control, memory management
 
 📌 Plan
-- Timers, `RoundRobin`
-- Inter-process communication `IPC`, pipes, message queues
-- Sync, semaphore, mutex, lock
-- Porting simple shells
-- Mutable page size, memory allocator
-- `SPI` driver and `LVGL` library
-- Port to other platform like `ESP32-C3(RISC-V)`
+> - Timers, `RoundRobin`
+> - Inter-process communication `IPC`, pipes, message queues
+> - Sync, semaphore, mutex, lock
+> - Porting simple shells
+> - Mutable page size, memory allocator
+> - `SPI` driver and `LVGL` library
+> - Port to other platform like `ESP32-C3(RISC-V)`
 ---
-📦 `0.0.2`
+📦 `v0.2`
 
 ✅ Done
-- `Sync::{Sema_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}`, where `Mutex_t` adopts Priority Ceiling Protocol
-- `Scheduler::Policy::PreemptPri`, under same priority -> `RoundRobin`
-- `Task::terminate` will be implicitly called when task exits
-- `Shell::{Command, CmdCall, launch}`
-- `HAL::STM32F4xx::SPI_t` and `Driver::ST7735S_t`, support `GuiLite`
-- `Kernel::Global::os_ticks` and `Task::delay` for blocking delay
-- Refactor the project into `{kernel, arch, drivers}`
-- Support `GCC` and `STM32CubeMX HAL`
-- `HAL::STM32F4xx::RTC_t`, `CmdCall::date_cmd` and `App::Calendar`
-- `idle` uses `Kernel::Global::zombie_list` to recycle inactive pages
-- Three basic page allocator policies, `Page_t::Policy::{POOL, DYNAMIC, STATIC}`
+> - `Sync::{Sema_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}`, where `Mutex_t` adopts Priority Ceiling Protocol
+> - `Scheduler::Policy::PreemptPri`, under same priority -> `RoundRobin`
+> - `Task::terminate` will be implicitly called when task exits
+> - `Shell::{Command, CmdCall, launch}`
+> - `HAL::STM32F4xx::SPI_t` and `Driver::ST7735S_t`, support `GuiLite`
+> - `Kernel::Global::os_ticks` and `Task::delay` for blocking delay
+> - Refactor the project into `{kernel, arch, drivers}`
+> - Support `GCC` and `STM32CubeMX HAL`
+> - `HAL::STM32F4xx::RTC_t`, `CmdCall::date_cmd` and `App::Calendar`
+> - `idle` uses `Kernel::Global::zombie_list` to recycle inactive pages
+> - Three basic page allocator policies, `Page_t::Policy::{POOL, DYNAMIC, STATIC}`
 ---
-📦 `0.0.3`
+📦 `v0.3`
 
 ✅ Done
-- `Tids` from `BitMap_t`
-- (Experimental) `Task::Async::{Future_t, async/await}`
-- `IPC::MsgQueue_t`, Message Queue
-- `Task::create` allows generic `fn` signature as `void fn(auto argv)` with type check
-- Add `ESP32C3` as `WiFi` Module
-- (Experimental) Atomic Type in `<stdatomic.h>`
-- (Experimental) `Utils::IntrGuard_t`, Nested Interrupt Lock Guard
-- Add `Driver::Device::SD_t` with `SPI` driver
-- Add `FatFs` as File System
+> - `Tids` from `BitMap_t`
+> - (Experimental) `Task::Async::{Future_t, async/await}`
+> - `IPC::MsgQueue_t`, Message Queue
+> - `Task::create` allows generic `fn` signature as `void fn(auto argv)` with type check
+> - Add `ESP32C3` as `WiFi` Module
+> - (**Experimental**) Atomic Type in `<stdatomic.h>`
+> - (**Experimental**) `Utils::IntrGuard_t`, Nested Interrupt Lock Guard
+> - Add `Driver::Device::SD_t` driver with `SPI` mode
+> - Add `FatFs` as File System
+> - Add `Shell::usr_cmds`，User Register Service
 
 📌 Plan
-- `IPC::pipe/channel`
-- Soft/Hardware Timers
-- Basic Formal Verification on `Scheduler`
-- `DMA_t` Driver
-- More real-time scheduling algorithms
-- `FPU` support
-- `Result<T, E>, Option<T>`
-- Async Stackless Coroutine `Async::{Future_t, async/await}`
+> - `IPC::pipe/channel`
+> - Soft/Hardware Timers
+> - (**Experimental**) Async Stackless Coroutine `Async::{Future_t, async/await}`
+> - (**Experimental**) Basic Formal Verification on `Scheduler`
+> - `DMA_t` Driver
+> - More real-time scheduling algorithms
+> - `FPU` support
+> - `Result<T, E>, Option<T>`
+> - Add `POSIX` support
+> - Performance Benchmark
 ---
 
 ### References 🛸

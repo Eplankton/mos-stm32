@@ -287,7 +287,7 @@ namespace MOS::ISR
 		uart.handle_it(USART_IT_RXNE, [&] {
 			char8_t data = uart.recv_data();
 			if (!buf.full()) {
-				if (data == '\n') // data received
+				if (data == '\n') // read a line
 					buf.signal_from_isr();
 				else
 					buf.add(data);

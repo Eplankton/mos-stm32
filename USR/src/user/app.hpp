@@ -1,8 +1,9 @@
 #ifndef _MOS_USER_APP_
 #define _MOS_USER_APP_
 
-// Import Kernel Module
+// Import Kernel and Shell Module
 #include "src/mos/kernel.hpp"
+#include "src/mos/shell.hpp"
 
 #include "src/user/global.hpp"
 #include "src/user/gui/GuiLite.h"
@@ -113,7 +114,7 @@ namespace MOS::User::App
 	{
 		using HAL::STM32F4xx::RTC_t;
 
-		auto print_rtc_info = [] {
+		auto print_rtc_info = [](auto argv) {
 			IntrGuard_t guard;
 			const auto date = RTC_t::get_date();
 			const auto time = RTC_t::get_time();
@@ -125,10 +126,7 @@ namespace MOS::User::App
 			);
 		};
 
-		while (true) {
-			Task::block();
-			print_rtc_info();
-		}
+		Shell::usr_cmds.add({"time", print_rtc_info});
 	}
 
 	// MOS_DEBUG_INFO bool f0 = 0, f1 = 0;

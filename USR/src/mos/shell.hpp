@@ -31,12 +31,19 @@ namespace MOS::Shell
 		Fn_t callback;
 
 		MOS_INLINE inline uint32_t
-		len() const { return strlen(text); }
+		len() const volatile { return strlen(text); }
 
 		MOS_INLINE inline void
-		run(Argv_t argv) const { callback(argv); }
+		run(Argv_t argv) const volatile { callback(argv); }
 
-		Argv_t match(Text_t str) const
+		MOS_INLINE inline void
+		operator=(const Command_t& cmd) volatile
+		{
+			text     = cmd.text;
+			callback = cmd.callback;
+		}
+
+		Argv_t match(Text_t str) const volatile
 		{
 			const auto xlen = len(); // The length of a command
 
@@ -137,25 +144,14 @@ namespace MOS::Shell
 		}
 
 		static inline void
-		date_cmd(Argv_t argv)
-		{
-			if (auto tcb = Task::find("Calendar")) {
-				Task::resume(tcb);
-			}
-			else {
-				MOS_MSG("sys-rtc not found!");
-			}
-		}
-
-		static inline void
 		uname_cmd(Argv_t argv)
 		{
 			IntrGuard_t guard;
 			kprintf(
-			    " A_A       _\n"
-			    "o'' )_____//  Version @ %s\n"
-			    " `_/  MOS  )  Build   @ %s, %s\n"
-			    " (_(_/--(_/   Chip    @ %s, %s\n",
+			    " A_A       _  Version @ %s\n"
+			    "o'' )_____//  Build   @ %s, %s\n"
+			    " `_/  MOS  )  Chip    @ %s, %s\n"
+			    " (_(_/--(_/   2023-2024 Copyright by Eplankton\n",
 			    MOS_VERSION,
 			    __TIME__, __DATE__,
 			    MOS_MCU, MOS_ARCH
@@ -171,17 +167,19 @@ namespace MOS::Shell
 	}
 
 	// Add more commands here with {"text", CmdCall::callback}
-	static constexpr Command_t cmds[] = {
+	static constexpr Command_t sys_cmds[] = {
 	    {    "ls",     CmdCall::ls_cmd},
 	    {  "kill",   CmdCall::kill_cmd},
 	    { "block",  CmdCall::block_cmd},
 	    {"resume", CmdCall::resume_cmd},
-	    {  "date",   CmdCall::date_cmd},
 	    { "uname",  CmdCall::uname_cmd},
 	    {"reboot", CmdCall::reboot_cmd},
 	};
 
 	using SyncRxBuf_t = DataType::SyncRxBuf_t<Macro::SHELL_BUF_SIZE>;
+	using UsrCmds_t   = DataType::Buffer_t<Command_t, Macro::SHELL_USR_CMD_SIZE>;
+
+	UsrCmds_t usr_cmds; // For applications to register
 
 	void launch(SyncRxBuf_t& input)
 	{
@@ -190,11 +188,20 @@ namespace MOS::Shell
 		static auto parse = [](Text_t str) {
 			kprintf("> %s\n", str); // Echo
 			if (str[0] != '\0') {
-				for (auto& cmd: cmds) { // Search
+				// Search in System Commands
+				for (auto& cmd: sys_cmds) {
 					if (auto argv = cmd.match(str)) {
 						return cmd.run(argv);
 					}
 				}
+
+				// Search in User Commands
+				for (auto& cmd: usr_cmds.raw) {
+					if (auto argv = cmd.match(str)) {
+						return cmd.run(argv);
+					}
+				}
+
 				MOS_MSG("Unknown command '%s'", str);
 			}
 		};
