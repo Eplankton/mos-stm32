@@ -213,7 +213,7 @@ namespace MOS::Kernel::Task
 			else {
 				static_assert(
 				    AsFnPtr<RawFn_t, RawArgv_t>,
-				    "Mismatched Invoke Type!"
+				    "Invalid Invoke Type!"
 				);
 				return (Fn_t) ((uint32_t) fn);
 			}

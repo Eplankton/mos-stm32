@@ -2,9 +2,7 @@
   "name": "mos",
   "type": "ARM",
   "dependenceList": [],
-  "srcDirs": [
-    ".eide/deps"
-  ],
+  "srcDirs": [],
   "virtualFolder": {
     "name": "<virtual_root>",
     "files": [],
@@ -336,14 +334,12 @@
         "incList": [
           "c:/Keil_v5/ARM/ARMCLANG/include",
           ".cmsis/include",
-          ".eide/deps",
           "../Driver/inc",
           "../CMSIS/Include",
           "../CORE",
           "../USR"
         ],
         "libList": [],
-        "sourceDirList": [],
         "defineList": [
           "USE_STDPERIPH_DRIVER",
           "STM32F429_439xx"
@@ -508,7 +504,6 @@
           "c:/Keil_v5/ARM/ARMCLANG/include"
         ],
         "libList": [],
-        "sourceDirList": [],
         "defineList": [
           "USE_STDPERIPH_DRIVER",
           "STM32F429_439xx"
@@ -580,5 +575,5 @@
       }
     }
   },
-  "version": "3.3"
+  "version": "3.4"
 }

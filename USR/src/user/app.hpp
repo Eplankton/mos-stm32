@@ -21,7 +21,7 @@ namespace MOS::User::App
 
 	using Color = Device::ST7735S_t::Color;
 
-	namespace Gui
+	namespace GUI
 	{
 		using Global::lcd;
 
@@ -60,9 +60,9 @@ namespace MOS::User::App
 		);
 	}
 
-	void GUI()
+	void gui()
 	{
-		using namespace Gui;
+		using namespace GUI;
 		EXTERNAL_GFX_OP gfx_op {gfx_draw_pixel, nullptr};
 		startHello3D(
 		    nullptr, lcd.width, lcd.height,
@@ -70,12 +70,10 @@ namespace MOS::User::App
 		);
 	}
 
-	void LCD(Device::ST7735S_t& lcd)
+	void lcd_init(Device::ST7735S_t& lcd)
 	{
-		using Sync::Mutex_t;
-
 		// A mutex wrapper of lcd
-		static Mutex_t lcd_mtx {lcd};
+		static Sync::Mutex_t lcd_mtx {lcd};
 
 		auto GIF = [] {
 			while (true) {
@@ -106,11 +104,11 @@ namespace MOS::User::App
 		};
 
 		auto pri = Task::current()->get_pri();
-		Task::create(GIF, nullptr, pri, "GIF");
-		Task::create(Slogan, nullptr, pri, "Slogan");
+		Task::create(GIF, nullptr, pri, "gif");
+		Task::create(Slogan, nullptr, pri, "slogan");
 	}
 
-	void Calendar()
+	void time_init()
 	{
 		using HAL::STM32F4xx::RTC_t;
 
@@ -132,7 +130,7 @@ namespace MOS::User::App
 	// MOS_DEBUG_INFO bool f0 = 0, f1 = 0;
 	Sync::Barrier_t bar {2};
 
-	void LED_1(Device::LED_t leds[])
+	void led1(Device::LED_t leds[])
 	{
 		bar.wait();
 		for (auto _: Range(0, 20)) {
@@ -146,12 +144,12 @@ namespace MOS::User::App
 		);
 	}
 
-	void LED_0(Device::LED_t leds[])
+	void led0(Device::LED_t leds[])
 	{
 		Task::create(
-		    LED_1, leds,
+		    led1, leds,
 		    Task::current()->get_pri(),
-		    "L1"
+		    "led1"
 		);
 		bar.wait();
 		while (true) {
@@ -161,7 +159,7 @@ namespace MOS::User::App
 		}
 	}
 
-	void WiFi(DataType::SyncRxBuf_t<8>& buf)
+	void wifi(DataType::SyncRxBuf_t<8>& buf)
 	{
 		while (true) {
 			buf.wait();
@@ -171,6 +169,77 @@ namespace MOS::User::App
 			}
 			buf.clear();
 		}
+	}
+
+	void log_init()
+	{
+		using FatFs  = FileSys::FatFs;
+		using File_t = FatFs::File_t;
+
+		static FIL file_raw; // 文件裸对象
+
+		static auto lgw_cmd = [](auto text) {
+			File_t file {file_raw}; // 文件对象
+			auto res = file.open(   // 打开文件，如果文件不存在则创建它
+			    "0:log.txt", File_t::OpenMode::Write
+			);
+
+			if (res == FR_OK) {
+				auto [res, num] = file.write( // 将指定存储区内容写入到文件内
+				    (void*) text, strlen(text)
+				);
+				MOS_MSG("Write(%d) <- \"%s\"", num, text);
+			}
+			else {
+				MOS_MSG("File open failed!");
+			}
+		};
+
+		static auto cat_cmd = [](auto name) {
+			File_t file {file_raw}; // 文件对象
+			auto append_str = [](char* dest, const char* src) {
+				while (*dest) { // 找到目标字符串的末尾
+					dest++;
+				}
+
+				while (*src) { // 复制源字符串到目标字符串的末尾
+					if ((*dest = *src) != '\0') {
+						dest++;
+						src++;
+					}
+					else {
+						break;
+					}
+				}
+
+				*dest = '\0'; // 确保目标字符串以'\0'结尾
+			};
+
+			char path[16] = "0:", r_buf[32] = "";
+
+			append_str(path, name);
+
+			auto res = file.open( // 打开文件，如果文件不存在则创建它
+			    path, File_t::OpenMode::Read
+			);
+
+			if (res == FR_OK) {
+				auto [res, num] = file.read(
+				    (void*) r_buf, sizeof(r_buf)
+				);
+				MOS_MSG("Read(%d) -> \"%s\"", num, r_buf);
+			}
+			else {
+				MOS_MSG("File open failed!");
+			}
+		};
+
+		// log read cmd
+		static auto lgr_cmd = [](auto _) { cat_cmd("log.txt"); };
+
+		Shell::usr_cmds.add({"cat", cat_cmd});
+		Shell::usr_cmds.add({"lgr", lgr_cmd});
+		Shell::usr_cmds.add({"lgw", lgw_cmd});
 	}
 }
 

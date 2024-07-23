@@ -27,11 +27,17 @@ namespace MOS::DataType
 		MOS_INLINE inline void
 		add(T data) volatile { raw[len++] = data; }
 
-		MOS_INLINE inline char
+		MOS_INLINE inline auto
 		back() const volatile
 		{
-			return empty() ? '\0' : raw[len - 1];
+			return empty() ? 0 : raw[len - 1];
 		}
+
+		MOS_INLINE inline auto
+		begin() const { return &raw[0]; }
+
+		MOS_INLINE inline auto
+		end() const { return &raw[len]; }
 
 		MOS_INLINE inline void
 		pop() volatile

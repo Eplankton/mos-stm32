@@ -83,25 +83,26 @@ namespace MOS::Kernel::Scheduler
 	}
 
 	// Start scheduling
+	template <typename Hook_t = void (*)()>
 	static inline void
-	launch(Fn_t hook = nullptr)
+	launch(Hook_t hook = nullptr)
 	{
-		static uint32_t init_block[PAGE_SIZE / 2];
+		static uint32_t ipb[PAGE_SIZE / 2]; // Idle Page Block
 
 		Page_t idle_page {
 		    .policy = Page_t::Policy::STATIC,
-		    .raw    = init_block,
-		    .size   = sizeof(init_block) / sizeof(uint32_t),
+		    .raw    = ipb,
+		    .size   = sizeof(ipb) / sizeof(uint32_t),
 		};
 
 		// Default idle can be replaced by user-defined hook
-		auto idle = [](void* argv) {
+		auto idle = [] {
 			while (true) {
-				Task::recycle();
+				Task::recycle(); // Recycle resources
 			}
 		};
 
-		// Create idle task with hook
+		// Create idle task with hook, or just default
 		Task::create(
 		    hook ? hook : idle,
 		    nullptr, PRI_MIN, "idle", idle_page
@@ -111,10 +112,7 @@ namespace MOS::Kernel::Scheduler
 
 		cur_tcb = ready_list.begin();
 		cur_tcb->set_status(RUNNING);
-
-		debug_tcbs.mark(cur_tcb); // For debug only
 		sched_status = SchedStatus::Ok;
-
 		init();
 	}
 

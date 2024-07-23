@@ -20,23 +20,26 @@ int main()
 	BSP::config();
 
 	// Create Calendar with RTC
-	Task::create(App::Calendar, nullptr, 0, "Calendar");
+	Task::create(App::time_init, nullptr, 1, "time/init");
 
 	// Create Shell with io_buf
-	Task::create(Shell::launch, &io_buf, 1, "Shell");
+	Task::create(Shell::launch, &sh_buf, 1, "shell");
 
 	// Create FatFs on SD card
-	Task::create(FatFs::test, nullptr, 2, "FatFs");
+	Task::create(FileSys::rw_test, &fatfs, 2, "fs/rw_test");
+
+	// Create Log System
+	Task::create(App::log_init, nullptr, 2, "log/init");
 
 	/* User Tasks */
-	Task::create(App::LED_0, &leds, 2, "L0");
-	// Task::create(App::GUI, nullptr, 3, "gui", 256);
-	Task::create(App::LCD, &lcd, 3, "LCD");
-	Task::create(App::WiFi, &wifi_buf, 3, "WiFi");
+	Task::create(App::led0, &leds, 2, "led0");
+	// Task::create(App::gui, nullptr, 3, "gui", 256);
+	Task::create(App::lcd_init, &lcd, 3, "lcd/init");
+	Task::create(App::wifi, &wifi_buf, 3, "wifi");
 
 	/* Test examples */
 	// Test::MutexTest();
-	// Test::MsgQueueTest();
+	Test::MsgQueueTest();
 
 	// Start scheduling, never return
 	Scheduler::launch();

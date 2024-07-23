@@ -98,8 +98,7 @@ namespace MOS::Shell
 		ls_cmd(Argv_t argv)
 		{
 			task_ctrl_cmd(
-			    argv,
-			    [](auto tcb) { /* Todo */ },
+			    argv, [](auto tcb) { /* Todo */ },
 			    [] { Task::print_all(); }
 			);
 		}
@@ -108,8 +107,7 @@ namespace MOS::Shell
 		kill_cmd(Argv_t argv)
 		{
 			task_ctrl_cmd(
-			    argv,
-			    [](auto tcb) {
+			    argv, [](auto tcb) {
 				    MOS_MSG("Task '%s' terminated", tcb->get_name());
 				    Task::terminate(tcb);
 			    },
@@ -121,8 +119,7 @@ namespace MOS::Shell
 		block_cmd(Argv_t argv)
 		{
 			task_ctrl_cmd(
-			    argv,
-			    [](auto tcb) {
+			    argv, [](auto tcb) {
 				    MOS_MSG("Task '%s' blocked", tcb->get_name());
 				    Task::block(tcb);
 			    },
@@ -134,8 +131,7 @@ namespace MOS::Shell
 		resume_cmd(Argv_t argv)
 		{
 			task_ctrl_cmd(
-			    argv,
-			    [](auto tcb) {
+			    argv, [](auto tcb) {
 				    MOS_MSG("Task '%s' resumed", tcb->get_name());
 				    Task::resume(tcb);
 			    },
@@ -151,7 +147,7 @@ namespace MOS::Shell
 			    " A_A       _  Version @ %s\n"
 			    "o'' )_____//  Build   @ %s, %s\n"
 			    " `_/  MOS  )  Chip    @ %s, %s\n"
-			    " (_(_/--(_/   2023-2024 Copyright by Eplankton\n",
+			    " (_(_/--(_/   2023 - 2024 Copyright by Eplankton\n",
 			    MOS_VERSION,
 			    __TIME__, __DATE__,
 			    MOS_MCU, MOS_ARCH
@@ -164,39 +160,58 @@ namespace MOS::Shell
 			MOS_MSG("Reboot!\n\n");
 			MOS_REBOOT();
 		}
+
+		static inline void
+		help_cmd(Argv_t argv);
+
+		// Add more commands to here by {"text", callback}
+		static constexpr Command_t sys_cmds[] = {
+		    {    "ls",     ls_cmd},
+		    {  "kill",   kill_cmd},
+		    { "block",  block_cmd},
+		    {"resume", resume_cmd},
+		    {  "help",   help_cmd},
+		    { "uname",  uname_cmd},
+		    {"reboot", reboot_cmd},
+		};
+
+		using UsrCmds_t = DataType::Buffer_t<Command_t, Macro::SHELL_USR_CMD_SIZE>;
+		UsrCmds_t usr_cmds; // For applications to register
+
+		static inline void
+		help_cmd(Argv_t argv)
+		{
+			static auto show = [](const auto& cmds) {
+				for (auto [text, _]: cmds) {
+					kprintf("%s, ", text);
+				}
+			};
+
+			kprintf("{");
+			show(sys_cmds);
+			show(usr_cmds);
+			kprintf("}\n");
+		}
 	}
 
-	// Add more commands here with {"text", CmdCall::callback}
-	static constexpr Command_t sys_cmds[] = {
-	    {    "ls",     CmdCall::ls_cmd},
-	    {  "kill",   CmdCall::kill_cmd},
-	    { "block",  CmdCall::block_cmd},
-	    {"resume", CmdCall::resume_cmd},
-	    { "uname",  CmdCall::uname_cmd},
-	    {"reboot", CmdCall::reboot_cmd},
-	};
-
 	using SyncRxBuf_t = DataType::SyncRxBuf_t<Macro::SHELL_BUF_SIZE>;
-	using UsrCmds_t   = DataType::Buffer_t<Command_t, Macro::SHELL_USR_CMD_SIZE>;
-
-	UsrCmds_t usr_cmds; // For applications to register
+	using CmdCall::sys_cmds;
+	using CmdCall::usr_cmds;
 
 	void launch(SyncRxBuf_t& input)
 	{
 		using Text_t = Command_t::Text_t;
 
-		static auto parse = [](Text_t str) {
+		static auto parse_and_run = [](Text_t str) {
 			kprintf("> %s\n", str); // Echo
 			if (str[0] != '\0') {
-				// Search in System Commands
-				for (auto& cmd: sys_cmds) {
+				for (auto& cmd: sys_cmds) { // Search in System Commands
 					if (auto argv = cmd.match(str)) {
 						return cmd.run(argv);
 					}
 				}
 
-				// Search in User Commands
-				for (auto& cmd: usr_cmds.raw) {
+				for (auto& cmd: usr_cmds) { // Search in User Commands
 					if (auto argv = cmd.match(str)) {
 						return cmd.run(argv);
 					}
@@ -211,7 +226,7 @@ namespace MOS::Shell
 
 		while (true) {
 			input.wait();
-			parse(input.as_str());
+			parse_and_run(input.as_str());
 			input.clear();
 		}
 	}

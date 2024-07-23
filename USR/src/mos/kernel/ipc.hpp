@@ -28,34 +28,43 @@ namespace MOS::Kernel::IPC
 		MOS_INLINE inline bool
 		empty() const { return raw.empty(); }
 
-		bool send(const T& msg, Tick_t timeout = 0)
+		auto send(const T& msg, Tick_t timeout = 0)
 		{
-			if (raw.full()) {
-				if (timeout == 0 ||
-				    !block_to(senders, timeout)) {
-					return false;
-				}
+			if (raw.full() &&
+			    block_to(senders, timeout) == TimeOut) {
+				return TimeOut;
 			}
 
-			raw.push(msg);
-			try_wake_up(receivers);
+			{
+				IntrGuard_t guard;
+				raw.push(msg);
+			}
 
-			return true;
+			try_wake_up(receivers);
+			return Ok;
 		}
 
-		bool recv(T& buf, Tick_t timeout = 0)
+		auto recv(Tick_t timeout = 0)
 		{
-			if (raw.empty()) {
-				if (timeout == 0 ||
-				    !block_to(receivers, timeout)) {
-					return false;
-				}
+			struct RecvMsg_t
+			{
+				Status status = TimeOut;
+				T msg {};
+			} res;
+
+			if (raw.empty() &&
+			    block_to(receivers, timeout) == TimeOut) {
+				return res;
 			}
 
-			buf = raw.serve();
-			try_wake_up(senders);
+			{
+				IntrGuard_t guard;
+				res.status = Ok;
+				res.msg    = raw.serve();
+			}
 
-			return true;
+			try_wake_up(senders);
+			return res;
 		}
 
 	private:
@@ -68,7 +77,13 @@ namespace MOS::Kernel::IPC
 			return container_of(event, TCB_t, event);
 		}
 
-		static bool
+		enum Status : bool
+		{
+			Ok      = true,
+			TimeOut = !Ok,
+		};
+
+		static Status
 		check_for(EventList_t& src)
 		{
 			IntrGuard_t guard;
@@ -77,12 +92,12 @@ namespace MOS::Kernel::IPC
 				// If still in event-linked
 				// -> Timeout(Awakened by Scheduler)
 				src.remove(cur->event);
-				return false;
+				return TimeOut;
 			}
-			return true;
+			return Ok;
 		}
 
-		static bool
+		static Status
 		block_to(EventList_t& dest, Tick_t timeout)
 		{
 			// Priority & WakePoint Compare
@@ -95,6 +110,9 @@ namespace MOS::Kernel::IPC
 				    return TCB_t::pri_cmp(lhs, rhs) &&
 				           TCB_t::wkpt_cmp(lhs, rhs);
 			    };
+
+			if (timeout == 0)
+				return TimeOut;
 
 			{
 				IntrGuard_t guard;

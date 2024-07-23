@@ -1,72 +1,73 @@
-## MOS-STM32 🧀
+<img src="Pic/mos_logo.svg">
+
+## MOS 🧀
 
 ### Introduction 🚀
-[English](https://github.com/Eplankton/mos-stm32/blob/master/README.md) | [中文](https://gitee.com/Eplankton/mos-stm32/blob/master/README.md)
+-  **[English](https://github.com/Eplankton/mos-stm32/blob/master/README.md) | [中文](https://gitee.com/Eplankton/mos-stm32/blob/master/README.md)**
 ```
- A_A       _
-o'' )_____//    [MOS-STM32]
- `_/  MOS  )    Mini RTOS on Cortex-M
- (_(_/--(_/     MOS <=> Mini-RTOS
-
-- Board: NUCLEO-144 F429ZI
-- MCU:   STM32F429ZIT6 (256KB SRAM, 2MB FLASH)
+ A_A       _    MOS Real-Time Operating System
+o'' )_____//    Simple RTOS on Cortex-M
+ `_/  MOS  )    Developed with C/C++
+ (_(_/--(_/     [Apache License Version 2.0]
 ```
 
 ### Repository 🌏
-[GitHub](https://github.com/Eplankton/mos-stm32) | [Gitee](https://gitee.com/Eplankton/mos-stm32/)
+- **[GitHub(English)](https://github.com/Eplankton/mos-stm32) | [Gitee(中文)](https://gitee.com/Eplankton/mos-stm32/)**
+
 
 ### Architecture 🔍
 [USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
 <img src="Pic/mos-arch.svg">
 ```C++
 .
-├── vendor              // Hardware Abstraction Layer(SPL/HAL/LL/...)
+├── vendor              // Hardware Abstraction Layer (SPL/HAL/LL/...)
 └── src
-    ├── drivers         // Hardware Driver Portable Interface
-    │   ├── stm32f4xx   // STM32F4xx On-Chip Peripherals(USART, I2C, SPI, ...)
-    │   └── device      // Other components(LED, LCD, ...)
+    ├── driver          // Interface Compatibility Layer
+    │   ├── stm32f4xx   // STM32F4xx On-Chip Peripherals (USART, I2C, SPI, ...)
+    │   └── device      // Other Hardware Components (LED, LCD, SD, ...)
     │
     ├── mos
     │   ├── config.h             // System Configuration
-    │   ├── arch                 // Arch-related
-    │   │   └── cpu.hpp          // asm for init/context_switch
+    │   ├── arch                 // Architecture Specific
+    │   │   └── cpu.hpp          // Init/Context Switch
     │   │
-    │   ├── kernel               // Kernel(Arch-independent)
-    │   │   ├── macro.hpp        // Kernel Constant Macros
+    │   ├── kernel               // Kernel (Arch Independent)
+    │   │   ├── macro.hpp        // Kernel Constants Macros
     │   │   ├── type.hpp         // Basic Types
-    │   │   ├── concepts.hpp     // Type Constraints(Optional)
+    │   │   ├── concepts.hpp     // Type Constraints (Optional)
     │   │   ├── data_type.hpp    // Basic Data Structures
-    │   │   ├── alloc.hpp        // Static/Dynamic Allocator
-    │   │   ├── global.hpp       // Kernel Globals
-    │   │   ├── printf.h/.c      // Thread-safe printf (by mpaland)
-    │   │   ├── task.hpp         // Task control
-    │   │   ├── sync.hpp         // Sync primitives
-    │   │   ├── scheduler.hpp    // Scheduler and Policy
+    │   │   ├── alloc.hpp        // Memory Management
+    │   │   ├── global.hpp       // Kernel Global Variables
+    │   │   ├── printf.h/.c      // Thread-Safe printf(*)
+    │   │   ├── task.hpp         // Task Control
+    │   │   ├── sync.hpp         // Synchronization Primitives
+    │   │   ├── scheduler.hpp    // Scheduler
     │   │   ├── ipc.hpp          // Inter-Process Communication
-    │   │   └── utils.hpp        // Utils
+    │   │   └── utils.hpp        // Other Utilities
     │   │
-    │   ├── kernel.hpp           // Import Kernel Modules
-    │   └── shell.hpp            // Simple Shell
+    │   ├── kernel.hpp           // Kernel Module
+    │   └── shell.hpp            // Command Line Shell
     │
     ├── user
-    │   ├── gui                  // GUI-related
+    │   ├── gui                  // Graphical System
     │   │   ├── GuiLite.h        // GuiLite Framework
-    │   │   └── UICode.cpp       // User Interface
+    │   │   └── UICode.cpp       // Custom UI
     │   │
-    │   ├── global.hpp           // User Globals
+    │   ├── global.hpp           // User Global Variables
     │   ├── bsp.hpp              // Board Support Package
-    │   ├── app.hpp              // User Applications
-    │   └── test.hpp             // Test
+    │   ├── app.hpp              // User Tasks
+    │   ├── fatfs.hpp            // File System
+    │   └── test.hpp             // Test Code
     │
-    ├── main.cpp                 // Entry main()
-    └── stm32f4xx_it.cpp         // Interrput SubRoutine(Partly)
+    ├── main.cpp                 // System Entry Function
+    └── stm32f4xx_it.cpp         // Interrupt Handler Routine
 ```
 
 ### Example 🍎
-`Shell`
+`Shell Test`
 ![shell_demo](Pic/shell.gif)
 
-`MutexTest`
+`Mutex Test(Priority Ceiling Protocol)`
 ![mutex_test](Pic/mutex.gif)
 
 `LCD Driver & GUI Demo`<br>
@@ -74,6 +75,7 @@ o'' )_____//    [MOS-STM32]
 <img src="Pic/board.gif" width="39.1%"> <img src="Pic/guilite.gif" width="34.5%">
 
 `Concurrent Task Period & Time Sequence`<br>
+<img src="Pic/stmviewer.png" width="80%">
 <img src="Pic/T0-T1.png" width="80%">
 <img src="Pic/tids.png" width="65%">
 
@@ -120,12 +122,11 @@ namespace MOS::User::BSP
 
     void USART_Config()
     {
-        // Simplified
         stdio.init(9600-8-1-N)
              .rx_config(PXa)  // RX -> PXa
              .tx_config(PYb)  // TX -> PYb
              .it_enable(RXNE) // Enable RXNE interrupt
-             .enable();
+             .enable();       // Enable UART
     }
     ...
 }
@@ -133,25 +134,28 @@ namespace MOS::User::BSP
 ```C++
 namespace MOS::User::App
 {
-    Sync::Barrier_t bar {2};
+    Sync::Barrier_t bar {2}; // Set Barrier to sync tasks
 
-    void LED_1(Device::LED_t leds[])
+    void led1(Device::LED_t leds[])
     {
         bar.wait();
         for (auto _: Range(0, 20)) {
            leds[1].toggle(); // green
            Task::delay(250_ms);
         }
-        kprintf("L1 exits...\n");
+        kprintf(
+            "%s exits...\n",
+            Task::current()->get_name()
+        );
     }
 
-    void LED_0(Device::LED_t leds[])
+    void led0(Device::LED_t leds[])
     {
         Task::create(
-            LED_1, 
+            led1, 
             leds, 
             Task::current()->get_pri(),
-            "L1"
+            "led1"
         );
         bar.wait();
         while (true) {
@@ -159,6 +163,7 @@ namespace MOS::User::App
             Task::delay(500_ms);
         }
     }
+    ...
 }
 ```
 ```C++
@@ -172,15 +177,15 @@ int main()
     BSP::config(); // Init hardware and clocks
 
     Task::create( // Create Calendar with RTC
-        App::Calendar, nullptr, 0, "Calendar"
+        App::time_init, nullptr, 0, "time/init"
     );
 
     Task::create( // Create Shell with io_buf
-        Shell::launch, &io_buf, 1, "Shell"
+        Shell::launch, &io_buf, 1, "shell"
     );
 
     /* User Tasks */
-    Task::create(App::LED_0, &leds, 2, "L0");
+    Task::create(App::led0, &leds, 2, "led0");
     ...
 
     /* Test examples */
@@ -203,68 +208,78 @@ o'' )_____//   Build   @ TIME, DATE
  Tid   Name   Priority   Status   Stack%
 -----------------------------------------
  #0    idle      15      READY       10%
- #1    Shell      1      BLOCKED     21%
- #2    L0         2      RUNNING      9%
+ #1    shell      1      BLOCKED     21%
+ #2    led0       2      RUNNING      9%
 -----------------------------------------
 ```
 
 ### Version 🧾
----
+
+
 📦 `v0.1`
 
-✅ Done
-> - Basic Scheduler and Task control, memory management
+> ✅ Done:
+> 
+> - Basic data structures, scheduler, and task control, memory management
+>
+> 📌 Planned: 
+> 
+> - Timers, round-robin scheduling
+> - Inter-Process Communication (IPC), pipes, message queues
+> - Process synchronization (Sync), semaphores, mutexes
+> - Porting a simple Shell
+> - Variable page sizes, memory allocator
+> - SPI driver, porting GuiLite/LVGL graphics libraries
+> - Porting to other development boards/architectures, e.g., ESP32-C3 (RISC-V)
 
-📌 Plan
-> - Timers, `RoundRobin`
-> - Inter-process communication `IPC`, pipes, message queues
-> - Sync, semaphore, mutex, lock
-> - Porting simple shells
-> - Mutable page size, memory allocator
-> - `SPI` driver and `LVGL` library
-> - Port to other platform like `ESP32-C3(RISC-V)`
----
+
+
 📦 `v0.2`
 
-✅ Done
-> - `Sync::{Sema_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}`, where `Mutex_t` adopts Priority Ceiling Protocol
-> - `Scheduler::Policy::PreemptPri`, under same priority -> `RoundRobin`
-> - `Task::terminate` will be implicitly called when task exits
-> - `Shell::{Command, CmdCall, launch}`
-> - `HAL::STM32F4xx::SPI_t` and `Driver::ST7735S_t`, support `GuiLite`
-> - `Kernel::Global::os_ticks` and `Task::delay` for blocking delay
-> - Refactor the project into `{kernel, arch, drivers}`
-> - Support `GCC` and `STM32CubeMX HAL`
-> - `HAL::STM32F4xx::RTC_t`, `CmdCall::date_cmd` and `App::Calendar`
-> - `idle` uses `Kernel::Global::zombie_list` to recycle inactive pages
-> - Three basic page allocator policies, `Page_t::Policy::{POOL, DYNAMIC, STATIC}`
----
+> ✅ Done:
+> 
+> - Synchronization primitives `Sync::{Sema_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}`
+> - `Scheduler::Policy::PreemptPri` with round-robin `RoundRobin` scheduling for same priority levels
+> - `Task::terminate` implicitly called upon task exit to reclaim resources
+> - Simple command-line interaction `Shell::{Command, CmdCall, launch}`
+> - `HAL::STM32F4xx::SPI_t` and `Driver::Device::ST7735S_t`, porting the `GuiLite` graphics library
+> - Blocking delay with `Kernel::Global::os_ticks` and `Task::delay`
+> - Refactored project organization into `{kernel, arch, drivers}`
+> - Support for `GCC` compilation, compatible with `STM32Cube HAL`
+> - Real-time calendar `HAL::STM32F4xx::RTC_t`, `CmdCall::date_cmd`, `App::Calendar`
+> - `idle` uses `Kernel::Global::zombie_list` to reclaim inactive pages
+> - Three basic page allocation strategies `Page_t::Policy::{POOL, DYNAMIC, STATIC}`
+
+
+
 📦 `v0.3`
 
-✅ Done
-> - `Tids` from `BitMap_t`
-> - (Experimental) `Task::Async::{Future_t, async/await}`
-> - `IPC::MsgQueue_t`, Message Queue
-> - `Task::create` allows generic `fn` signature as `void fn(auto argv)` with type check
-> - Add `ESP32C3` as `WiFi` Module
-> - (**Experimental**) Atomic Type in `<stdatomic.h>`
-> - (**Experimental**) `Utils::IntrGuard_t`, Nested Interrupt Lock Guard
-> - Add `Driver::Device::SD_t` driver with `SPI` mode
-> - Add `FatFs` as File System
-> - Add `Shell::usr_cmds`，User Register Service
+> ✅ Done:
+>
+> - Mapping `Tids` to `BitMap_t`
+> - Message queue `IPC::MsgQueue_t`
+> - `Task::create` allows generic function signatures `void fn(auto argv)` with type checking
+> - Added `ESP32-C3` as a `WiFi` component
+> - Added `Driver::Device::SD_t`, `SD` card driver, porting `FatFs` file system
+> - Added `Shell::usr_cmds` for user-registered commands
+> - **[Experimental]** Atomic types `<stdatomic.h>`
+> - **[Experimental]** `Utils::IntrGuard_t`, nested interrupt critical sections
+> - **[Experimental]** Simple formal verification of `Scheduler + Mutex`
+>
+> 
+>
+> 📌 Planned: 
+>
+> - Inter-Process Communication: pipes/channels
+> - `FPU` hardware float support
+> - Performance benchmarking
+> - Error handling with `Result<T, E>`, `Option<T>`
+> - `DMA_t` DMA Driver
+> - Software/hardware timers `Timer`
+> - **[Experimental]** Adding `POSIX` support
+> - **[Experimental]** Asynchronous stackless coroutines `Async::{Future_t, async/await}`
+> - **[Experimental]** More real-time scheduling algorithms
 
-📌 Plan
-> - `IPC::pipe/channel`
-> - Soft/Hardware Timers
-> - (**Experimental**) Async Stackless Coroutine `Async::{Future_t, async/await}`
-> - (**Experimental**) Basic Formal Verification on `Scheduler`
-> - `DMA_t` Driver
-> - More real-time scheduling algorithms
-> - `FPU` support
-> - `Result<T, E>, Option<T>`
-> - Add `POSIX` support
-> - Performance Benchmark
----
 
 ### References 🛸
 - [How to build a Real-Time Operating System(RTOS)](https://medium.com/@dheeptuck/building-a-real-time-operating-system-rtos-ground-up-a70640c64e93)
@@ -274,6 +289,9 @@ o'' )_____//   Build   @ TIME, DATE
 - [GuiLite](https://github.com/idea4good/GuiLite)
 - [STMViewer](https://github.com/klonyyy/STMViewer)
 - [FatFs](http://elm-chan.org/fsw/ff)
+- [The Zephyr Project](https://www.zephyrproject.org/)
+- [Eclipse ThreadX](https://github.com/eclipse-threadx/threadx)
+- [Embassy](https://embassy.dev/)
 
 ```
 Wake up, Neo...

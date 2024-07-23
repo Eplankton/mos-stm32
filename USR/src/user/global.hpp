@@ -12,15 +12,21 @@
 // Buffer
 #include "src/mos/kernel/data_type/buffer.hpp"
 
+#include "src/user/fatfs.hpp"
+
 namespace MOS::User::Global
 {
 	using namespace HAL::STM32F4xx;
 	using namespace Driver::Device;
 	using namespace DataType;
+	using namespace FileSys;
+
+	// File System
+	FatFs fatfs;
 
 	// Serial Input/Output UART
 	auto& stdio = convert(USART3);
-	SyncRxBuf_t<SHELL_BUF_SIZE> io_buf;
+	SyncRxBuf_t<SHELL_BUF_SIZE> sh_buf;
 
 	// ESP32C3 WiFi Module UART
 	auto& esp32 = convert(USART2);

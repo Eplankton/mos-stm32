@@ -41,44 +41,37 @@ namespace MOS::User::Test
 
 	void MsgQueueTest()
 	{
-		static IPC::MsgQueue_t<int, 3> msg_q;
+		using MsgQ_t = IPC::MsgQueue_t<int, 3>;
 
-		static auto producer = [](int& msg) {
+		static auto producer = [](MsgQ_t& msg_q) {
+			uint32_t i = Task::current()->get_pri();
 			while (true) {
-				msg_q.send(msg++);
+				msg_q.send(i++);
 				Task::delay(50_ms);
 			}
 		};
 
-		static auto consumer = [] {
+		static auto consumer = [](MsgQ_t& msg_q) {
 			while (true) {
-				int msg  = -1;
-				auto res = msg_q.recv(msg, 100_ms);
-
+				auto [status, msg] = msg_q.recv(100_ms);
 				IntrGuard_t guard;
-				kprintf(res ? "" : "Timeout!\n");
-				// kprintf(res ? "%d\n" : "Timeout!\n", msg);
+				kprintf(status ? "" : "MsgQ Timeout!\n");
+				// kprintf(status ? "%d, " : "MsgQ Timeout!\n", msg);
 			}
 		};
 
 		static auto launch = [] {
-			// Create a Consumer
-			Task::create(consumer, nullptr, 4, "recv");
+			static MsgQ_t msg_q; // Create a static MsgQueue
+			Task::Prior_t pri_seq[] = {5, 6, 7, 8, 9};
 
-			// Mutable Data Sequences
-			static int data[] = {5, 6, 7, 8, 9};
+			Task::create(consumer, &msg_q, 4, "recv"); // Create a Consumer
 
-			// Create some Producers
-			for (auto& i: data) {
-				Task::create(
-				    producer, &i, (Task::Prior_t) i, "send"
-				);
+			for (auto p: pri_seq) { // Create several Producers
+				Task::create(producer, &msg_q, p, "send");
 			}
 		};
 
-		Task::create(
-		    launch, nullptr, Macro::PRI_MAX, "MsgQueueTest"
-		);
+		Task::create(launch, nullptr, Macro::PRI_MAX, "msg_q/test");
 	}
 
 	void SDCardTest()

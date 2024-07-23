@@ -318,12 +318,12 @@ namespace MOS::ISR
 
 			EXTI_t::handle_line(EXTI_Line13, [] {
 				static uint32_t k1_cnt = 0;
-				MOS_MSG("K1 Cnt = %d", ++k1_cnt);
+				MOS_MSG("k1 cnt = %d", ++k1_cnt);
 				Task::create_from_isr(
 				    k1_burst,
 				    nullptr,
 				    Task::current()->get_pri(),
-				    "K1"
+				    "k1"
 				);
 			});
 		}
@@ -339,10 +339,10 @@ namespace MOS::ISR
 		void USART3_IRQHandler() // Shell I/O
 		{
 			using User::Global::stdio;
-			using User::Global::io_buf;
+			using User::Global::sh_buf;
 
 			uart_it_rxne_sync(
-			    stdio, io_buf,
+			    stdio, sh_buf,
 			    [] { MOS_MSG("Oops! Cmd too long!"); }
 			);
 		}
