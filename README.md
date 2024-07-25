@@ -1,7 +1,5 @@
 <img src="Pic/mos_logo.svg">
 
-## MOS 🧀
-
 ### Introduction 🚀
 -  **[English](https://github.com/Eplankton/mos-stm32/blob/master/README.md) | [中文](https://gitee.com/Eplankton/mos-stm32/blob/master/README.md)**
 ```
