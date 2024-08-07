@@ -22,7 +22,6 @@ namespace MOS::Kernel::Task
 	using Tick_t   = TCB_t::Tick_t;
 	using TcbPtr_t = TCB_t::TcbPtr_t;
 
-	using enum Page_t::Policy;
 	using enum TCB_t::Status;
 
 	MOS_INLINE inline TcbPtr_t
@@ -33,7 +32,7 @@ namespace MOS::Kernel::Task
 
 	// Whether task with higher priority than tcb exists
 	MOS_INLINE inline bool
-	higher_exists(TcbPtr_t tcb = current())
+	any_higher(TcbPtr_t tcb = current())
 	{
 		return tcb != ready_list.begin();
 	}
@@ -48,12 +47,8 @@ namespace MOS::Kernel::Task
 			current()->time_slice = 0;
 	}
 
-	MOS_INLINE inline Tick_t
-	inc_ticks()
-	{
-		os_ticks += 1;
-		return os_ticks;
-	}
+	MOS_INLINE inline void
+	inc_ticks() { os_ticks += 1; }
 
 	MOS_INLINE inline Tid_t
 	tid_alloc()
@@ -69,26 +64,17 @@ namespace MOS::Kernel::Task
 		IntrGuard_t guard;
 		while (!zombie_list.empty()) {
 			auto tcb = zombie_list.begin();
-
-			// Remove from zombie_list
-			zombie_list.remove(tcb);
-
-			// Release resources
-			tcb->release();
+			zombie_list.remove(tcb); // Remove from zombie_list
+			tcb->release();          // Release resources
 		}
 		return yield();
 	}
-
-	// For debug only
-	MOS_INLINE inline auto
-	num() { return debug_tcbs.size(); }
 
 	inline void
 	terminate_raw(TcbPtr_t tcb)
 	{
 		// Remove the task from where it belongs to
-		if (tcb->is_status(RUNNING) ||
-		    tcb->is_status(READY)) {
+		if (tcb->is_status(RUNNING) || tcb->is_status(READY)) {
 			ready_list.remove(tcb);
 		}
 		else if (tcb->is_sleeping()) {
@@ -98,23 +84,15 @@ namespace MOS::Kernel::Task
 			blocked_list.remove(tcb);
 		}
 
-		// Mark tcb as TERMINATED
-		tcb->set_status(TERMINATED);
+		tcb->set_status(TERMINATED); // Mark tcb as TERMINATED
+		tids.reset(tcb->get_tid());  // Clear the bit in tids
+		debug_tcbs.remove(tcb);      // For debug only
 
-		// Clear the bit in tids
-		tids.reset(tcb->get_tid());
-
-		// For debug only
-		debug_tcbs.remove(tcb);
-
-		// Only DYNAMIC pages need delayed recycling
+		// Only `DYNAMIC` pages need delayed recycling
 		if (tcb->page.is_policy(DYNAMIC)) {
-			// Add to zombie_list
-			zombie_list.add(tcb);
+			zombie_list.add(tcb); // Add to zombie_list
 		}
-		else {
-			// Otherwise for POOL or STATIC
-			// just release immediately
+		else { // Otherwise for `POOL` or `STATIC` just release immediately
 			tcb->release();
 		}
 	}
@@ -136,7 +114,7 @@ namespace MOS::Kernel::Task
 	exit() { terminate(current()); }
 
 	MOS_INLINE static inline TcbPtr_t
-	setup_context(TcbPtr_t tcb)
+	load_context(TcbPtr_t tcb)
 	{
 		// A descending stack consists of 16 registers as context.
 		// high -> low, descending stack
@@ -174,7 +152,7 @@ namespace MOS::Kernel::Task
 
 		// clang-format off
 		template <typename Fn, typename Argv>
-		concept LambdaInvocable =
+		concept LambdaInvoke =
 		(LambdaArgvCheck<Fn, Argv> &&
 			requires(Fn fn, Argv argv) {
 				{ fn.operator()(argv) } -> Same<void>;
@@ -185,11 +163,11 @@ namespace MOS::Kernel::Task
 		// clang-format on
 
 		template <typename Fn, typename Argv>
-		concept AsLambdaFn =
+		concept AsLambda =
 		    (Pointer<Argv> &&
-		     (LambdaInvocable<Fn, deref_t<Argv>*> ||
-		      LambdaInvocable<Fn, deref_t<Argv>&>) ) ||
-		    (!Pointer<Argv> && LambdaInvocable<Fn, Argv>);
+		     (LambdaInvoke<Fn, deref_t<Argv>*> ||
+		      LambdaInvoke<Fn, deref_t<Argv>&>) ) ||
+		    (!Pointer<Argv> && LambdaInvoke<Fn, Argv>);
 
 		template <typename Fn, typename Argv>
 		concept AsFnPtr =
@@ -205,9 +183,7 @@ namespace MOS::Kernel::Task
 			using RawFn_t   = decltype(fn);
 			using RawArgv_t = decltype(argv);
 
-			if constexpr (
-			    AsLambdaFn<RawFn_t, RawArgv_t>
-			) {
+			if constexpr (AsLambda<RawFn_t, RawArgv_t>) {
 				return (Fn_t) ((uint32_t) + fn);
 			}
 			else {
@@ -246,29 +222,17 @@ namespace MOS::Kernel::Task
 		         pri, name, page
 		     );
 
-		// Load Context
-		setup_context(tcb);
+		load_context(tcb);         // Load Context
+		tcb->set_tid(tid_alloc()); // Set Tid
+		tcb->set_stamp(os_ticks);  // Set Timestamp
+		tcb->set_parent(cur);      // Set Parent
+		tcb->set_status(READY);    // Set task into READY
 
-		// Set Tid
-		tcb->set_tid(tid_alloc());
-
-		// Set Time Stamp
-		tcb->set_stamp(os_ticks);
-
-		// Set Parent
-		tcb->set_parent(cur);
-
-		// Set tcb into READY
-		tcb->set_status(READY);
-
-		// Add to ready_list
-		ready_list.insert_in_order(
+		ready_list.insert_in_order( // Add to ready_list
 		    tcb, TCB_t::pri_cmp
 		);
 
-		// For debug only
-		debug_tcbs.add(tcb);
-
+		debug_tcbs.add(tcb); // For debug only
 		return tcb;
 	}
 
@@ -408,11 +372,7 @@ namespace MOS::Kernel::Task
 	)
 	{
 		tcb->set_status(READY);
-		src.send_to_in_order(
-		    tcb,
-		    ready_list,
-		    TCB_t::pri_cmp
-		);
+		src.send_to_in_order(tcb, ready_list, TCB_t::pri_cmp);
 	}
 
 	inline void
@@ -426,7 +386,7 @@ namespace MOS::Kernel::Task
 		if (tcb == nullptr || !tcb->is_status(BLOCKED))
 			return;
 		resume_raw(tcb, src);
-		if (higher_exists()) {
+		if (any_higher()) {
 			return yield();
 		}
 	}
@@ -451,7 +411,7 @@ namespace MOS::Kernel::Task
 		IntrGuard_t guard;
 		tcb->set_pri(pri);
 		ready_list.re_insert(tcb, TCB_t::pri_cmp);
-		if (higher_exists()) {
+		if (any_higher()) {
 			return yield();
 		}
 	}
@@ -522,17 +482,13 @@ namespace MOS::Kernel::Task
 	{
 		auto cur = current();
 		cur->set_wkpt(os_ticks + ticks);
-		block_to_in_order(
-		    cur,
-		    sleeping_list,
-		    TCB_t::wkpt_cmp
-		);
+		block_to_in_order(cur, sleeping_list, TCB_t::wkpt_cmp);
 	}
 
 	inline void
 	wake_raw(TcbPtr_t tcb)
 	{
-		tcb->set_wkpt(-1);
+		tcb->set_wkpt(0xFFFF'FFFF); // Set wakepoint as invalid
 		Task::resume_raw(tcb, sleeping_list);
 	}
 }

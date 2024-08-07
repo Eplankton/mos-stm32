@@ -17,27 +17,27 @@ namespace MOS::Kernel::IPC
 	struct MsgQueue_t
 	{
 		using Tick_t         = TCB_t::Tick_t;
-		using Raw_t          = Queue_t<T, N>;
+		using RawQueue_t     = Queue_t<T, N>;
 		using EventList_t    = List_t;
 		using NodePtr_t      = List_t::NodePtr_t;
 		using ConstNodePtr_t = List_t::ConstNodePtr_t;
 
 		MOS_INLINE inline bool
-		full() const { return raw.full(); }
+		full() const { return queue.full(); }
 
 		MOS_INLINE inline bool
-		empty() const { return raw.empty(); }
+		empty() const { return queue.empty(); }
 
 		auto send(const T& msg, Tick_t timeout = 0)
 		{
-			if (raw.full() &&
-			    block_to(senders, timeout) == TimeOut) {
+			if (queue.full() &&
+			    wait_on(senders, timeout) == TimeOut) {
 				return TimeOut;
 			}
 
 			{
 				IntrGuard_t guard;
-				raw.push(msg);
+				queue.push(msg);
 			}
 
 			try_wake_up(receivers);
@@ -52,15 +52,15 @@ namespace MOS::Kernel::IPC
 				T msg {};
 			} res;
 
-			if (raw.empty() &&
-			    block_to(receivers, timeout) == TimeOut) {
+			if (queue.empty() &&
+			    wait_on(receivers, timeout) == TimeOut) {
 				return res;
 			}
 
 			{
 				IntrGuard_t guard;
 				res.status = Ok;
-				res.msg    = raw.serve();
+				res.msg    = queue.serve();
 			}
 
 			try_wake_up(senders);
@@ -69,7 +69,7 @@ namespace MOS::Kernel::IPC
 
 	private:
 		EventList_t senders, receivers;
-		Raw_t raw;
+		RawQueue_t queue;
 
 		MOS_INLINE static constexpr inline auto
 		into_tcb(ConstNodePtr_t event)
@@ -89,8 +89,7 @@ namespace MOS::Kernel::IPC
 			IntrGuard_t guard;
 			auto cur = Task::current();
 			if (cur->in_event()) {
-				// If still in event-linked
-				// -> Timeout(Awakened by Scheduler)
+				// Still in event-linked -> Timeout
 				src.remove(cur->event);
 				return TimeOut;
 			}
@@ -98,7 +97,7 @@ namespace MOS::Kernel::IPC
 		}
 
 		static Status
-		block_to(EventList_t& dest, Tick_t timeout)
+		wait_on(EventList_t& dest, Tick_t timeout)
 		{
 			// Priority & WakePoint Compare
 			auto pri_wkpt_cmp =
@@ -122,8 +121,7 @@ namespace MOS::Kernel::IPC
 				);
 			}
 
-			// Sleep until timeout
-			Task::delay(timeout);
+			Task::delay(timeout); // Sleep until timeout
 
 			// After being awakened, check for timeout
 			return check_for(dest);
@@ -140,7 +138,7 @@ namespace MOS::Kernel::IPC
 			IntrGuard_t guard;
 			if (!src.empty()) {
 				wake_up(src.begin());
-				if (Task::higher_exists()) {
+				if (Task::any_higher()) {
 					return Task::yield();
 				}
 			}

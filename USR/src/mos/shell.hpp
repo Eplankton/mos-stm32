@@ -16,9 +16,8 @@
 namespace MOS::Shell
 {
 	using namespace Kernel;
-	using Utils::IntrGuard_t;
-	using Utils::strlen;
-	using Utils::strncmp;
+	using namespace Utils;
+	using namespace DataType;
 
 	struct Command_t
 	{
@@ -95,13 +94,7 @@ namespace MOS::Shell
 		}
 
 		static inline void
-		ls_cmd(Argv_t argv)
-		{
-			task_ctrl_cmd(
-			    argv, [](auto tcb) { /* Todo */ },
-			    [] { Task::print_all(); }
-			);
-		}
+		ls_cmd(Argv_t _) { Task::print_all(); }
 
 		static inline void
 		kill_cmd(Argv_t argv)
@@ -147,7 +140,7 @@ namespace MOS::Shell
 			    " A_A       _  Version @ %s\n"
 			    "o'' )_____//  Build   @ %s, %s\n"
 			    " `_/  MOS  )  Chip    @ %s, %s\n"
-			    " (_(_/--(_/   2023 - 2024 Copyright by Eplankton\n",
+			    " (_(_/--(_/   2023-2024 Copyright by Eplankton\n",
 			    MOS_VERSION,
 			    __TIME__, __DATE__,
 			    MOS_MCU, MOS_ARCH
@@ -166,16 +159,16 @@ namespace MOS::Shell
 
 		// Add more commands to here by {"text", callback}
 		static constexpr Command_t sys_cmds[] = {
-		    {    "ls",     ls_cmd},
-		    {  "kill",   kill_cmd},
-		    { "block",  block_cmd},
-		    {"resume", resume_cmd},
-		    {  "help",   help_cmd},
-		    { "uname",  uname_cmd},
-		    {"reboot", reboot_cmd},
+		    {    "ls",     ls_cmd}, // List all tasks
+		    {  "kill",   kill_cmd}, // Kill a task
+		    { "block",  block_cmd}, // Block a task
+		    {"resume", resume_cmd}, // Resume a task
+		    {  "help",   help_cmd}, // Show help info
+		    { "uname",  uname_cmd}, // Show system info
+		    {"reboot", reboot_cmd}, // Reboot system
 		};
 
-		using UsrCmds_t = DataType::Buffer_t<Command_t, Macro::SHELL_USR_CMD_SIZE>;
+		using UsrCmds_t = Buffer_t<Command_t, Macro::SHELL_USR_CMD_SIZE>;
 		UsrCmds_t usr_cmds; // For applications to register
 
 		static inline void
@@ -194,15 +187,13 @@ namespace MOS::Shell
 		}
 	}
 
-	using SyncRxBuf_t = DataType::SyncRxBuf_t<Macro::SHELL_BUF_SIZE>;
+	using Input_t = SyncRxBuf_t<Macro::SHELL_BUF_SIZE>;
 	using CmdCall::sys_cmds;
 	using CmdCall::usr_cmds;
 
-	void launch(SyncRxBuf_t& input)
+	void launch(Input_t& input)
 	{
-		using Text_t = Command_t::Text_t;
-
-		static auto parse_and_run = [](Text_t str) {
+		static auto parser = [](auto str) {
 			kprintf("> %s\n", str); // Echo
 			if (str[0] != '\0') {
 				for (auto& cmd: sys_cmds) { // Search in System Commands
@@ -225,9 +216,7 @@ namespace MOS::Shell
 		Task::print_all();
 
 		while (true) {
-			input.wait();
-			parse_and_run(input.as_str());
-			input.clear();
+			parser(input.recv().as_str());
 		}
 	}
 }

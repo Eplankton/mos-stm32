@@ -52,7 +52,7 @@ namespace MOS::Kernel::Sync
 			MOS_ASSERT(test_irq(), "Disabled Interrupt");
 			IntrGuard_t guard;
 			up_raw();
-			if (Task::higher_exists()) {
+			if (Task::any_higher()) {
 				return Task::yield();
 			}
 		}
@@ -180,7 +180,7 @@ namespace MOS::Kernel::Sync
 				owner = tcb;
 				sema.cnt += 1;
 
-				if (Task::higher_exists()) {
+				if (Task::any_higher()) {
 					return Task::yield();
 				}
 			}
@@ -359,8 +359,7 @@ namespace MOS::Kernel::Sync
 		{
 			IntrGuard_t guard;
 			Task::block_to_raw(
-			    Task::current(),
-			    waiting_list
+			    Task::current(), waiting_list
 			);
 			return Task::yield();
 		}
@@ -369,8 +368,7 @@ namespace MOS::Kernel::Sync
 		wake_up()
 		{
 			Task::resume_raw(
-			    waiting_list.begin(),
-			    waiting_list
+			    waiting_list.begin(), waiting_list
 			);
 		}
 	};

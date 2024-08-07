@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<svg width="886pt" height="483pt" viewBox="0.00 0.00 885.60 483.12" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 479.1177)">
+<title>PriorityCeilingProtocol</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-479.1177 881.5968,-479.1177 881.5968,4 -4,4"/>
+<!-- Task1 -->
+<g id="node1" class="node">
+<title>Task1</title>
+<ellipse fill="#add8e6" stroke="#add8e6" cx="52.4319" cy="-242.06" rx="48.369" ry="48.369"/>
+<ellipse fill="none" stroke="#add8e6" cx="52.4319" cy="-242.06" rx="52.3638" ry="52.3638"/>
+<text text-anchor="middle" x="52.4319" y="-246.26" font-family="Consolas" font-size="14.00" fill="#000000">Task 1</text>
+<text text-anchor="middle" x="52.4319" y="-229.46" font-family="Consolas" font-size="14.00" fill="#000000">Low Prio</text>
+</g>
+<!-- Lock -->
+<g id="node4" class="node">
+<title>Lock</title>
+<ellipse fill="#add8e6" stroke="#add8e6" cx="485.9541" cy="-272.4149" rx="69.1118" ry="69.1118"/>
+<ellipse fill="none" stroke="#add8e6" cx="485.9541" cy="-272.4149" rx="73.115" ry="73.115"/>
+<text text-anchor="middle" x="485.9541" y="-276.6149" font-family="Consolas" font-size="14.00" fill="#000000">Mutex </text>
+<text text-anchor="middle" x="485.9541" y="-259.8149" font-family="Consolas" font-size="14.00" fill="#000000">Ceiling Prio: ?</text>
+</g>
+<!-- Task1&#45;&gt;Lock -->
+<g id="edge1" class="edge">
+<title>Task1-&gt;Lock</title>
+<path fill="none" stroke="#000000" d="M105.1568,-245.7517C179.2824,-250.942 315.0418,-260.4477 402.835,-266.595"/>
+<polygon fill="#000000" stroke="#000000" points="402.8108,-270.1017 413.0309,-267.3089 403.2998,-263.1188 402.8108,-270.1017"/>
+<text text-anchor="middle" x="237.2827" y="-260.3733" font-family="Consolas" font-size="14.00" fill="#000000">lock()</text>
+</g>
+<!-- Task2 -->
+<g id="node2" class="node">
+<title>Task2</title>
+<ellipse fill="#add8e6" stroke="#add8e6" cx="629.8256" cy="-67.8335" rx="63.6772" ry="63.6772"/>
+<ellipse fill="none" stroke="#add8e6" cx="629.8256" cy="-67.8335" rx="67.6674" ry="67.6674"/>
+<text text-anchor="middle" x="629.8256" y="-72.0335" font-family="Consolas" font-size="14.00" fill="#000000">Task 2</text>
+<text text-anchor="middle" x="629.8256" y="-55.2335" font-family="Consolas" font-size="14.00" fill="#000000">Medium Prio</text>
+</g>
+<!-- Task2&#45;&gt;Lock -->
+<g id="edge2" class="edge">
+<title>Task2-&gt;Lock</title>
+<path fill="none" stroke="#ff0000" stroke-dasharray="5,2" d="M590.7022,-123.466C573.2077,-148.3427 552.4181,-177.9049 533.9895,-204.1099"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="530.9859,-202.2966 528.0964,-212.4898 536.7118,-206.3233 530.9859,-202.2966"/>
+<text text-anchor="middle" x="545.6327" y="-167.988" font-family="Consolas" font-size="14.00" fill="#000000">lock()</text>
+</g>
+<!-- WaitingQueue -->
+<g id="node5" class="node">
+<title>WaitingQueue</title>
+<polygon fill="#add8e6" stroke="#add8e6" points="877.7873,-229.705 791.0268,-229.705 791.0268,-193.705 877.7873,-193.705 877.7873,-229.705"/>
+<text text-anchor="middle" x="834.4071" y="-207.505" font-family="Consolas" font-size="14.00" fill="#000000">Waiting List</text>
+</g>
+<!-- Task2&#45;&gt;WaitingQueue -->
+<g id="edge4" class="edge">
+<title>Task2-&gt;WaitingQueue</title>
+<path fill="none" stroke="#ff0000" d="M681.6942,-111.7358C715.585,-136.8745 759.2988,-167.3751 791.2845,-188.0819"/>
+<polygon fill="#ff0000" stroke="#ff0000" points="789.6688,-191.2034 799.9773,-193.65 793.4445,-185.309 789.6688,-191.2034"/>
+<text text-anchor="middle" x="675.6334" y="-154.1089" font-family="Consolas" font-size="14.00" fill="#000000">Block to Waiting List</text>
+</g>
+<!-- Task3 -->
+<g id="node3" class="node">
+<title>Task3</title>
+<ellipse fill="#add8e6" stroke="#add8e6" cx="305.1248" cy="-152.8813" rx="50.164" ry="50.164"/>
+<ellipse fill="none" stroke="#add8e6" cx="305.1248" cy="-152.8813" rx="54.1703" ry="54.1703"/>
+<text text-anchor="middle" x="305.1248" y="-157.0813" font-family="Consolas" font-size="14.00" fill="#000000">Task 3</text>
+<text text-anchor="middle" x="305.1248" y="-140.2813" font-family="Consolas" font-size="14.00" fill="#000000">High Prio</text>
+</g>
+<!-- Task3&#45;&gt;Lock -->
+<g id="edge3" class="edge">
+<title>Task3-&gt;Lock</title>
+<path fill="none" stroke="#00ff00" d="M347.0169,-187.6867C366.6181,-201.5891 390.529,-217.6549 412.9574,-232.0552"/>
+<polygon fill="#00ff00" stroke="#00ff00" points="411.1557,-235.0573 421.4687,-237.4847 414.9204,-229.1559 411.1557,-235.0573"/>
+<text text-anchor="middle" x="357.4437" y="-230.871" font-family="Consolas" font-size="14.00" fill="#000000">lock()</text>
+<text text-anchor="middle" x="357.4437" y="-214.071" font-family="Consolas" font-size="14.00" fill="#000000">Granted</text>
+</g>
+<!-- Lock&#45;&gt;Task3 -->
+<g id="edge5" class="edge">
+<title>Lock-&gt;Task3</title>
+<path fill="none" stroke="#00ff00" d="M420.4191,-221.2049C398.3102,-206.1589 374.0542,-190.3843 353.5105,-177.7545"/>
+<polygon fill="#00ff00" stroke="#00ff00" points="418.547,-224.1648 428.7752,-226.9276 422.5023,-218.3894 418.547,-224.1648"/>
+<text text-anchor="middle" x="410.678" y="-186.8797" font-family="Consolas" font-size="14.00" fill="#000000">unlock()</text>
+</g>
+<!-- FindCeiling -->
+<g id="node6" class="node">
+<title>FindCeiling</title>
+<polygon fill="#add8e6" stroke="#add8e6" points="325.7008,-332.1944 443.1671,-420.189 208.2344,-420.189 325.7008,-332.1944"/>
+<text text-anchor="middle" x="325.7008" y="-395.0574" font-family="Consolas" font-size="14.00" fill="#000000">FindCeiling</text>
+<text text-anchor="middle" x="325.7008" y="-378.2574" font-family="Consolas" font-size="14.00" fill="#000000">(Logic)</text>
+</g>
+<!-- Lock&#45;&gt;FindCeiling -->
+<g id="edge6" class="edge">
+<title>Lock-&gt;FindCeiling</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M427.1917,-315.846C409.5353,-328.8957 390.3859,-343.049 373.5275,-355.5089"/>
+<polygon fill="#000000" stroke="#000000" points="371.4139,-352.7188 365.4523,-361.4773 375.5745,-358.3482 371.4139,-352.7188"/>
+<text text-anchor="middle" x="361.8729" y="-323.0774" font-family="Consolas" font-size="14.00" fill="#000000">find_ceiling()</text>
+</g>
+<!-- UpdatePri -->
+<g id="node7" class="node">
+<title>UpdatePri</title>
+<polygon fill="#add8e6" stroke="#add8e6" points="690.5356,-357.6234 793.3326,-445.6179 587.7385,-445.6179 690.5356,-357.6234"/>
+<text text-anchor="middle" x="690.5356" y="-420.4864" font-family="Consolas" font-size="14.00" fill="#000000">UpdatePri</text>
+<text text-anchor="middle" x="690.5356" y="-403.6864" font-family="Consolas" font-size="14.00" fill="#000000">(Logic)</text>
+</g>
+<!-- Lock&#45;&gt;UpdatePri -->
+<g id="edge7" class="edge">
+<title>Lock-&gt;UpdatePri</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M545.953,-314.609C577.3947,-336.7203 615.3068,-363.3819 644.4193,-383.8552"/>
+<polygon fill="#000000" stroke="#000000" points="642.5754,-386.8373 652.7686,-389.7269 646.6022,-381.1115 642.5754,-386.8373"/>
+<text text-anchor="middle" x="629.7822" y="-336.6321" font-family="Consolas" font-size="14.00" fill="#000000">update_pri()</text>
+</g>
+<!-- WaitingQueue&#45;&gt;Task2 -->
+<g id="edge9" class="edge">
+<title>WaitingQueue-&gt;Task2</title>
+<path fill="none" stroke="#0000ff" stroke-width="2" d="M816.1243,-193.6208C789.5356,-172.0495 738.9491,-135.648 697.1775,-107.4916"/>
+<polygon fill="#0000ff" stroke="#0000ff" stroke-width="2" points="698.9359,-104.4568 688.6804,-101.7972 695.039,-110.2718 698.9359,-104.4568"/>
+<text text-anchor="middle" x="793.5787" y="-154.7562" font-family="Consolas" font-size="14.00" fill="#000000">Wake Task 2</text>
+</g>
+<!-- UpdatePri&#45;&gt;WaitingQueue -->
+<g id="edge8" class="edge">
+<title>UpdatePri-&gt;WaitingQueue</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M716.5896,-379.2383C745.1805,-338.5827 790.3673,-274.3283 815.6642,-238.3569"/>
+<polygon fill="#000000" stroke="#000000" points="818.7553,-240.0457 821.6449,-229.8525 813.0294,-236.019 818.7553,-240.0457"/>
+</g>
+</g>
+</svg>

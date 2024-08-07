@@ -178,12 +178,12 @@ int main()
         App::time_init, nullptr, 0, "time/init"
     );
 
-    Task::create( // Create Shell with io_buf
-        Shell::launch, &io_buf, 1, "shell"
+    Task::create( // Create Shell with buffer
+        Shell::launch, &stdio.buf, 1, "shell"
     );
 
     /* User Tasks */
-    Task::create(App::led0, &leds, 2, "led0");
+    Task::create(App::led_init, &leds, 2, "led/init");
     ...
 
     /* Test examples */
@@ -203,12 +203,12 @@ o'' )_____//   Build   @ TIME, DATE
  `_/  MOS  )   Chip    @ MCU, ARCH
  (_(_/--(_/    2023-2024 Copyright by Eplankton
 
- Tid   Name   Priority   Status   Stack%
------------------------------------------
- #0    idle      15      READY       10%
- #1    shell      1      BLOCKED     21%
- #2    led0       2      RUNNING      9%
------------------------------------------
+ Tid   Name   Priority   Status    Mem%
+----------------------------------------
+ #0    idle      15      READY      10%
+ #1    shell      1      BLOCKED    21%
+ #2    led0       2      RUNNING     9%
+----------------------------------------
 ```
 
 ### Version 🧾
@@ -228,7 +228,7 @@ o'' )_____//   Build   @ TIME, DATE
 > - Porting a simple Shell
 > - Variable page sizes, memory allocator
 > - SPI driver, porting GuiLite/LVGL graphics libraries
-> - Porting to other development boards/architectures, e.g., ESP32-C3 (RISC-V)
+> - Porting to other boards/arch, e.g., ESP32-C3 (RISC-V)
 
 
 
@@ -246,7 +246,7 @@ o'' )_____//   Build   @ TIME, DATE
 > - Support for `GCC` compilation, compatible with `STM32Cube HAL`
 > - Real-time calendar `HAL::STM32F4xx::RTC_t`, `CmdCall::date_cmd`, `App::Calendar`
 > - `idle` uses `Kernel::Global::zombie_list` to reclaim inactive pages
-> - Three basic page allocation strategies `Page_t::Policy::{POOL, DYNAMIC, STATIC}`
+> - Three basic page allocation policies `Page_t::Policy::{POOL, DYNAMIC, STATIC}`
 
 
 
@@ -256,7 +256,7 @@ o'' )_____//   Build   @ TIME, DATE
 >
 > - Mapping `Tids` to `BitMap_t`
 > - Message queue `IPC::MsgQueue_t`
-> - `Task::create` allows generic function signatures `void fn(auto argv)` with type checking
+> - `Task::create` allows generic function signatures as `void fn(auto argv)` with type checker
 > - Added `ESP32-C3` as a `WiFi` component
 > - Added `Driver::Device::SD_t`, `SD` card driver, porting `FatFs` file system
 > - Added `Shell::usr_cmds` for user-registered commands
@@ -292,8 +292,7 @@ o'' )_____//   Build   @ TIME, DATE
 - [Embassy](https://embassy.dev/)
 
 ```
-Wake up, Neo...
-The Matrix has you...
-Follow the white rabbit.
-Knock, knock, Neo.
+There's a movie on TV.
+Four boys are walking on railroad tracks...
+I better go, too.
 ```

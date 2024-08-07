@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<svg width="851pt" height="334pt" viewBox="0.00 0.00 851.47 333.60" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 329.6)">
+<title>Scheduler</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-329.6 847.4697,-329.6 847.4697,4 -4,4"/>
+<g id="clust1" class="cluster">
+<title>cluster_roundrobin_tasks</title>
+<polygon fill="#eedfcc" stroke="#000000" points="8,-73.6 8,-317.6 160,-317.6 160,-73.6 8,-73.6"/>
+<text text-anchor="middle" x="84" y="-301" font-family="Times,serif" font-size="14.00" fill="#000000">PriGroup[0]</text>
+</g>
+<!-- TERMINATED -->
+<g id="node1" class="node">
+<title>TERMINATED</title>
+<ellipse fill="#cd9b9b" stroke="#cd9b9b" cx="512" cy="-99.6" rx="73.5753" ry="18"/>
+<text text-anchor="middle" x="512" y="-95.4" font-family="Consolas" font-size="14.00" fill="#000000">TERMINATED</text>
+</g>
+<!-- READY -->
+<g id="node2" class="node">
+<title>READY</title>
+<ellipse fill="#bcd2ee" stroke="#bcd2ee" cx="347" cy="-18" rx="44.0814" ry="18"/>
+<text text-anchor="middle" x="347" y="-13.8" font-family="Consolas" font-size="14.00" fill="#000000">READY</text>
+</g>
+<!-- RUNNING -->
+<g id="node3" class="node">
+<title>RUNNING</title>
+<ellipse fill="#bcd2ee" stroke="#bcd2ee" cx="320" cy="-181.2" rx="55.5966" ry="18"/>
+<text text-anchor="middle" x="320" y="-177" font-family="Consolas" font-size="14.00" fill="#000000">RUNNING</text>
+</g>
+<!-- READY&#45;&gt;RUNNING -->
+<g id="edge1" class="edge">
+<title>READY-&gt;RUNNING</title>
+<path fill="none" stroke="#000000" d="M330.3244,-34.9033C321.396,-45.1711 311.2864,-59.0711 306.5616,-73.6 298.0174,-99.8738 303.686,-131.3853 310.0797,-153.4946"/>
+<polygon fill="#000000" stroke="#000000" points="306.7986,-154.7299 313.1184,-163.2334 313.4808,-152.6448 306.7986,-154.7299"/>
+<text text-anchor="middle" x="316.2192" y="-97.2" font-family="Consolas" font-size="8.00" fill="#000000">调度</text>
+</g>
+<!-- READY&#45;&gt;RUNNING -->
+<g id="edge13" class="edge">
+<title>READY-&gt;RUNNING</title>
+<path fill="none" stroke="#f08080" stroke-width="2" d="M343.994,-36.1698C339.3024,-64.5275 330.2036,-119.5246 324.6582,-153.044"/>
+<polygon fill="#f08080" stroke="#f08080" stroke-width="2" points="321.1719,-152.674 322.9926,-163.1112 328.078,-153.8166 321.1719,-152.674"/>
+<text text-anchor="middle" x="373.77" y="-97.2" font-family="Consolas" font-size="8.00" fill="#000000">执行高优先级任务</text>
+</g>
+<!-- READY1 -->
+<g id="node5" class="node">
+<title>READY1</title>
+<polygon fill="#add8e6" stroke="#add8e6" points="144,-284.8 90,-284.8 90,-248.8 144,-248.8 144,-284.8"/>
+<text text-anchor="middle" x="117" y="-262.6" font-family="Consolas" font-size="14.00" fill="#000000">TaskA</text>
+</g>
+<!-- READY&#45;&gt;READY1 -->
+<!-- READY2 -->
+<g id="node6" class="node">
+<title>READY2</title>
+<polygon fill="#add8e6" stroke="#add8e6" points="144,-117.6 90,-117.6 90,-81.6 144,-81.6 144,-117.6"/>
+<text text-anchor="middle" x="117" y="-95.4" font-family="Consolas" font-size="14.00" fill="#000000">TaskB</text>
+</g>
+<!-- READY&#45;&gt;READY2 -->
+<!-- RUNNING&#45;&gt;TERMINATED -->
+<g id="edge4" class="edge">
+<title>RUNNING-&gt;TERMINATED</title>
+<path fill="none" stroke="#000000" d="M353.8838,-166.7994C384.9793,-153.5838 431.3124,-133.8922 465.794,-119.2375"/>
+<polygon fill="#000000" stroke="#000000" points="467.3485,-122.3799 475.1828,-115.2473 464.6105,-115.9376 467.3485,-122.3799"/>
+<text text-anchor="middle" x="429.3316" y="-138" font-family="Consolas" font-size="8.00" fill="#000000">终止</text>
+</g>
+<!-- RUNNING&#45;&gt;READY -->
+<g id="edge5" class="edge">
+<title>RUNNING-&gt;READY</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M373.7758,-176.561C445.8518,-169.1013 567.895,-151.6891 595,-117.6 649.3729,-49.2169 489.5928,-27.5454 401.2742,-20.8655"/>
+<polygon fill="#000000" stroke="#000000" points="401.3616,-17.3629 391.1374,-20.1406 400.8623,-24.3451 401.3616,-17.3629"/>
+<text text-anchor="middle" x="641.7704" y="-102" font-family="Consolas" font-size="8.00" fill="#000000">时间片耗尽且</text>
+<text text-anchor="middle" x="641.7704" y="-92.4" font-family="Consolas" font-size="8.00" fill="#000000">存在相同优先级任务</text>
+</g>
+<!-- RUNNING&#45;&gt;READY -->
+<g id="edge12" class="edge">
+<title>RUNNING-&gt;READY</title>
+<path fill="none" stroke="#f08080" stroke-width="2" d="M285.0454,-167.09C264.4294,-156.7279 240.0985,-140.4542 228.1232,-117.6 219.0469,-100.2783 217.6255,-90.099 228.1232,-73.6 243.2397,-49.8416 271.4684,-36.0642 296.6251,-28.1682"/>
+<polygon fill="#f08080" stroke="#f08080" stroke-width="2" points="297.8112,-31.4686 306.4429,-25.3251 295.864,-24.7448 297.8112,-31.4686"/>
+<text text-anchor="middle" x="264.4384" y="-97.2" font-family="Consolas" font-size="8.00" fill="#000000">高优先级任务到达</text>
+</g>
+<!-- BLOCKED -->
+<g id="node4" class="node">
+<title>BLOCKED</title>
+<ellipse fill="#bcd2ee" stroke="#bcd2ee" cx="768" cy="-99.6" rx="56.76" ry="18"/>
+<text text-anchor="middle" x="768" y="-95.4" font-family="Consolas" font-size="14.00" fill="#000000">BLOCKED</text>
+</g>
+<!-- RUNNING&#45;&gt;BLOCKED -->
+<g id="edge2" class="edge">
+<title>RUNNING-&gt;BLOCKED</title>
+<path fill="none" stroke="#000000" d="M375.1314,-178.5846C438.6776,-174.7283 545.9385,-165.626 636,-145.2 665.85,-138.43 698.3598,-127.248 723.6472,-117.6517"/>
+<polygon fill="#000000" stroke="#000000" points="725.2393,-120.7892 733.3124,-113.9281 722.7227,-114.2572 725.2393,-120.7892"/>
+<text text-anchor="middle" x="686.5508" y="-138" font-family="Consolas" font-size="8.00" fill="#000000">任务阻塞</text>
+</g>
+<!-- BLOCKED&#45;&gt;READY -->
+<g id="edge3" class="edge">
+<title>BLOCKED-&gt;READY</title>
+<path fill="none" stroke="#000000" d="M731.4298,-85.6283C720.6973,-81.6334 708.912,-77.3487 698,-73.6 670.6682,-64.2103 664.234,-60.1673 636,-54 555.1511,-36.3397 459.5502,-26.546 401.1088,-21.7788"/>
+<polygon fill="#000000" stroke="#000000" points="401.2414,-18.2784 390.9952,-20.9739 400.686,-25.2563 401.2414,-18.2784"/>
+<text text-anchor="middle" x="675.6676" y="-56.4" font-family="Consolas" font-size="8.00" fill="#000000">恢复</text>
+</g>
+<!-- READY1&#45;&gt;RUNNING -->
+<g id="edge10" class="edge">
+<title>READY1-&gt;RUNNING</title>
+<path fill="none" stroke="#000000" d="M144.3545,-251.9383C149.1901,-249.4646 154.2101,-246.9931 159,-244.8 196.7645,-227.5095 240.6768,-210.3519 273.0927,-198.2229"/>
+<polygon fill="#000000" stroke="#000000" points="274.6118,-201.3922 282.7642,-194.6256 272.1714,-194.8314 274.6118,-201.3922"/>
+<text text-anchor="middle" x="237.3824" y="-219.6" font-family="Consolas" font-size="8.00" fill="#000000">选择执行</text>
+</g>
+<!-- READY1&#45;&gt;READY2 -->
+<g id="edge6" class="edge">
+<title>READY1-&gt;READY2</title>
+<path fill="none" stroke="#000000" d="M89.8412,-248.6652C74.444,-236.6677 56.6029,-219.4406 48.1064,-199.2 41.9135,-184.4471 41.6896,-177.8569 48.1064,-163.2 55.1887,-147.0232 68.6403,-133.1356 81.7912,-122.502"/>
+<polygon fill="#000000" stroke="#000000" points="84.0672,-125.1675 89.881,-116.3103 79.8127,-119.6088 84.0672,-125.1675"/>
+<text text-anchor="middle" x="69.4468" y="-178.8" font-family="Consolas" font-size="8.00" fill="#000000">RoundRobin</text>
+</g>
+<!-- READY2&#45;&gt;RUNNING -->
+<g id="edge11" class="edge">
+<title>READY2-&gt;RUNNING</title>
+<path fill="none" stroke="#000000" d="M121.5792,-117.6919C124.9229,-127.2711 130.4467,-138.4235 139.2352,-145.2 157.3963,-159.2033 211.8886,-168.8113 256.3349,-174.556"/>
+<polygon fill="#000000" stroke="#000000" points="256.1596,-178.0612 266.5165,-175.8284 257.0277,-171.1153 256.1596,-178.0612"/>
+<text text-anchor="middle" x="156.3824" y="-138" font-family="Consolas" font-size="8.00" fill="#000000">选择执行</text>
+</g>
+<!-- READY2&#45;&gt;READY1 -->
+<g id="edge7" class="edge">
+<title>READY2-&gt;READY1</title>
+<path fill="none" stroke="#000000" d="M117,-117.7892C117,-146.7963 117,-203.7671 117,-238.2476"/>
+<polygon fill="#000000" stroke="#000000" points="113.5001,-238.5883 117,-248.5884 120.5001,-238.5884 113.5001,-238.5883"/>
+<text text-anchor="middle" x="137.4468" y="-178.8" font-family="Consolas" font-size="8.00" fill="#000000">RoundRobin</text>
+</g>
+<!-- comment1 -->
+<g id="node7" class="node">
+<title>comment1</title>
+<polygon fill="#f5f5f5" stroke="transparent" points="389.6034,-288.8 168.3966,-288.8 168.3966,-244.8 389.6034,-244.8 389.6034,-288.8"/>
+<text text-anchor="middle" x="279" y="-275.8" font-family="Consolas" font-size="10.00" fill="#000000">注:</text>
+<text text-anchor="middle" x="279" y="-263.8" font-family="Consolas" font-size="10.00" fill="#000000">1. 红色边表示抢占</text>
+<text text-anchor="middle" x="279" y="-251.8" font-family="Consolas" font-size="10.00" fill="#000000">2. 虚线边表示时间片耗尽和RoundRobin调度</text>
+</g>
+</g>
+</svg>

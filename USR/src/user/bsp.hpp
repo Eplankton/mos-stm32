@@ -15,8 +15,8 @@ namespace MOS::User::BSP
 	MOS_PUTCHAR(char ch)
 	{
 		using Global::stdio;
-		stdio.send_data(ch);
-		stdio.wait_flag(USART_FLAG_TXE);
+		stdio.uart.send_data(ch);
+		stdio.uart.wait_flag(USART_FLAG_TXE);
 	}
 
 	static inline void
@@ -74,7 +74,7 @@ namespace MOS::User::BSP
 		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
 
 		// stdio uart config
-		Global::stdio
+		Global::stdio.uart
 		    .init( // 57600-8-1-N
 		        57600,
 		        USART_WordLength_8b,
@@ -95,7 +95,7 @@ namespace MOS::User::BSP
 		    .enable();
 
 		// esp32-wifi uart config
-		Global::esp32
+		Global::esp32.uart
 		    .init( // 115200-8-1-N
 		        115200,
 		        USART_WordLength_8b,
@@ -208,28 +208,18 @@ namespace MOS::User::BSP
 		};
 
 		static auto clock_config = [&] {
-			/*使能 PWR 时钟*/
-			RCC_t::APB1::enable(RCC_APB1Periph_PWR);
-
-			/* PWR_CR:DBF置1，使能RTC、RTC备份寄存器和备份SRAM的访问 */
-			PWR_t::backup_access_cmd(ENABLE);
-
-			/* 使能LSE */
-			RCC_t::lse_config(RCC_LSE_ON);
+			RCC_t::APB1::enable(RCC_APB1Periph_PWR); /*使能 PWR 时钟*/
+			PWR_t::backup_access_cmd(ENABLE);        /* PWR_CR:DBF置1，使能RTC、RTC备份寄存器和备份SRAM的访问 */
+			RCC_t::lse_config(RCC_LSE_ON);           /* 使能LSE */
 
 			/* 等待LSE稳定 */
 			while (RCC_t::get_flag_status(RCC_FLAG_LSERDY) == RESET) {
 				MOS_NOP();
 			}
 
-			/* 选择LSE做为RTC的时钟源 */
-			RCC_t::rtc_clk_config(RCC_RTCCLKSource_LSE);
-
-			/* 使能RTC时钟 */
-			RCC_t::rtc_clk_cmd(ENABLE);
-
-			/* 等待 RTC APB 寄存器同步 */
-			RTC_t::wait_for_sync();
+			RCC_t::rtc_clk_config(RCC_RTCCLKSource_LSE); /* 选择LSE做为RTC的时钟源 */
+			RCC_t::rtc_clk_cmd(ENABLE);                  /* 使能RTC时钟 */
+			RTC_t::wait_for_sync();                      /* 等待 RTC APB 寄存器同步 */
 
 			/* 用RTC_InitStructure的内容初始化RTC寄存器 */
 			MOS_ASSERT(RTC_t::init(init_cfg) != ERROR, "RTC Init Failed!\n");
@@ -249,14 +239,9 @@ namespace MOS::User::BSP
 			set_time_and_date(); // 设置时间和日期
 		}
 		else {
-			/* 使能 PWR 时钟 */
-			RCC_t::APB1::enable(RCC_APB1Periph_PWR);
-
-			/* PWR_CR:DBF置1，使能RTC、RTC备份寄存器和备份SRAM的访问 */
-			PWR_t::backup_access_cmd(ENABLE);
-
-			/* 等待 RTC APB 寄存器同步 */
-			RTC_t::wait_for_sync();
+			RCC_t::APB1::enable(RCC_APB1Periph_PWR); /* 使能 PWR 时钟 */
+			PWR_t::backup_access_cmd(ENABLE);        /* PWR_CR:DBF置1，使能RTC、RTC备份寄存器和备份SRAM的访问 */
+			RTC_t::wait_for_sync();                  /* 等待 RTC APB 寄存器同步 */
 		}
 	}
 
@@ -276,36 +261,13 @@ namespace MOS::User::BSP
 
 namespace MOS::ISR
 {
-	template <size_t N>
-	MOS_INLINE static inline void
-	uart_it_rxne_sync(
-	    HAL::STM32F4xx::USART_t& uart,
-	    DataType::SyncRxBuf_t<N>& buf,
-	    auto&& oops
-	)
-	{
-		uart.handle_it(USART_IT_RXNE, [&] {
-			char8_t data = uart.recv_data();
-			if (!buf.full()) {
-				if (data == '\n') // read a line
-					buf.signal_from_isr();
-				else
-					buf.add(data);
-			}
-			else {
-				buf.clear();
-				oops();
-			}
-		});
-	}
-
 	extern "C" {
 		void EXTI15_10_IRQHandler() // K1 IRQ Handler
 		{
 			using namespace Kernel;
+			using namespace Utils;
 			using HAL::STM32F4xx::EXTI_t;
 			using User::Global::leds;
-			using Utils::Range;
 
 			// To simulate a burst task
 			static auto k1_burst = [] {
@@ -330,20 +292,13 @@ namespace MOS::ISR
 
 		void USART2_IRQHandler() // ESP32C3 WiFi Module I/O
 		{
-			using User::Global::esp32;
-			using User::Global::wifi_buf;
-
-			uart_it_rxne_sync(esp32, wifi_buf, [] {});
+			User::Global::esp32.read_line([] {});
 		}
 
 		void USART3_IRQHandler() // Shell I/O
 		{
-			using User::Global::stdio;
-			using User::Global::sh_buf;
-
-			uart_it_rxne_sync(
-			    stdio, sh_buf,
-			    [] { MOS_MSG("Oops! Cmd too long!"); }
+			User::Global::stdio.read_line(
+			    [] { MOS_MSG("Oops! Command too long!"); }
 			);
 		}
 	}

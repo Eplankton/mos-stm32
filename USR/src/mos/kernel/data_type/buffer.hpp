@@ -72,14 +72,27 @@ namespace MOS::DataType
 		signal_from_isr() { sema.up_from_isr(); }
 
 		MOS_INLINE inline auto
-		as_str() const
+		as_str() const { return this->get_raw(); }
+
+		MOS_INLINE inline auto
+		recv()
 		{
-			return this->get_raw();
+			struct TmpRecvObj_t
+			{
+				~TmpRecvObj_t() { tmp_ref.clear(); }
+
+				MOS_INLINE inline auto
+				as_str() const { return tmp_ref.as_str(); }
+
+				SyncRxBuf_t<N>& tmp_ref;
+			};
+
+			wait();
+			return TmpRecvObj_t {*this};
 		}
 
 	private:
-		using Sema_t = Kernel::Sync::Sema_t;
-		Sema_t sema {0};
+		Kernel::Sync::Sema_t sema {0};
 	};
 }
 

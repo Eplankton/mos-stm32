@@ -97,8 +97,8 @@ namespace MOS::Kernel::Scheduler
 
 		// Default idle can be replaced by user-defined hook
 		auto idle = [] {
-			while (true) {
-				Task::recycle(); // Recycle resources
+			while (true) { // Recycle resources
+				Task::recycle();
 			}
 		};
 
@@ -116,22 +116,9 @@ namespace MOS::Kernel::Scheduler
 		init();
 	}
 
-	static inline void
-	try_wake_up()
-	{
-		// sleeping_list is sorted
-		auto tcb = sleeping_list.begin();
-		while (tcb != sleeping_list.end()) {
-			if (tcb->get_wkpt() > os_ticks)
-				return;
-			Task::wake_raw(tcb);
-			tcb = sleeping_list.begin(); // check next
-		}
-	}
-
 	template <Policy policy>
 	static inline void
-	next_tcb()
+	next_tcb() // Select next task to run
 	{
 		auto switch_to = [](TcbPtr_t tcb) {
 			tcb->set_status(RUNNING);
@@ -139,7 +126,16 @@ namespace MOS::Kernel::Scheduler
 			debug_tcbs.mark(cur_tcb); // For debug only
 		};
 
-		try_wake_up();
+		auto wake_up_sleeper = [] { // sleeping_list is sorted
+			auto tcb = sleeping_list.begin();
+			while (tcb != sleeping_list.end()) {
+				if (os_ticks < tcb->get_wkpt()) return;
+				Task::wake_raw(tcb);
+				tcb = sleeping_list.begin(); // check next one
+			}
+		};
+
+		wake_up_sleeper();
 
 		auto st = ready_list.begin(),
 		     ed = ready_list.end(),
@@ -184,10 +180,7 @@ namespace MOS::ISR
 {
 	extern "C" {
 		MOS_NAKED void
-		MOS_SVC_HANDLER()
-		{
-			asm volatile(ARCH_INIT_ASM);
-		};
+		MOS_SVC_HANDLER() { asm volatile(ARCH_INIT_ASM); };
 
 		MOS_NAKED void
 		MOS_PENDSV_HANDLER()
@@ -198,7 +191,7 @@ namespace MOS::ISR
 		void MOS_SYSTICK_HANDLER()
 		{
 			using namespace Kernel;
-			using Utils::IntrGuard_t;
+			using namespace Utils;
 
 			IntrGuard_t guard;
 			Task::inc_ticks();

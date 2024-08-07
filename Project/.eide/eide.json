@@ -567,7 +567,6 @@
           ".eide/deps"
         ],
         "libList": [],
-        "sourceDirList": [],
         "defineList": [
           "USE_STDPERIPH_DRIVER",
           "STM32F429_439xx"

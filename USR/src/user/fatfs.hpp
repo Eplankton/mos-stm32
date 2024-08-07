@@ -95,13 +95,17 @@ namespace MOS::FileSys
 				return res;
 			}
 		};
+
+		using File_t    = FatFs::File_t;
+		using RawFile_t = File_t::Raw_t;
 	};
 
-	void rw_test(FatFs& fs)
-	{
-		using File_t = FatFs::File_t;
+	using File_t    = FatFs::File_t;
+	using RawFile_t = FatFs::RawFile_t;
 
-		static FIL file_raw; /* 文件裸对象 */
+	void init(FatFs& fs)
+	{
+		static FIL test_file_raw; /* 文件裸对象 */
 
 		auto mnt_or_fmt = [&] {
 			// 挂载文件系统，文件系统挂载时会对 SPI-SD 设备初始化 -> 调用 sd.init()
@@ -138,8 +142,8 @@ namespace MOS::FileSys
 			static BYTE w_buf[] = "hello, world!"; /* 写缓冲区*/
 
 			/*--------------------- 文件系统测试：写测试 -----------------------*/
-			File_t file {file_raw}; /* 创建文件对象 */
-			auto res = file.open(   // 打开文件，如果文件不存在则创建它
+			File_t file {test_file_raw}; /* 创建文件对象 */
+			auto res = file.open(        // 打开文件，如果文件不存在则创建它
 			    "0:rw_test.txt",
 			    File_t::OpenMode::Write
 			);
@@ -151,7 +155,7 @@ namespace MOS::FileSys
 				/* 实测SPI_SD驱动下写入大于512字节的数据在SD卡里打开会显示乱码，如需写入大量数据使用f_write_co替代上面f_write即可 */
 				// res_sd=f_write_co(&fnew,WriteBuffer,sizeof(WriteBuffer),&fnum);
 				if (res == FR_OK)
-					MOS_MSG("Write(%d) <- \"%s\"", num, w_buf);
+					MOS_MSG("W(%d) <- \"%s\"", num, w_buf);
 				else
 					MOS_MSG("Bad:(%d)", res);
 			}
@@ -164,8 +168,8 @@ namespace MOS::FileSys
 			static BYTE r_buf[64] = {0}; /* 读缓冲区 */
 
 			/*------------------ 文件系统测试：读测试 --------------------------*/
-			File_t file {file_raw}; /* 创建文件对象 */
-			auto res = file.open(   // 打开文件，如果文件不存在则创建它
+			File_t file {test_file_raw}; /* 创建文件对象 */
+			auto res = file.open(        // 打开文件，如果文件不存在则创建它
 			    "0:rw_test.txt",
 			    File_t::OpenMode::Read
 			);
@@ -179,7 +183,7 @@ namespace MOS::FileSys
 				// 如需读取大量数据使用 f_read_co 替代上面 f_read 即可
 				// res_sd = f_read_co(&fnew, ReadBuffer, sizeof(ReadBuffer), &fnum);
 				if (res == FR_OK) {
-					MOS_MSG("Read(%d) -> \"%s\"", num, r_buf);
+					MOS_MSG("R(%d) -> \"%s\"", num, r_buf);
 				}
 				else {
 					MOS_MSG("Bad:(%d)", res);

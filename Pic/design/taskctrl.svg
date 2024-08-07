@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<svg width="608pt" height="92pt" viewBox="0.00 0.00 608.02 92.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 88)">
+<title>TaskStateMachine</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-88 604.0214,-88 604.0214,4 -4,4"/>
+<!-- start -->
+<g id="node1" class="node">
+<title>start</title>
+<ellipse fill="#000000" stroke="#000000" cx="1.8" cy="-47" rx="1.8" ry="1.8"/>
+</g>
+<!-- READY -->
+<g id="node2" class="node">
+<title>READY</title>
+<polygon fill="#add8e6" stroke="#add8e6" points="123.005,-65 58.5864,-65 58.5864,-29 123.005,-29 123.005,-65"/>
+<text text-anchor="middle" x="90.7957" y="-42.8" font-family="Consolas" font-size="14.00" fill="#000000">READY</text>
+</g>
+<!-- start&#45;&gt;READY -->
+<g id="edge7" class="edge">
+<title>start-&gt;READY</title>
+<path fill="none" stroke="#000000" d="M3.6588,-47C9.6678,-47 29.2898,-47 48.3951,-47"/>
+<polygon fill="#000000" stroke="#000000" points="48.564,-50.5001 58.564,-47 48.5639,-43.5001 48.564,-50.5001"/>
+<text text-anchor="middle" x="31.1456" y="-49.4" font-family="Consolas" font-size="8.00" fill="#000000">create</text>
+</g>
+<!-- RUNNING -->
+<g id="node3" class="node">
+<title>RUNNING</title>
+<polygon fill="#add8e6" stroke="#add8e6" points="271.1849,-84 191.1217,-84 191.1217,-48 271.1849,-48 271.1849,-84"/>
+<text text-anchor="middle" x="231.1533" y="-61.8" font-family="Consolas" font-size="14.00" fill="#000000">RUNNING</text>
+</g>
+<!-- READY&#45;&gt;RUNNING -->
+<g id="edge1" class="edge">
+<title>READY-&gt;RUNNING</title>
+<path fill="none" stroke="#000000" d="M123.0255,-54.7103C128.9459,-55.9455 135.0903,-57.1085 140.9002,-58 153.7823,-59.9767 167.7794,-61.5119 180.8205,-62.6843"/>
+<polygon fill="#000000" stroke="#000000" points="180.7752,-66.1929 191.0346,-63.5482 181.3653,-59.2178 180.7752,-66.1929"/>
+<text text-anchor="middle" x="156.8942" y="-63.4" font-family="Consolas" font-size="8.00" fill="#000000">scheduled</text>
+</g>
+<!-- RUNNING&#45;&gt;READY -->
+<g id="edge2" class="edge">
+<title>RUNNING-&gt;READY</title>
+<path fill="none" stroke="#000000" d="M191.1046,-51.4706C185.0708,-49.7928 178.8663,-48.346 172.8882,-47.4 160.0032,-45.3611 145.8376,-44.729 132.9543,-44.7585"/>
+<polygon fill="#000000" stroke="#000000" points="132.892,-41.2589 122.946,-44.9096 132.9978,-48.2581 132.892,-41.2589"/>
+<text text-anchor="middle" x="156.8942" y="-49.4" font-family="Consolas" font-size="8.00" fill="#000000">yield</text>
+</g>
+<!-- BLOCKED -->
+<g id="node4" class="node">
+<title>BLOCKED</title>
+<polygon fill="#add8e6" stroke="#add8e6" points="426.889,-36 344.6924,-36 344.6924,0 426.889,0 426.889,-36"/>
+<text text-anchor="middle" x="385.7907" y="-13.8" font-family="Consolas" font-size="14.00" fill="#000000">BLOCKED</text>
+</g>
+<!-- RUNNING&#45;&gt;BLOCKED -->
+<g id="edge3" class="edge">
+<title>RUNNING-&gt;BLOCKED</title>
+<path fill="none" stroke="#000000" d="M271.3788,-53.5139C290.8468,-47.4709 314.4266,-40.1517 335.1094,-33.7317"/>
+<polygon fill="#000000" stroke="#000000" points="336.1773,-37.065 344.6902,-30.7577 334.1021,-30.3797 336.1773,-37.065"/>
+<text text-anchor="middle" x="308.08" y="-49.4" font-family="Consolas" font-size="8.00" fill="#000000">block/delay</text>
+</g>
+<!-- TERMINATED -->
+<g id="node5" class="node">
+<title>TERMINATED</title>
+<polygon fill="#add8e6" stroke="#add8e6" points="600.0074,-63 493.0634,-63 493.0634,-27 600.0074,-27 600.0074,-63"/>
+<text text-anchor="middle" x="546.5354" y="-40.8" font-family="Consolas" font-size="14.00" fill="#000000">TERMINATED</text>
+</g>
+<!-- RUNNING&#45;&gt;TERMINATED -->
+<g id="edge5" class="edge">
+<title>RUNNING-&gt;TERMINATED</title>
+<path fill="none" stroke="#000000" d="M271.417,-63.319C324.7429,-59.7683 419.4013,-53.4653 482.5683,-49.2593"/>
+<polygon fill="#000000" stroke="#000000" points="483.0672,-52.7339 492.8125,-48.5772 482.602,-45.7494 483.0672,-52.7339"/>
+<text text-anchor="middle" x="385.7907" y="-60.4" font-family="Consolas" font-size="8.00" fill="#000000">terminate</text>
+</g>
+<!-- BLOCKED&#45;&gt;READY -->
+<g id="edge4" class="edge">
+<title>BLOCKED-&gt;READY</title>
+<path fill="none" stroke="#000000" d="M344.6051,-19.027C305.0747,-20.3387 243.7443,-23.2281 190.8882,-29.4 171.8438,-31.6238 150.9314,-35.1311 133.1688,-38.4315"/>
+<polygon fill="#000000" stroke="#000000" points="132.2846,-35.0367 123.1123,-40.3395 133.5895,-41.914 132.2846,-35.0367"/>
+<text text-anchor="middle" x="231.1533" y="-31.4" font-family="Consolas" font-size="8.00" fill="#000000">resume/wake_up</text>
+</g>
+<!-- BLOCKED&#45;&gt;TERMINATED -->
+<g id="edge6" class="edge">
+<title>BLOCKED-&gt;TERMINATED</title>
+<path fill="none" stroke="#000000" d="M427.1865,-24.9532C444.1394,-27.8007 464.1451,-31.1611 482.8824,-34.3083"/>
+<polygon fill="#000000" stroke="#000000" points="482.3953,-37.7754 492.8369,-35.9804 483.5549,-30.8722 482.3953,-37.7754"/>
+<text text-anchor="middle" x="459.9446" y="-34.4" font-family="Consolas" font-size="8.00" fill="#000000">terminate</text>
+</g>
+</g>
+</svg>

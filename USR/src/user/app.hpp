@@ -72,7 +72,7 @@ namespace MOS::User::App
 
 	void lcd_init(Device::ST7735S_t& lcd)
 	{
-		// A mutex wrapper of lcd
+		// A mutex wrapper of lcd&
 		static Sync::Mutex_t lcd_mtx {lcd};
 
 		auto GIF = [] {
@@ -127,36 +127,40 @@ namespace MOS::User::App
 		Shell::usr_cmds.add({"time", print_rtc_info});
 	}
 
-	// MOS_DEBUG_INFO bool f0 = 0, f1 = 0;
-	Sync::Barrier_t bar {2};
-
-	void led1(Device::LED_t leds[])
+	void led_init(Device::LED_t leds[])
 	{
-		bar.wait();
-		for (auto _: Range(0, 20)) {
-			// f1 = !f1;
-			leds[1].toggle();
-			Task::delay(250_ms);
-		}
-		kprintf(
-		    "%s exits...\n",
-		    Task::current()->get_name()
-		);
-	}
+		static Sync::Barrier_t bar {2};
 
-	void led0(Device::LED_t leds[])
-	{
+		static auto led1 = [](Device::LED_t leds[]) {
+			bar.wait();
+			for (auto _: Range(0, 20)) {
+				leds[1].toggle();
+				Task::delay(250_ms);
+			}
+			kprintf(
+			    "%s exits...\n",
+			    Task::current()->get_name()
+			);
+		};
+
+		static auto led0 = [](Device::LED_t leds[]) {
+			Task::create(
+			    led1, leds,
+			    Task::current()->get_pri(),
+			    "led1"
+			);
+			bar.wait();
+			while (true) {
+				leds[0].toggle();
+				Task::delay(500_ms);
+			}
+		};
+
 		Task::create(
-		    led1, leds,
+		    led0, leds,
 		    Task::current()->get_pri(),
-		    "led1"
+		    "led0"
 		);
-		bar.wait();
-		while (true) {
-			// f0 = !f0;
-			leds[0].toggle();
-			Task::delay(500_ms);
-		}
 	}
 
 	void wifi(DataType::SyncRxBuf_t<8>& buf)
@@ -171,33 +175,32 @@ namespace MOS::User::App
 		}
 	}
 
-	void log_init()
+	void log_init(Sync::Mutex_t<FileSys::File_t>& sys_log)
 	{
-		using FatFs  = FileSys::FatFs;
-		using File_t = FatFs::File_t;
+		using OpenMode = FileSys::File_t::OpenMode;
 
-		static FIL file_raw; // 文件裸对象
+		static auto& log_mtx {sys_log}; // 系统日志文件
 
 		static auto lgw_cmd = [](auto text) {
-			File_t file {file_raw}; // 文件对象
-			auto res = file.open(   // 打开文件，如果文件不存在则创建它
-			    "0:log.txt", File_t::OpenMode::Write
-			);
+			auto mtx_grd = log_mtx.lock();
+			auto& log    = mtx_grd.get();
 
-			if (res == FR_OK) {
-				auto [res, num] = file.write( // 将指定存储区内容写入到文件内
-				    (void*) text, strlen(text)
-				);
-				MOS_MSG("Write(%d) <- \"%s\"", num, text);
+			// 打开文件，如果文件不存在则创建它
+			auto res = log.open("0:log.txt", OpenMode::Write);
+
+			if (res == FR_OK) { // 将指定存储区内容写入到文件内
+				auto [_, num] = log.write((void*) text, strlen(text));
+				MOS_MSG("W(%d) <- \"%s\"", num, text);
 			}
 			else {
 				MOS_MSG("File open failed!");
 			}
+
+			log.close(); // 关闭文件
 		};
 
 		static auto cat_cmd = [](auto name) {
-			File_t file {file_raw}; // 文件对象
-			auto append_str = [](char* dest, const char* src) {
+			auto get_path = [](char* dest, const char* src) {
 				while (*dest) { // 找到目标字符串的末尾
 					dest++;
 				}
@@ -215,28 +218,28 @@ namespace MOS::User::App
 				*dest = '\0'; // 确保目标字符串以'\0'结尾
 			};
 
-			char path[16] = "0:", r_buf[32] = "";
+			auto mtx_grd = log_mtx.lock();
+			auto& log    = mtx_grd.get();
 
-			append_str(path, name);
+			char dir[16] = "0:", r_buf[32] = "";
+			get_path(dir, name);
 
-			auto res = file.open( // 打开文件，如果文件不存在则创建它
-			    path, File_t::OpenMode::Read
-			);
+			// 打开文件，如果文件不存在则创建它
+			auto res = log.open(dir, OpenMode::Read);
 
-			if (res == FR_OK) {
-				auto [res, num] = file.read(
-				    (void*) r_buf, sizeof(r_buf)
-				);
-				MOS_MSG("Read(%d) -> \"%s\"", num, r_buf);
+			if (res == FR_OK) { // 将文件内容读取到缓冲区
+				auto [_, num] = log.read((void*) r_buf, sizeof(r_buf));
+				MOS_MSG("R(%d) -> \"%s\"", num, r_buf);
 			}
 			else {
 				MOS_MSG("File open failed!");
 			}
+
+			log.close(); // 关闭文件
 		};
 
 		// log read cmd
 		static auto lgr_cmd = [](auto _) { cat_cmd("log.txt"); };
-
 		Shell::usr_cmds.add({"cat", cat_cmd});
 		Shell::usr_cmds.add({"lgr", lgr_cmd});
 		Shell::usr_cmds.add({"lgw", lgw_cmd});
