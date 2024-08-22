@@ -58,7 +58,7 @@ namespace MOS::FileSys
 			MOS_INLINE ~File_t() { close(); }
 
 			MOS_INLINE auto
-			read(const Buf_t r_buf, Len_t len)
+			read(const Buf_t buf, Len_t len)
 			{
 				struct ReadRes_t
 				{
@@ -68,7 +68,7 @@ namespace MOS::FileSys
 
 				res.fres = f_read(
 				    &raw,
-				    r_buf,
+				    buf,
 				    len,
 				    &res.fnum
 				);
@@ -77,7 +77,7 @@ namespace MOS::FileSys
 			}
 
 			MOS_INLINE auto
-			write(Buf_t r_buf, Len_t len)
+			write(Buf_t src, Len_t len)
 			{
 				struct WriteRes_t
 				{
@@ -87,11 +87,30 @@ namespace MOS::FileSys
 
 				res.fres = f_write(
 				    &raw,
-				    r_buf,
+				    src,
 				    len,
 				    &res.fnum
 				);
 
+				return res;
+			}
+
+			MOS_INLINE auto
+			append(Buf_t src, Len_t len)
+			{
+				struct WriteRes_t
+				{
+					Res_t fres;
+					Len_t fnum;
+				} res;
+
+				res.fres = f_lseek(&raw, f_size(&raw));
+
+				if (res.fres != FR_OK) {
+					return res;
+				}
+
+				res.fres = f_write(&raw, src, len, &res.fnum);
 				return res;
 			}
 		};

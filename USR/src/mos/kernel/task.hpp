@@ -113,30 +113,20 @@ namespace MOS::Kernel::Task
 	MOS_INLINE static inline void
 	exit() { terminate(current()); }
 
-	MOS_INLINE static inline TcbPtr_t
+	MOS_INLINE static inline void
 	load_context(TcbPtr_t tcb)
 	{
 		// A descending stack consists of 16 registers as context.
 		// high -> low, descending stack
 		// | xPSR | PC | LR | R12 | R3 | R2 | R1 | R0 | R11 | R10 | R9 | R8 | R7 | R6 | R5 | R4 |
-		tcb->set_sp(
-		    (uint32_t) &tcb->page.from_bottom(16)
-		);
+		tcb->set_sp((uint32_t) &tcb->page.from_bottom(16));
 
 		// Set the 'T' bit in stacked xPSR to '1' to notify processor on exception return about the Thumb state.
 		// V6-m and V7-m cores can only support Thumb state so it should always be set to '1'.
 		tcb->set_xpsr((uint32_t) 0x0100'0000);
-
-		// Set the stacked PC
-		tcb->set_pc((uint32_t) tcb->fn);
-
-		// Call terminate() automatically
-		tcb->set_lr((uint32_t) exit);
-
-		// Set arguments
-		tcb->set_argv((uint32_t) tcb->argv);
-
-		return tcb;
+		tcb->set_pc((uint32_t) tcb->fn);     // Set the stacked PC as entry
+		tcb->set_lr((uint32_t) exit);        // Call terminate() automatically
+		tcb->set_argv((uint32_t) tcb->argv); // Set arguments to R0
 	}
 
 	namespace // private checker concepts
@@ -217,8 +207,7 @@ namespace MOS::Kernel::Task
 		// Construct a tcb at the head of a page
 		auto cur = current(),
 		     tcb = TCB_t::build(
-		         type_check(fn, argv),
-		         (Argv_t) argv,
+		         type_check(fn, argv), (Argv_t) argv,
 		         pri, name, page
 		     );
 
@@ -226,7 +215,7 @@ namespace MOS::Kernel::Task
 		tcb->set_tid(tid_alloc()); // Set Tid
 		tcb->set_stamp(os_ticks);  // Set Timestamp
 		tcb->set_parent(cur);      // Set Parent
-		tcb->set_status(READY);    // Set task into READY
+		tcb->set_status(READY);    // Set Status into READY
 
 		ready_list.insert_in_order( // Add to ready_list
 		    tcb, TCB_t::pri_cmp

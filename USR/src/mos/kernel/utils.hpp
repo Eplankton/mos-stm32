@@ -30,12 +30,15 @@
 
 #if (MOS_CONF_ASSERT)
 #define MOS_ASSERT(expr, format, ...) \
-	((expr) ? ((void) 0) : mos_assert_failed((uint8_t*) __FILE__, __LINE__, format))
+	((expr) ? ((void) 0) : mos_assert_failed((uint8_t*) __FILE__, __LINE__, (uint8_t*) __func__, format))
 
 static inline void
-mos_assert_failed(void* file, uint32_t line, const char* msg)
+mos_assert_failed(void* file, uint32_t line, void* func, const char* msg)
 {
-	MOS_MSG("%s, %d: %s", file, line, msg);
+	MOS_MSG(
+	    "%s(%d) <%s>: \"%s\"",
+	    file, line, func, msg
+	);
 	while (true) {
 		MOS_NOP();
 	}

@@ -15,8 +15,8 @@ namespace MOS::User::BSP
 	MOS_PUTCHAR(char ch)
 	{
 		using Global::stdio;
-		stdio.uart.send_data(ch);
-		stdio.uart.wait_flag(USART_FLAG_TXE);
+		stdio.port.send_data(ch);
+		stdio.port.wait_flag(USART_FLAG_TXE);
 	}
 
 	static inline void
@@ -74,7 +74,7 @@ namespace MOS::User::BSP
 		NVIC_t::init(USART3_IRQn, 1, 1, ENABLE);
 
 		// stdio uart config
-		Global::stdio.uart
+		Global::stdio.port
 		    .init( // 57600-8-1-N
 		        57600,
 		        USART_WordLength_8b,
@@ -95,7 +95,7 @@ namespace MOS::User::BSP
 		    .enable();
 
 		// esp32-wifi uart config
-		Global::esp32.uart
+		Global::esp32.port
 		    .init( // 115200-8-1-N
 		        115200,
 		        USART_WordLength_8b,

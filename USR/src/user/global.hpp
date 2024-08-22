@@ -12,6 +12,10 @@
 // Buffer
 #include "src/mos/kernel/data_type/buffer.hpp"
 
+// MsgQueue Channel
+#include "src/mos/kernel/ipc.hpp"
+
+// FatFs File System
 #include "src/user/fatfs.hpp"
 
 namespace MOS::User::Global
@@ -19,6 +23,7 @@ namespace MOS::User::Global
 	using namespace HAL::STM32F4xx;
 	using namespace Driver::Device;
 	using namespace Kernel::Sync;
+	using namespace Kernel::IPC;
 	using namespace DataType;
 	using namespace FileSys;
 
@@ -26,17 +31,21 @@ namespace MOS::User::Global
 	FatFs fatfs;
 	RawFile_t raw_sys_log;
 	Mutex_t sys_log {File_t {raw_sys_log}};
+	MsgQueue_t<const char*, 2> sys_log_q;
 
 	template <size_t N>
-	struct SyncUartDev
+	struct SyncUartDev_t
 	{
-		USART_t& uart;
-		SyncRxBuf_t<N> buf;
+		using Port_t = USART_t;
+		using Buf_t  = SyncRxBuf_t<N>;
+
+		Port_t& port;
+		Buf_t buf;
 
 		void read_line(auto&& oops)
 		{
-			uart.handle_it(USART_IT_RXNE, [&] {
-				char8_t data = uart.recv_data();
+			port.handle_it(USART_IT_RXNE, [&] {
+				char8_t data = port.recv_data();
 				if (!buf.full()) {
 					if (data == '\n') // read a line
 						buf.signal_from_isr();
@@ -52,10 +61,10 @@ namespace MOS::User::Global
 	};
 
 	// Serial Input/Output UART
-	auto stdio = SyncUartDev<SHELL_BUF_SIZE> {convert(USART3)};
+	auto stdio = SyncUartDev_t<SHELL_BUF_SIZE> {convert(USART3)};
 
 	// ESP32C3 WiFi Module UART
-	auto esp32 = SyncUartDev<8> {convert(USART2)};
+	auto esp32 = SyncUartDev_t<8> {convert(USART2)};
 
 	// RGB LEDs
 	LED_t leds[] = {

@@ -344,6 +344,69 @@
           "USE_STDPERIPH_DRIVER",
           "STM32F429_439xx"
         ]
+      },
+      "builderOptions": {
+        "GCC": {
+          "version": 5,
+          "beforeBuildTasks": [],
+          "afterBuildTasks": [],
+          "global": {
+            "$float-abi-type": "softfp",
+            "output-debug-info": "enable",
+            "misc-control": "--specs=nosys.specs --specs=nano.specs"
+          },
+          "c/cpp-compiler": {
+            "language-c": "c17",
+            "language-cpp": "c++17",
+            "optimization": "level-size",
+            "warnings": "all-warnings",
+            "one-elf-section-per-function": true,
+            "one-elf-section-per-data": true,
+            "CXX_FLAGS": "-std=c++2b -fno-exceptions -fno-rtti"
+          },
+          "asm-compiler": {},
+          "linker": {
+            "output-format": "elf",
+            "remove-unused-input-sections": true,
+            "LIB_FLAGS": "-lm"
+          }
+        },
+        "AC6": {
+          "version": 3,
+          "beforeBuildTasks": [],
+          "afterBuildTasks": [
+            {
+              "name": "Copy compile_commands.json",
+              "disable": true,
+              "abortAfterFailed": false,
+              "command": "bash -c \"cp build/${ConfigName}/compile_commands.json ../build/\""
+            }
+          ],
+          "global": {
+            "output-debug-info": "enable"
+          },
+          "c/cpp-compiler": {
+            "optimization": "level-image-size",
+            "language-c": "c11",
+            "language-cpp": "c++14",
+            "short-enums#wchar": true,
+            "warnings": "ac5-like-warnings",
+            "misc-controls": "-Wno-empty-body -Wno-deprecated-volatile",
+            "CXX_FLAGS": "-std=c++2b -fno-exceptions -fno-rtti",
+            "one-elf-section-per-function": true,
+            "link-time-optimization": true
+          },
+          "asm-compiler": {
+            "$use": "asm-auto",
+            "misc-controls": "--diag_suppress=1950"
+          },
+          "linker": {
+            "output-format": "elf",
+            "misc-controls": "--diag_suppress=L6329",
+            "ro-base": "0x08000000",
+            "rw-base": "0x20000000"
+          }
+        }
       }
     },
     "Debug": {
@@ -508,6 +571,43 @@
           "USE_STDPERIPH_DRIVER",
           "STM32F429_439xx"
         ]
+      },
+      "builderOptions": {
+        "AC6": {
+          "version": 3,
+          "beforeBuildTasks": [],
+          "afterBuildTasks": [
+            {
+              "name": "Copy compile_commands.json",
+              "disable": true,
+              "abortAfterFailed": false,
+              "command": "bash -c \"cp build/${ConfigName}/compile_commands.json ../build/\""
+            }
+          ],
+          "global": {
+            "output-debug-info": "enable"
+          },
+          "c/cpp-compiler": {
+            "optimization": "level-0",
+            "language-c": "c11",
+            "language-cpp": "c++14",
+            "one-elf-section-per-function": true,
+            "short-enums#wchar": true,
+            "warnings": "ac5-like-warnings",
+            "CXX_FLAGS": "-std=c++2b -fno-exceptions -fno-rtti",
+            "misc-controls": "-Wno-deprecated-volatile -Wno-empty-body -mcpu=cortex-m4 -mthumb"
+          },
+          "asm-compiler": {
+            "$use": "asm-auto",
+            "misc-controls": "--diag_suppress=1950"
+          },
+          "linker": {
+            "output-format": "elf",
+            "misc-controls": "--diag_suppress=L6329",
+            "ro-base": "0x08000000",
+            "rw-base": "0x20000000"
+          }
+        }
       }
     },
     "GCC": {
@@ -571,8 +671,71 @@
           "USE_STDPERIPH_DRIVER",
           "STM32F429_439xx"
         ]
+      },
+      "builderOptions": {
+        "GCC": {
+          "version": 5,
+          "beforeBuildTasks": [],
+          "afterBuildTasks": [],
+          "global": {
+            "$float-abi-type": "softfp",
+            "output-debug-info": "enable",
+            "misc-control": "--specs=nosys.specs --specs=nano.specs"
+          },
+          "c/cpp-compiler": {
+            "language-c": "c11",
+            "language-cpp": "gnu++17",
+            "optimization": "level-size",
+            "warnings": "all-warnings",
+            "one-elf-section-per-function": true,
+            "one-elf-section-per-data": true,
+            "CXX_FLAGS": "-std=gnu++20 -fno-exceptions -fno-rtti -flto",
+            "C_FLAGS": "-Wno-empty-body -Wno-deprecated-volatile"
+          },
+          "asm-compiler": {},
+          "linker": {
+            "output-format": "elf",
+            "remove-unused-input-sections": true,
+            "LIB_FLAGS": "-lm -lsupc++"
+          }
+        },
+        "AC6": {
+          "version": 3,
+          "beforeBuildTasks": [],
+          "afterBuildTasks": [
+            {
+              "name": "Copy compile_commands.json",
+              "disable": true,
+              "abortAfterFailed": false,
+              "command": "bash -c \"cp build/${ConfigName}/compile_commands.json ../build/\""
+            }
+          ],
+          "global": {
+            "output-debug-info": "enable"
+          },
+          "c/cpp-compiler": {
+            "optimization": "level-0",
+            "language-c": "c11",
+            "language-cpp": "c++14",
+            "one-elf-section-per-function": true,
+            "short-enums#wchar": true,
+            "warnings": "ac5-like-warnings",
+            "CXX_FLAGS": "-std=c++2b -fno-exceptions -fno-rtti",
+            "misc-controls": "-Wno-deprecated-volatile -Wno-empty-body -mcpu=cortex-m4 -mthumb"
+          },
+          "asm-compiler": {
+            "$use": "asm-auto",
+            "misc-controls": "--diag_suppress=1950"
+          },
+          "linker": {
+            "output-format": "elf",
+            "misc-controls": "--diag_suppress=L6329",
+            "ro-base": "0x08000000",
+            "rw-base": "0x20000000"
+          }
+        }
       }
     }
   },
-  "version": "3.4"
+  "version": "3.5"
 }

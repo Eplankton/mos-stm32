@@ -28,6 +28,12 @@ namespace MOS::Kernel::IPC
 		MOS_INLINE inline bool
 		empty() const { return queue.empty(); }
 
+		enum Status : bool
+		{
+			Ok      = true,
+			TimeOut = !Ok,
+		};
+
 		auto send(const T& msg, Tick_t timeout = 0)
 		{
 			if (queue.full() &&
@@ -46,11 +52,7 @@ namespace MOS::Kernel::IPC
 
 		auto recv(Tick_t timeout = 0)
 		{
-			struct RecvMsg_t
-			{
-				Status status = TimeOut;
-				T msg {};
-			} res;
+			RecvMsg_t res;
 
 			if (queue.empty() &&
 			    wait_on(receivers, timeout) == TimeOut) {
@@ -71,17 +73,26 @@ namespace MOS::Kernel::IPC
 		EventList_t senders, receivers;
 		RawQueue_t queue;
 
+		struct RecvMsg_t
+		{
+			Status status = TimeOut;
+			T msg {};
+
+			MOS_INLINE inline void
+			map_or(auto&& fn, auto&& oops)
+			{
+				if (status == Ok)
+					fn(msg);
+				else
+					oops();
+			}
+		};
+
 		MOS_INLINE static constexpr inline auto
 		into_tcb(ConstNodePtr_t event)
 		{
 			return container_of(event, TCB_t, event);
 		}
-
-		enum Status : bool
-		{
-			Ok      = true,
-			TimeOut = !Ok,
-		};
 
 		static Status
 		check_for(EventList_t& src)

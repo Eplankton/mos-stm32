@@ -79,15 +79,17 @@ namespace MOS::DataType
 		{
 			struct TmpRecvObj_t
 			{
-				~TmpRecvObj_t() { tmp_ref.clear(); }
+				using TmpBuf_t = SyncRxBuf_t<N>;
+
+				MOS_INLINE inline TmpRecvObj_t(TmpBuf_t& ref): tmp_ref(ref) { tmp_ref.wait(); }
+				MOS_INLINE inline ~TmpRecvObj_t() { tmp_ref.clear(); }
 
 				MOS_INLINE inline auto
 				as_str() const { return tmp_ref.as_str(); }
 
-				SyncRxBuf_t<N>& tmp_ref;
+				TmpBuf_t& tmp_ref;
 			};
 
-			wait();
 			return TmpRecvObj_t {*this};
 		}
 

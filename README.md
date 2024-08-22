@@ -1,4 +1,6 @@
+<p align="center">
 <img src="Pic/mos_logo.svg">
+</p>
 
 ### Introduction 🚀
 -  **[English](https://github.com/Eplankton/mos-stm32/blob/master/README.md) | [中文](https://gitee.com/Eplankton/mos-stm32/blob/master/README.md)**
@@ -18,18 +20,18 @@ o'' )_____//    Simple RTOS on Cortex-M
 <img src="Pic/mos-arch.svg">
 ```C++
 .
-├── vendor              // Hardware Abstraction Layer (SPL/HAL/LL/...)
-└── src
-    ├── driver          // Interface Compatibility Layer
-    │   ├── stm32f4xx   // STM32F4xx On-Chip Peripherals (USART, I2C, SPI, ...)
-    │   └── device      // Other Hardware Components (LED, LCD, SD, ...)
+├── 📁 vendor              // Hardware Abstraction Layer (SPL/HAL/LL/...)
+└── 📁 src
+    ├── 📁 driver          // Interface Compatibility Layer
+    │   ├── 📁 stm32f4xx   // STM32F4xx On-Chip Peripherals (USART, I2C, SPI, ...)
+    │   └── 📁 device      // Other Hardware Components (LED, LCD, SD, ...)
     │
-    ├── mos
+    ├── 📁 mos
     │   ├── config.h             // System Configuration
-    │   ├── arch                 // Architecture Specific
+    │   ├── 📁 arch              // Architecture Specific
     │   │   └── cpu.hpp          // Init/Context Switch
     │   │
-    │   ├── kernel               // Kernel (Arch Independent)
+    │   ├── 📁 kernel            // Kernel (Arch Independent)
     │   │   ├── macro.hpp        // Kernel Constants Macros
     │   │   ├── type.hpp         // Basic Types
     │   │   ├── concepts.hpp     // Type Constraints (Optional)
@@ -46,8 +48,8 @@ o'' )_____//    Simple RTOS on Cortex-M
     │   ├── kernel.hpp           // Kernel Module
     │   └── shell.hpp            // Command Line Shell
     │
-    ├── user
-    │   ├── gui                  // Graphical System
+    ├── 📁 user
+    │   ├── 📁 gui               // Graphical System
     │   │   ├── GuiLite.h        // GuiLite Framework
     │   │   └── UICode.cpp       // Custom UI
     │   │
@@ -69,17 +71,17 @@ o'' )_____//    Simple RTOS on Cortex-M
 ![mutex_test](Pic/mutex.gif)
 
 `LCD Driver & GUI Demo`<br>
+<p align="center">
 <img src="Pic/cat.gif" width="21%"> <img src="Pic/mac.gif" width="20.35%"> <img src="Pic/face.gif" width="20.35%">
 <img src="Pic/board.gif" width="39.1%"> <img src="Pic/guilite.gif" width="34.5%">
+</p>
 
 `Concurrent Task Period & Time Sequence`<br>
+<p align="center">
 <img src="Pic/stmviewer.png" width="80%">
 <img src="Pic/T0-T1.png" width="80%">
 <img src="Pic/tids.png" width="65%">
-
-
-`Async Executor`
-<img src="Pic/async.png">
+</p>
 
 ```C++
 // MOS Kernel & Shell

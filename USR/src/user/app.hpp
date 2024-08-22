@@ -165,13 +165,15 @@ namespace MOS::User::App
 
 	void wifi(DataType::SyncRxBuf_t<8>& buf)
 	{
-		while (true) {
-			buf.wait();
-			auto rx = buf.as_str();
+		auto runner = [](auto rx) {
 			if (atoi(rx) % 10 == 0) {
 				kprintf("[esp32] -> %s\n", rx);
+				Global::sys_log_q.send(rx);
 			}
-			buf.clear();
+		};
+
+		while (true) {
+			runner(buf.recv().as_str());
 		}
 	}
 
@@ -239,10 +241,21 @@ namespace MOS::User::App
 		};
 
 		// log read cmd
-		static auto lgr_cmd = [](auto _) { cat_cmd("log.txt"); };
+		auto lgr_cmd = [](auto _) { cat_cmd("log.txt"); };
 		Shell::usr_cmds.add({"cat", cat_cmd});
 		Shell::usr_cmds.add({"lgr", lgr_cmd});
 		Shell::usr_cmds.add({"lgw", lgw_cmd});
+
+		static auto log = [] {
+			while (true) {
+				Global::sys_log_q.recv(1000_ms).map_or(
+				    [](auto msg) { lgw_cmd(msg); },
+				    [] {}
+				);
+			}
+		};
+
+		Task::create(log, nullptr, Task::current()->get_pri(), "log");
 	}
 }
 
