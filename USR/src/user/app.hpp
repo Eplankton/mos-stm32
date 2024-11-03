@@ -2,8 +2,8 @@
 #define _MOS_USER_APP_
 
 // Import Kernel and Shell Module
-#include "src/mos/kernel.hpp"
-#include "src/mos/shell.hpp"
+#include "src/core/kernel.hpp"
+#include "src/core/shell.hpp"
 
 #include "src/user/global.hpp"
 #include "src/user/gui/GuiLite.h"
@@ -113,7 +113,7 @@ namespace MOS::User::App
 		using HAL::STM32F4xx::RTC_t;
 
 		auto print_rtc_info = [](auto argv) {
-			IntrGuard_t guard;
+			IrqGuard_t guard;
 			const auto date = RTC_t::get_date();
 			const auto time = RTC_t::get_time();
 			MOS_MSG(
@@ -124,7 +124,7 @@ namespace MOS::User::App
 			);
 		};
 
-		Shell::usr_cmds.add({"time", print_rtc_info});
+		Shell::add_usr_cmd({"time", print_rtc_info});
 	}
 
 	void led_init(Device::LED_t leds[])
@@ -242,15 +242,15 @@ namespace MOS::User::App
 
 		// log read cmd
 		auto lgr_cmd = [](auto _) { cat_cmd("log.txt"); };
-		Shell::usr_cmds.add({"cat", cat_cmd});
-		Shell::usr_cmds.add({"lgr", lgr_cmd});
-		Shell::usr_cmds.add({"lgw", lgw_cmd});
+		Shell::add_usr_cmd({"cat", cat_cmd});
+		Shell::add_usr_cmd({"lgr", lgr_cmd});
+		Shell::add_usr_cmd({"lgw", lgw_cmd});
 
 		static auto log = [] {
 			while (true) {
-				Global::sys_log_q.recv(1000_ms).map_or(
-				    [](auto msg) { lgw_cmd(msg); },
-				    [] {}
+				Global::sys_log_q.recv(1000_ms).ok_or(
+					[](auto msg) { lgw_cmd(msg); },
+					[] { /* oops */ }
 				);
 			}
 		};

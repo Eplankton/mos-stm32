@@ -1,7 +1,7 @@
 #ifndef _MOS_FATFS_
 #define _MOS_FATFS_
 
-#include "src/mos/kernel/utils.hpp"
+#include "src/core/kernel/utils.hpp"
 #include "fatfs/ff.h"
 
 namespace MOS::FileSys

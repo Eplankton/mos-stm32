@@ -15,8 +15,6 @@
 
 version: "2.0"
 options:
-    Release:
-        virtualPathFiles:
-            <virtual_root>/USR/src/delay.hpp: -O0
-            <virtual_root>/USR/src/lcd.hpp: -O0
-            <virtual_root>/USR/src/lcd.cpp: -O0
+    Release: {}
+    Debug: {}
+    GCC: {}

@@ -228,7 +228,7 @@
                 "path": "../USR/src/main.cpp"
               },
               {
-                "path": "../USR/src/mos/kernel/printf.c"
+                "path": "../USR/src/core/kernel/printf.c"
               },
               {
                 "path": "../USR/src/stm32f4xx_it.cpp"
@@ -332,7 +332,7 @@
       "custom_dep": {
         "name": "default",
         "incList": [
-          "c:/Keil_v5/ARM/ARMCLANG/include",
+          "../../../../../../Keil_v5/ARM/ARMCLANG/include",
           ".cmsis/include",
           "../Driver/inc",
           "../CMSIS/Include",
@@ -372,29 +372,33 @@
           }
         },
         "AC6": {
-          "version": 3,
+          "version": 5,
           "beforeBuildTasks": [],
           "afterBuildTasks": [
             {
-              "name": "Copy compile_commands.json",
-              "disable": true,
+              "name": "Copy index database",
+              "disable": false,
               "abortAfterFailed": false,
               "command": "bash -c \"cp build/${ConfigName}/compile_commands.json ../build/\""
             }
           ],
           "global": {
-            "output-debug-info": "enable"
+            "$float-abi-type": "softfp",
+            "output-debug-info": "enable",
+            "misc-control": "--specs=nosys.specs --specs=nano.specs"
           },
           "c/cpp-compiler": {
-            "optimization": "level-image-size",
             "language-c": "c11",
-            "language-cpp": "c++14",
-            "short-enums#wchar": true,
+            "language-cpp": "gnu++17",
+            "optimization": "level-image-size",
             "warnings": "ac5-like-warnings",
-            "misc-controls": "-Wno-empty-body -Wno-deprecated-volatile",
-            "CXX_FLAGS": "-std=c++2b -fno-exceptions -fno-rtti",
             "one-elf-section-per-function": true,
-            "link-time-optimization": true
+            "one-elf-section-per-data": true,
+            "CXX_FLAGS": "-std=c++2b -fno-exceptions -fno-rtti -flto",
+            "C_FLAGS": "-Wno-empty-body -Wno-deprecated-volatile",
+            "link-time-optimization": true,
+            "short-enums#wchar": true,
+            "misc-controls": "-Wno-empty-body -Wno-deprecated-volatile"
           },
           "asm-compiler": {
             "$use": "asm-auto",
@@ -402,9 +406,12 @@
           },
           "linker": {
             "output-format": "elf",
-            "misc-controls": "--diag_suppress=L6329",
+            "remove-unused-input-sections": true,
+            "LIB_FLAGS": "-lm -lsupc++",
+            "$toolName": "auto",
+            "misc-controls": "--diag_suppress=1950",
             "ro-base": "0x08000000",
-            "rw-base": "0x20000000"
+            "rw-base": "0x02000000"
           }
         }
       }
@@ -676,7 +683,14 @@
         "GCC": {
           "version": 5,
           "beforeBuildTasks": [],
-          "afterBuildTasks": [],
+          "afterBuildTasks": [
+            {
+              "name": "new postbuild task",
+              "disable": false,
+              "abortAfterFailed": false,
+              "command": "bash -c \"cp build/${ConfigName}/compile_commands.json ../build/\""
+            }
+          ],
           "global": {
             "$float-abi-type": "softfp",
             "output-debug-info": "enable",
@@ -696,7 +710,8 @@
           "linker": {
             "output-format": "elf",
             "remove-unused-input-sections": true,
-            "LIB_FLAGS": "-lm -lsupc++"
+            "LIB_FLAGS": "-lm -lsupc++",
+            "$toolName": "auto"
           }
         },
         "AC6": {

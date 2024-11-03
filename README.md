@@ -7,13 +7,16 @@
 ```
  A_A       _    MOS Real-Time Operating System
 o'' )_____//    Simple RTOS on Cortex-M
- `_/  MOS  )    Developed with C/C++
+ `_/  MOS  )    Developed using C/C++
  (_(_/--(_/     [Apache License Version 2.0]
 ```
 
 ### Repository 🌏
-- **[GitHub(English)](https://github.com/Eplankton/mos-stm32) | [Gitee(中文)](https://gitee.com/Eplankton/mos-stm32/)**
+- `mos-core` 👉 **[GitHub(English)](https://github.com/Eplankton/mos-core) | [Gitee(中文)](https://gitee.com/Eplankton/mos-core/)**
 
+- `mos-stm32` 👉 **[GitHub(English)](https://github.com/Eplankton/mos-stm32) | [Gitee(中文)](https://gitee.com/Eplankton/mos-stm32/)**
+
+- `mos-renode` 👉 **[GitHub(English)](https://github.com/Eplankton/mos-renode) | [Gitee(中文)](https://gitee.com/Eplankton/mos-renode/)**
 
 ### Architecture 🔍
 [USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
@@ -26,7 +29,7 @@ o'' )_____//    Simple RTOS on Cortex-M
     │   ├── 📁 stm32f4xx   // STM32F4xx On-Chip Peripherals (USART, I2C, SPI, ...)
     │   └── 📁 device      // Other Hardware Components (LED, LCD, SD, ...)
     │
-    ├── 📁 mos
+    ├── 📁 core
     │   ├── config.h             // System Configuration
     │   ├── 📁 arch              // Architecture Specific
     │   │   └── cpu.hpp          // Init/Context Switch
@@ -85,8 +88,8 @@ o'' )_____//    Simple RTOS on Cortex-M
 
 ```C++
 // MOS Kernel & Shell
-#include "mos/kernel.hpp"
-#include "mos/shell.hpp"
+#include "core/kernel.hpp"
+#include "core/shell.hpp"
 
 // HAL and Device 
 #include "drivers/stm32f4xx/hal.hpp"
@@ -263,7 +266,7 @@ o'' )_____//   Build   @ TIME, DATE
 > - Added `Driver::Device::SD_t`, `SD` card driver, porting `FatFs` file system
 > - Added `Shell::usr_cmds` for user-registered commands
 > - **[Experimental]** Atomic types `<stdatomic.h>`
-> - **[Experimental]** `Utils::IntrGuard_t`, nested interrupt critical sections
+> - **[Experimental]** `Utils::IrqGuard_t`, nested interrupt critical sections
 > - **[Experimental]** Simple formal verification of `Scheduler + Mutex`
 >
 > 
@@ -298,3 +301,7 @@ There's a movie on TV.
 Four boys are walking on railroad tracks...
 I better go, too.
 ```
+
+<p align="center">
+<img src="Pic/cbp-green.svg">
+</p>

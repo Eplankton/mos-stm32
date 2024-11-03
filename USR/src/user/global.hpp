@@ -10,10 +10,10 @@
 #include "src/drivers/device/sd.hpp"
 
 // Buffer
-#include "src/mos/kernel/data_type/buffer.hpp"
+#include "src/core/kernel/data_type/buffer.hpp"
 
 // MsgQueue Channel
-#include "src/mos/kernel/ipc.hpp"
+#include "src/core/kernel/ipc.hpp"
 
 // FatFs File System
 #include "src/user/fatfs.hpp"

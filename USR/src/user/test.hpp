@@ -1,9 +1,9 @@
 #ifndef _MOS_USER_TEST_
 #define _MOS_USER_TEST_
 
-#include "src/mos/kernel/task.hpp"
-#include "src/mos/kernel/sync.hpp"
-#include "src/mos/kernel/ipc.hpp"
+#include "src/core/kernel/task.hpp"
+#include "src/core/kernel/sync.hpp"
+#include "src/core/kernel/ipc.hpp"
 #include "global.hpp"
 
 namespace MOS::User::Test
@@ -54,7 +54,7 @@ namespace MOS::User::Test
 		static auto consumer = [](MsgQ_t& msg_q) {
 			while (true) {
 				auto [status, msg] = msg_q.recv(200_ms);
-				IntrGuard_t guard;
+				IrqGuard_t guard;
 				kprintf(status ? "" : "MsgQ Timeout!\n");
 				// kprintf(status ? "%d, " : "MsgQ Timeout!\n", msg);
 			}

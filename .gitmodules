@@ -1,0 +1,3 @@
+[submodule "USR/src/core"]
+	path = USR/src/core
+	url = https://github.com/Eplankton/mos-core.git

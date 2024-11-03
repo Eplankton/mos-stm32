@@ -1,6 +1,6 @@
 // MOS Kernel & Shell
-#include "mos/kernel.hpp"
-#include "mos/shell.hpp"
+#include "core/kernel.hpp"
+#include "core/shell.hpp"
 
 // User Application
 #include "user/global.hpp"
@@ -21,7 +21,7 @@ int main()
 	// Create Calendar with RTC
 	Task::create(App::time_init, nullptr, 1, "time/init");
 
-	// Create Shell with sh_buf
+	// Create Shell with stdio.buf
 	Task::create(Shell::launch, &stdio.buf, 1, "shell");
 
 	// Create FatFs on SD card

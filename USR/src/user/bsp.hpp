@@ -3,7 +3,7 @@
 
 // STM32F4xx HAL
 #include "src/drivers/stm32f4xx/hal.hpp"
-#include "src/mos/kernel/task.hpp"
+#include "src/core/kernel/task.hpp"
 #include "src/user/global.hpp"
 
 namespace MOS::User::BSP
