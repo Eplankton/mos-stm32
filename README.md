@@ -2,71 +2,56 @@
 <img src="Pic/mos_logo.svg">
 </p>
 
+# MOS
+
 ### Introduction 🚀
 -  **[English](https://github.com/Eplankton/mos-stm32/blob/master/README.md) | [中文](https://gitee.com/Eplankton/mos-stm32/blob/master/README.md)**
-```
- A_A       _    MOS Real-Time Operating System
-o'' )_____//    Simple RTOS on Cortex-M
- `_/  MOS  )    Developed using C/C++
- (_(_/--(_/     [Apache License Version 2.0]
-```
+
+**_MOS_** is a real-time operating system (RTOS) designed for embedded devices which consists of a preemptive kernel and a command-line shell(very primitive currently) with other user application components being ported(e.g., **GuiLite** and **FatFS**).
 
 ### Repository 🌏
-- `mos-core` 👉 **[GitHub(English)](https://github.com/Eplankton/mos-core) | [Gitee(中文)](https://gitee.com/Eplankton/mos-core/)**
+- `mos-core` - The preemptive kernel and command-line shell, from **[here](https://github.com/Eplankton/mos-core)**
+- `mos-stm32` - Running on STM32 series, from **[here](https://github.com/Eplankton/mos-stm32)**
+- `mos-renode` - Running on Renode emulation, from **[here](https://github.com/Eplankton/mos-renode)**
 
-- `mos-stm32` 👉 **[GitHub(English)](https://github.com/Eplankton/mos-stm32) | [Gitee(中文)](https://gitee.com/Eplankton/mos-stm32/)**
-
-- `mos-renode` 👉 **[GitHub(English)](https://github.com/Eplankton/mos-renode) | [Gitee(中文)](https://gitee.com/Eplankton/mos-renode/)**
 
 ### Architecture 🔍
-[USR/src](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)
+- Click **[here](https://github.com/Eplankton/mos-stm32/tree/master/USR/src)** to view code
+
 <img src="Pic/mos-arch.svg">
+
 ```C++
 .
-├── 📁 vendor              // Hardware Abstraction Layer (SPL/HAL/LL/...)
-└── 📁 src
-    ├── 📁 driver          // Interface Compatibility Layer
-    │   ├── 📁 stm32f4xx   // STM32F4xx On-Chip Peripherals (USART, I2C, SPI, ...)
-    │   └── 📁 device      // Other Hardware Components (LED, LCD, SD, ...)
-    │
-    ├── 📁 core
-    │   ├── config.h             // System Configuration
-    │   ├── 📁 arch              // Architecture Specific
-    │   │   └── cpu.hpp          // Init/Context Switch
-    │   │
-    │   ├── 📁 kernel            // Kernel (Arch Independent)
-    │   │   ├── macro.hpp        // Kernel Constants Macros
-    │   │   ├── type.hpp         // Basic Types
-    │   │   ├── concepts.hpp     // Type Constraints (Optional)
-    │   │   ├── data_type.hpp    // Basic Data Structures
-    │   │   ├── alloc.hpp        // Memory Management
-    │   │   ├── global.hpp       // Kernel Global Variables
-    │   │   ├── printf.h/.c      // Thread-Safe printf(*)
-    │   │   ├── task.hpp         // Task Control
-    │   │   ├── sync.hpp         // Synchronization Primitives
-    │   │   ├── scheduler.hpp    // Scheduler
-    │   │   ├── ipc.hpp          // Inter-Process Communication
-    │   │   └── utils.hpp        // Other Utilities
-    │   │
-    │   ├── kernel.hpp           // Kernel Module
-    │   └── shell.hpp            // Command Line Shell
-    │
-    ├── 📁 user
-    │   ├── 📁 gui               // Graphical System
-    │   │   ├── GuiLite.h        // GuiLite Framework
-    │   │   └── UICode.cpp       // Custom UI
-    │   │
-    │   ├── global.hpp           // User Global Variables
-    │   ├── bsp.hpp              // Board Support Package
-    │   ├── app.hpp              // User Tasks
-    │   ├── fatfs.hpp            // File System
-    │   └── test.hpp             // Test Code
-    │
-    ├── main.cpp                 // System Entry Function
-    └── stm32f4xx_it.cpp         // Interrupt Handler Routine
+├── 📁 emulation             // Renode emulation script
+├── 📁 vendor                // Vendor HAL (SPL/HAL/LL/...)
+├── 📁 core
+│   ├── 📁 arch              // Architecture-Specific Code
+│   │   └── cpu.hpp          // Initialization/Context Switch assembly code
+│   │
+│   ├── 📁 kernel            // Kernel Layer (Architecture-Independent)
+│   │   ├── macro.hpp        // Kernel Constants Macro
+│   │   ├── type.hpp         // Basic Types
+│   │   ├── concepts.hpp     // Type Constraints (Optional)
+│   │   ├── data_type.hpp    // Basic Data Structures
+│   │   ├── alloc.hpp        // Memory Management
+│   │   ├── global.hpp       // Kernel Layer Global Variables
+│   │   ├── printf.h/.c      // Thread-Safe printf (Reference Open Source Implementation)
+│   │   ├── task.hpp         // Task Control
+│   │   ├── sync.hpp         // Synchronization Primitives
+│   │   ├── scheduler.hpp    // Scheduler
+│   │   ├── ipc.hpp          // Inter-Process Communication
+│   │   └── utils.hpp        // Other Utilities
+│   │
+│   ├── config.h             // System Configuration
+│   ├── kernel.hpp           // Kernel Modules
+│   └── shell.hpp            // Shell Command Line
+│
+└── 📁 app                   // User Code
+    ├── main.cpp             // Entry Function
+    └── test.hpp             // Test Code
 ```
 
-### Example 🍎
+## Example 🍎
 `Shell Test`
 ![shell_demo](Pic/shell.gif)
 
@@ -88,8 +73,8 @@ o'' )_____//    Simple RTOS on Cortex-M
 
 ```C++
 // MOS Kernel & Shell
-#include "core/kernel.hpp"
-#include "core/shell.hpp"
+#include "mos/kernel.hpp"
+#include "mos/shell.hpp"
 
 // HAL and Device 
 #include "drivers/stm32f4xx/hal.hpp"
@@ -201,7 +186,7 @@ int main()
 }
 ```
 
-### Boot Up ⚡
+## Boot Up ⚡
 ```
  A_A       _   Version @ x.x.x(...)
 o'' )_____//   Build   @ TIME, DATE
@@ -216,42 +201,14 @@ o'' )_____//   Build   @ TIME, DATE
 ----------------------------------------
 ```
 
-### Version 🧾
+## Version 🧾
 
+📦 `v0.4`
 
-📦 `v0.1`
-
-> ✅ Done:
-> 
-> - Basic data structures, scheduler, and task control, memory management
+> ✅ Done：
 >
-> 📌 Planned: 
-> 
-> - Timers, round-robin scheduling
-> - Inter-Process Communication (IPC), pipes, message queues
-> - Process synchronization (Sync), semaphores, mutexes
-> - Porting a simple Shell
-> - Variable page sizes, memory allocator
-> - SPI driver, porting GuiLite/LVGL graphics libraries
-> - Porting to other boards/arch, e.g., ESP32-C3 (RISC-V)
-
-
-
-📦 `v0.2`
-
-> ✅ Done:
-> 
-> - Synchronization primitives `Sync::{Sema_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}`
-> - `Scheduler::Policy::PreemptPri` with round-robin `RoundRobin` scheduling for same priority levels
-> - `Task::terminate` implicitly called upon task exit to reclaim resources
-> - Simple command-line interaction `Shell::{Command, CmdCall, launch}`
-> - `HAL::STM32F4xx::SPI_t` and `Driver::Device::ST7735S_t`, porting the `GuiLite` graphics library
-> - Blocking delay with `Kernel::Global::os_ticks` and `Task::delay`
-> - Refactored project organization into `{kernel, arch, drivers}`
-> - Support for `GCC` compilation, compatible with `STM32Cube HAL`
-> - Real-time calendar `HAL::STM32F4xx::RTC_t`, `CmdCall::date_cmd`, `App::Calendar`
-> - `idle` uses `Kernel::Global::zombie_list` to reclaim inactive pages
-> - Three basic page allocation policies `Page_t::Policy::{POOL, DYNAMIC, STATIC}`
+> - Shift to `Renode` emulation platform, stable support for `Cortex-M` series
+> - **[Experimental]** Add scheduler lock `Scheduler::suspend()`
 
 
 
@@ -284,7 +241,42 @@ o'' )_____//   Build   @ TIME, DATE
 > - **[Experimental]** More real-time scheduling algorithms
 
 
-### References 🛸
+📦 `v0.2`
+
+> ✅ Done:
+> 
+> - Synchronization primitives `Sync::{Sema_t, Lock_t, Mutex_t<T>, CondVar_t, Barrier_t}`
+> - `Scheduler::Policy::PreemptPri` with `RoundRobin` scheduling for same priority levels
+> - `Task::terminate` implicitly called upon task exit to reclaim resources
+> - Simple command-line interaction `Shell::{Command, CmdCall, launch}`
+> - `HAL::STM32F4xx::SPI_t` and `Driver::Device::ST7735S_t`, porting the `GuiLite` graphics library
+> - Blocking delay with `Kernel::Global::os_ticks` and `Task::delay`
+> - Refactored project organization into `{kernel, arch, drivers}`
+> - Support for `GCC` compilation, compatible with `STM32Cube HAL`
+> - Real-time calendar `HAL::STM32F4xx::RTC_t`, `CmdCall::date_cmd`, `App::Calendar`
+> - `idle` uses `Kernel::Global::zombie_list` to reclaim inactive pages
+> - Three basic page allocation policies `Page_t::Policy::{POOL, DYNAMIC, STATIC}`
+
+
+
+📦 `v0.1`
+
+> ✅ Done:
+> 
+> - Basic data structures, scheduler, and task control, memory management
+>
+> 📌 Planned: 
+> 
+> - Timers, round-robin scheduling
+> - Inter-Process Communication (IPC), pipes, message queues
+> - Process synchronization (Sync), semaphores, mutexes
+> - Porting a simple Shell
+> - Variable page sizes, memory allocator
+> - SPI driver, porting GuiLite/LVGL graphics libraries
+> - Porting to other boards/arch, e.g., ESP32-C3 (RISC-V)
+
+
+## References 🛸
 - [How to build a Real-Time Operating System(RTOS)](https://medium.com/@dheeptuck/building-a-real-time-operating-system-rtos-ground-up-a70640c64e93)
 - [PeriodicScheduler_Semaphore](https://github.com/Dungyichao/PeriodicScheduler_Semaphore)
 - [STM32F4-LCD_ST7735s](https://github.com/Dungyichao/STM32F4-LCD_ST7735s)
@@ -295,6 +287,7 @@ o'' )_____//   Build   @ TIME, DATE
 - [The Zephyr Project](https://www.zephyrproject.org/)
 - [Eclipse ThreadX](https://github.com/eclipse-threadx/threadx)
 - [Embassy](https://embassy.dev/)
+- [Renode](https://renode.io/)
 
 ```
 There's a movie on TV.
