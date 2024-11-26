@@ -7,12 +7,12 @@
 ### Introduction 🚀
 -  **[English](https://github.com/Eplankton/mos-stm32/blob/master/README.md) | [中文](https://gitee.com/Eplankton/mos-stm32/blob/master/README.md)**
 
-**_MOS_** is a real-time operating system (RTOS) designed for embedded devices which consists of a preemptive kernel and a command-line shell(very primitive currently) with other user application components being ported(e.g., **GuiLite** and **FatFS**).
+**_MOS_** is a real-time operating system (RTOS) designed for embedded devices which consists of a preemptive kernel and a command-line shell(both in C++) with optional user application components being ported(e.g., **GuiLite** and **FatFS**).
 
 ### Repository 🌏
-- `mos-core` - The preemptive kernel and command-line shell, from **[here](https://github.com/Eplankton/mos-core)**
-- `mos-stm32` - Running on STM32 series, from **[here](https://github.com/Eplankton/mos-stm32)**
-- `mos-renode` - Running on Renode emulation, from **[here](https://github.com/Eplankton/mos-renode)**
+- `mos-core` - The kernel and shell, check **[here](https://github.com/Eplankton/mos-core)**.
+- `mos-stm32` - Running on STM32 series, check **[here](https://github.com/Eplankton/mos-stm32)**.
+- `mos-renode` - Running on Renode emulation, check **[here](https://github.com/Eplankton/mos-renode)**.
 
 
 ### Architecture 🔍
@@ -22,36 +22,49 @@
 
 ```C++
 .
-├── 📁 emulation             // Renode emulation script
-├── 📁 vendor                // Vendor HAL (SPL/HAL/LL/...)
-├── 📁 core
-│   ├── 📁 arch              // Architecture-Specific Code
-│   │   └── cpu.hpp          // Initialization/Context Switch assembly code
-│   │
-│   ├── 📁 kernel            // Kernel Layer (Architecture-Independent)
-│   │   ├── macro.hpp        // Kernel Constants Macro
-│   │   ├── type.hpp         // Basic Types
-│   │   ├── concepts.hpp     // Type Constraints (Optional)
-│   │   ├── data_type.hpp    // Basic Data Structures
-│   │   ├── alloc.hpp        // Memory Management
-│   │   ├── global.hpp       // Kernel Layer Global Variables
-│   │   ├── printf.h/.c      // Thread-Safe printf (Reference Open Source Implementation)
-│   │   ├── task.hpp         // Task Control
-│   │   ├── sync.hpp         // Synchronization Primitives
-│   │   ├── scheduler.hpp    // Scheduler
-│   │   ├── ipc.hpp          // Inter-Process Communication
-│   │   └── utils.hpp        // Other Utilities
-│   │
-│   ├── config.h             // System Configuration
-│   ├── kernel.hpp           // Kernel Modules
-│   └── shell.hpp            // Shell Command Line
-│
-└── 📁 app                   // User Code
-    ├── main.cpp             // Entry Function
-    └── test.hpp             // Test Code
+├── 📁 vendor              // Hardware Abstraction Layer (SPL/HAL/LL/...)
+└── 📁 src
+    ├── 📁 driver          // Interface Compatibility Layer
+    │   ├── 📁 stm32f4xx   // STM32F4xx On-Chip Peripherals (USART, I2C, SPI, ...)
+    │   └── 📁 device      // Other Hardware Components (LED, LCD, SD, ...)
+    │
+    ├── 📁 core
+    │   ├── config.h             // System Configuration
+    │   ├── 📁 arch              // Architecture Specific
+    │   │   └── cpu.hpp          // Init/Context Switch
+    │   │
+    │   ├── 📁 kernel            // Kernel (Arch Independent)
+    │   │   ├── macro.hpp        // Kernel Constants Macros
+    │   │   ├── type.hpp         // Basic Types
+    │   │   ├── concepts.hpp     // Type Constraints (Optional)
+    │   │   ├── data_type.hpp    // Basic Data Structures
+    │   │   ├── alloc.hpp        // Memory Management
+    │   │   ├── global.hpp       // Kernel Global Variables
+    │   │   ├── printf.h/.c      // Thread-Safe printf(*)
+    │   │   ├── task.hpp         // Task Control
+    │   │   ├── sync.hpp         // Synchronization Primitives
+    │   │   ├── scheduler.hpp    // Scheduler
+    │   │   ├── ipc.hpp          // Inter-Process Communication
+    │   │   └── utils.hpp        // Other Utilities
+    │   │
+    │   ├── kernel.hpp           // Kernel Module
+    │   └── shell.hpp            // Command Line Shell
+    │
+    ├── 📁 user
+    │   ├── 📁 gui               // Graphical System
+    │   │   ├── GuiLite.h        // GuiLite Frameworks
+    │   │   └── UICode.cpp       // Custom UI
+    │   │
+    │   ├── global.hpp           // User Global Variables
+    │   ├── bsp.hpp              // Board Support Package
+    │   ├── app.hpp              // User Tasks
+    │   ├── fatfs.hpp            // File System
+    │   └── test.hpp             // Test Code
+    │
+    └── main.cpp                 // System Entry Function
 ```
 
-## Example 🍎
+## Demo 🍎
 `Shell Test`
 ![shell_demo](Pic/shell.gif)
 
